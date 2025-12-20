@@ -23,18 +23,22 @@
  ****************************************************************************/
 
 #include "AppDelegate.h"
-#include "HelloWorldScene.h"
+#include "Scenes/MainMenuScene.h"
+#include "Core/Constants.h"
+#include "Core/GameMacros.h"
 
-// #define USE_AUDIO_ENGINE 1
+// 使用音频引擎
+#define USE_AUDIO_ENGINE 1
 
 #if USE_AUDIO_ENGINE
 #include "audio/include/AudioEngine.h"
-using namespace cocos2d::experimental;
+// cocos2d-x 4.0 中 AudioEngine 直接在 cocos2d 命名空间下
 #endif
 
 USING_NS_CC;
 
-static cocos2d::Size designResolutionSize = cocos2d::Size(480, 320);
+// 使用我们定义的设计分辨率
+static cocos2d::Size designResolutionSize = cocos2d::Size(Constants::DESIGN_WIDTH, Constants::DESIGN_HEIGHT);
 static cocos2d::Size smallResolutionSize = cocos2d::Size(480, 320);
 static cocos2d::Size mediumResolutionSize = cocos2d::Size(1024, 768);
 static cocos2d::Size largeResolutionSize = cocos2d::Size(2048, 1536);
@@ -107,11 +111,13 @@ bool AppDelegate::applicationDidFinishLaunching() {
 
     register_all_packages();
 
-    // create a scene. it's an autorelease object
-    auto scene = HelloWorld::createScene();
+    // 创建主菜单场景
+    auto scene = MainMenuScene::createScene();
 
-    // run
+    // 运行场景
     director->runWithScene(scene);
+    
+    GAME_LOG("Application launched successfully");
 
     return true;
 }

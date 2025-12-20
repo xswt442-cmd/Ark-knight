@@ -1,0 +1,102 @@
+﻿#ifndef __CONSTANTS_H__
+#define __CONSTANTS_H__
+
+#include <string>
+
+/**
+ * 全局常量定义
+ * 包含游戏中使用的所有常量值
+ */
+
+namespace Constants {
+    // ==================== 游戏配置 ====================
+    constexpr float DESIGN_WIDTH = 1280.0f;
+    constexpr float DESIGN_HEIGHT = 720.0f;
+    
+    // ==================== 玩家属性 ====================
+    namespace Player {
+        constexpr int DEFAULT_HP = 100;
+        constexpr int DEFAULT_MP = 100;
+        constexpr float DEFAULT_MOVE_SPEED = 200.0f;
+        constexpr float DASH_SPEED = 400.0f;
+        constexpr float DASH_DURATION = 0.3f;
+    }
+    
+    // ==================== 敌人属性 ====================
+    namespace Enemy {
+        constexpr int MELEE_HP = 50;
+        constexpr int RANGED_HP = 30;
+        constexpr int BOSS_HP = 500;
+        constexpr float DEFAULT_MOVE_SPEED = 100.0f;
+        constexpr float CHASE_RANGE = 300.0f;
+        constexpr float ATTACK_RANGE = 50.0f;
+    }
+    
+    // ==================== 地图配置 ====================
+    namespace Map {
+        constexpr int ROOM_WIDTH = 800;
+        constexpr int ROOM_HEIGHT = 600;
+        constexpr int MAX_ROOMS = 10;
+        constexpr int MAP_SIZE = 5;  // 5x5 地图矩阵
+    }
+    
+    // ==================== 战斗配置 ====================
+    namespace Combat {
+        constexpr float ATTACK_COOLDOWN = 0.5f;
+        constexpr float SKILL_COOLDOWN = 3.0f;
+        constexpr int PROJECTILE_SPEED = 500;
+    }
+    
+    // ==================== 资源路径 ====================
+    namespace Path {
+        // 场景
+        const std::string SCENE_MENU = "scenes/menu.png";
+        const std::string SCENE_GAME = "scenes/game_bg.png";
+        
+        // 玩家
+        const std::string PLAYER_MAGE = "player/mage.png";
+        const std::string PLAYER_WARRIOR = "player/warrior.png";
+        const std::string PLAYER_ALCHEMIST = "player/alchemist.png";
+        
+        // 敌人
+        const std::string ENEMY_MELEE = "enemy/melee.png";
+        const std::string ENEMY_RANGED = "enemy/ranged.png";
+        const std::string ENEMY_BOSS = "enemy/boss.png";
+        
+        // UI
+        const std::string UI_HP_BAR = "ui/hp_bar.png";
+        const std::string UI_MP_BAR = "ui/mp_bar.png";
+        
+        // 音频
+        const std::string BGM_MENU = "audio/bgm_menu.mp3";
+        const std::string BGM_BATTLE = "audio/bgm_battle.mp3";
+        const std::string BGM_BOSS = "audio/bgm_boss.mp3";
+        
+        const std::string SFX_ATTACK = "audio/sfx_attack.wav";
+        const std::string SFX_SKILL = "audio/sfx_skill.wav";
+        const std::string SFX_HIT = "audio/sfx_hit.wav";
+    }
+    
+    // ==================== 游戏标签 ====================
+    namespace Tag {
+        constexpr int PLAYER = 100;
+        constexpr int ENEMY = 200;
+        constexpr int PROJECTILE = 300;
+        constexpr int PROP = 400;
+        constexpr int OBSTACLE = 500;
+    }
+    
+    // ==================== Z-Order ====================
+    namespace ZOrder {
+        constexpr int BACKGROUND = 0;
+        constexpr int FLOOR = 10;
+        constexpr int PROP = 20;
+        constexpr int SHADOW = 30;
+        constexpr int ENTITY = 40;
+        constexpr int PROJECTILE = 50;
+        constexpr int EFFECT = 60;
+        constexpr int UI = 100;
+    }
+}
+
+#endif // __CONSTANTS_H__
