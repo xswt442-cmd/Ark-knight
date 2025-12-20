@@ -306,10 +306,24 @@ void GameScene::showGameOver()
 {
     GAME_LOG("Game Over!");
     
+    // 停止游戏更新
+    this->unscheduleUpdate();
+    
     // 停止玩家输入
     if (_player != nullptr)
     {
         _player->removeInputEvents();
+        _player->stopAllActions();
+    }
+    
+    // 停止所有敌人
+    for (auto enemy : _enemies)
+    {
+        if (enemy != nullptr)
+        {
+            enemy->stopAllActions();
+            enemy->unscheduleAllCallbacks();
+        }
     }
     
     // 添加半透明遮罩
@@ -331,19 +345,21 @@ void GameScene::showGameOver()
     hintLabel->setName("gameOverHint");
     _uiLayer->addChild(hintLabel, 1000);
     
-    // 添加重新开始的键盘监听
+    // 添加重新开始的键盘监听 - 使用this捕获
     auto listener = EventListenerKeyboard::create();
-    listener->onKeyPressed = [](EventKeyboard::KeyCode keyCode, Event* event) {
+    listener->onKeyPressed = [this](EventKeyboard::KeyCode keyCode, Event* event) {
         if (keyCode == EventKeyboard::KeyCode::KEY_R)
         {
             // 重新开始
-            Director::getInstance()->replaceScene(GameScene::createScene());
+            auto newScene = GameScene::createScene();
+            Director::getInstance()->replaceScene(TransitionFade::create(0.5f, newScene));
         }
         else if (keyCode == EventKeyboard::KeyCode::KEY_Q)
         {
             // 返回主菜单
-            Director::getInstance()->replaceScene(MainMenuScene::createScene());
+            auto menuScene = MainMenuScene::createScene();
+            Director::getInstance()->replaceScene(TransitionFade::create(0.5f, menuScene));
         }
     };
-    _eventDispatcher->addEventListenerWithSceneGraphPriority(listener, gameOverLabel);
+    _eventDispatcher->addEventListenerWithSceneGraphPriority(listener, this);
 }
