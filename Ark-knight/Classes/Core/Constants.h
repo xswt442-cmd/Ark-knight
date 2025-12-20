@@ -36,8 +36,36 @@ namespace Constants {
     namespace Map {
         constexpr int ROOM_WIDTH = 800;
         constexpr int ROOM_HEIGHT = 600;
-        constexpr int MAX_ROOMS = 10;
-        constexpr int MAP_SIZE = 5;  // 5x5 地图矩阵
+        constexpr int MAX_ROOMS = 6;      // 最大房间数量
+        constexpr int MAP_SIZE = 5;        // 5x5 地图矩阵
+        
+        // 地板和墙壁尺寸 (像素)
+        constexpr float FLOOR_WIDTH = 32.0f;
+        constexpr float FLOOR_HEIGHT = 32.0f;
+        constexpr float WALL_HEIGHT = 48.0f;
+        
+        // 房间尺寸 (地板数量)
+        constexpr int ROOM_TILES_WIDTH = 15;   // 房间宽度(地板块数)
+        constexpr int ROOM_TILES_HEIGHT = 11;  // 房间高度(地板块数)
+        
+        // 房间中心距离
+        constexpr float CENTER_DISTANCE = 600.0f;
+        
+        // 走廊尺寸
+        constexpr int HALL_WIDTH = 5;   // 走廊宽度(地板块数)
+    }
+    
+    // ==================== 方向定义 ====================
+    namespace Direction {
+        constexpr int UP = 0;
+        constexpr int RIGHT = 1;
+        constexpr int DOWN = 2;
+        constexpr int LEFT = 3;
+        constexpr int COUNT = 4;
+        
+        // 方向偏移 (X, Y) - 使用inline constexpr避免多重定义
+        inline constexpr int DX[] = {0, 1, 0, -1};
+        inline constexpr int DY[] = {1, 0, -1, 0};
     }
     
     // ==================== 战斗配置 ====================
@@ -90,13 +118,28 @@ namespace Constants {
     namespace ZOrder {
         constexpr int BACKGROUND = 0;
         constexpr int FLOOR = 10;
+        constexpr int WALL_BELOW = 15;     // 玩家下方的墙
+        constexpr int DOOR = 18;
         constexpr int PROP = 20;
         constexpr int SHADOW = 30;
         constexpr int ENTITY = 40;
         constexpr int PROJECTILE = 50;
+        constexpr int WALL_ABOVE = 55;     // 玩家上方的墙
         constexpr int EFFECT = 60;
+        constexpr int MINIMAP = 90;
         constexpr int UI = 100;
     }
+    
+    // ==================== 房间类型 ====================
+    enum class RoomType {
+        NONE,       // 无房间
+        BEGIN,      // 起始房间
+        NORMAL,     // 普通战斗房间
+        BOSS,       // Boss房间
+        END,        // 终点房间(下一关传送门)
+        WEAPON,     // 武器房间
+        PROP        // 道具房间
+    };
 }
 
 #endif // __CONSTANTS_H__

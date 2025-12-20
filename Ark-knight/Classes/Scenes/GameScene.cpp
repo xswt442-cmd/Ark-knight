@@ -16,10 +16,14 @@ bool GameScene::init()
     
     _isPaused = false;
     _isGameOver = false;
+    _mapGenerator = nullptr;
+    _miniMap = nullptr;
+    _currentRoom = nullptr;
     
     initLayers();
+    initMapSystem();    // 初始化地图系统
     createPlayer();
-    createTestEnemies();
+    // createTestEnemies();  // 敌人由房间生成，不再单独创建
     createHUD();
     setupKeyboardListener();
     
@@ -37,7 +41,7 @@ void GameScene::initLayers()
     Vec2 origin = Director::getInstance()->getVisibleOrigin();
     
     // 创建背景
-    auto background = LayerColor::create(Color4B(100, 100, 100, 255));
+    auto background = LayerColor::create(Color4B(40, 40, 50, 255));
     this->addChild(background, -1);
     
     // 游戏层
@@ -47,6 +51,24 @@ void GameScene::initLayers()
     // UI层
     _uiLayer = Layer::create();
     this->addChild(_uiLayer, Constants::ZOrder::UI);
+}
+
+void GameScene::initMapSystem()
+{
+    // 创建地图生成器
+    _mapGenerator = MapGenerator::create();
+    _mapGenerator->generateMap();
+    _gameLayer->addChild(_mapGenerator);
+    
+    // 创建小地图
+    _miniMap = MiniMap::create();
+    _miniMap->initFromMapGenerator(_mapGenerator);
+    _uiLayer->addChild(_miniMap);
+    
+    // 设置当前房间
+    _currentRoom = _mapGenerator->getBeginRoom();
+    
+    GAME_LOG("Map system initialized with %d rooms", _mapGenerator->getRoomCount());
 }
 
 void GameScene::createPlayer()
@@ -142,9 +164,35 @@ void GameScene::update(float dt)
     Scene::update(dt);
     
     updatePlayer(dt);
+    updateMapSystem(dt);  // 更新地图系统
     updateEnemies(dt);
     updateHUD(dt);
     checkCollisions();
+}
+
+void GameScene::updateMapSystem(float dt)
+{
+    if (_mapGenerator == nullptr || _player == nullptr) return;
+    
+    // 检测玩家当前所在房间
+    Room* newRoom = _mapGenerator->updatePlayerRoom(_player);
+    
+    if (newRoom != nullptr && newRoom != _currentRoom)
+    {
+        // 玩家进入了新房间
+        _currentRoom = newRoom;
+        
+        // 更新小地图
+        if (_miniMap)
+        {
+            _miniMap->updateCurrentRoom(_currentRoom);
+        }
+        
+        GAME_LOG("Player entered room (%d, %d), type: %d", 
+                 _currentRoom->getGridX(), 
+                 _currentRoom->getGridY(),
+                 static_cast<int>(_currentRoom->getRoomType()));
+    }
 }
 
 void GameScene::updatePlayer(float dt)
@@ -214,8 +262,21 @@ void GameScene::updateHUD(float dt)
         
         // 更新Debug信息
         char debugText[128];
-        sprintf(debugText, "Enemies: %d\nPos: (%.0f, %.0f)", 
-                (int)_enemies.size(),
+        const char* roomTypeStr = "Unknown";
+        if (_currentRoom) {
+            switch (_currentRoom->getRoomType()) {
+                case Constants::RoomType::BEGIN: roomTypeStr = "Start"; break;
+                case Constants::RoomType::NORMAL: roomTypeStr = "Normal"; break;
+                case Constants::RoomType::BOSS: roomTypeStr = "Boss"; break;
+                case Constants::RoomType::END: roomTypeStr = "End"; break;
+                case Constants::RoomType::WEAPON: roomTypeStr = "Weapon"; break;
+                case Constants::RoomType::PROP: roomTypeStr = "Prop"; break;
+                default: break;
+            }
+        }
+        sprintf(debugText, "Room: %s\nRooms: %d\nPos: (%.0f, %.0f)", 
+                roomTypeStr,
+                _mapGenerator ? _mapGenerator->getRoomCount() : 0,
                 _player->getPositionX(),
                 _player->getPositionY());
         _debugLabel->setString(debugText);
