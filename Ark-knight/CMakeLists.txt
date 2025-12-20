@@ -68,6 +68,11 @@ list(APPEND GAME_SOURCE
      # Scenes
      Classes/Scenes/MainMenuScene.cpp
      Classes/Scenes/GameScene.cpp
+     # Map
+     Classes/Map/Room.cpp
+     Classes/Map/MapGenerator.cpp
+     # UI
+     Classes/UI/MiniMap.cpp
      # Managers
      Classes/Managers/GameManager.cpp
      Classes/Managers/SoundManager.cpp
@@ -90,6 +95,11 @@ list(APPEND GAME_HEADER
      # Scenes
      Classes/Scenes/MainMenuScene.h
      Classes/Scenes/GameScene.h
+     # Map
+     Classes/Map/Room.h
+     Classes/Map/MapGenerator.h
+     # UI
+     Classes/UI/MiniMap.h
      # Managers
      Classes/Managers/GameManager.h
      Classes/Managers/SoundManager.h

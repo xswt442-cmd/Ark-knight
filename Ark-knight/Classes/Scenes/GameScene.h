@@ -6,6 +6,9 @@
 #include "Core/GameMacros.h"
 #include "Entities/Player/Player.h"
 #include "Entities/Enemy/Enemy.h"
+#include "Map/MapGenerator.h"
+#include "Map/Room.h"
+#include "UI/MiniMap.h"
 
 USING_NS_CC;
 
@@ -45,6 +48,16 @@ private:
      * 创建测试敌人
      */
     void createTestEnemies();
+    
+    /**
+     * 初始化地图系统
+     */
+    void initMapSystem();
+    
+    /**
+     * 更新地图和房间
+     */
+    void updateMapSystem(float dt);
     
     /**
      * 创建HUD
@@ -97,6 +110,11 @@ private:
     // 游戏对象
     Player* _player;
     Vector<Enemy*> _enemies;
+    
+    // 地图系统
+    MapGenerator* _mapGenerator;
+    MiniMap* _miniMap;
+    Room* _currentRoom;
     
     // HUD元素
     Label* _hpLabel;

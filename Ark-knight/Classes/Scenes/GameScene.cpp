@@ -1,6 +1,7 @@
 ﻿#include "GameScene.h"
 #include "MainMenuScene.h"
 #include "Entities/Player/Mage.h"
+#include <algorithm>
 
 Scene* GameScene::createScene()
 {
@@ -16,10 +17,14 @@ bool GameScene::init()
     
     _isPaused = false;
     _isGameOver = false;
+    _mapGenerator = nullptr;
+    _miniMap = nullptr;
+    _currentRoom = nullptr;
     
     initLayers();
+    initMapSystem();    // 初始化地图系统
     createPlayer();
-    createTestEnemies();
+    // createTestEnemies();  // 敌人由房间生成，不再单独创建
     createHUD();
     setupKeyboardListener();
     
@@ -37,7 +42,7 @@ void GameScene::initLayers()
     Vec2 origin = Director::getInstance()->getVisibleOrigin();
     
     // 创建背景
-    auto background = LayerColor::create(Color4B(100, 100, 100, 255));
+    auto background = LayerColor::create(Color4B(40, 40, 50, 255));
     this->addChild(background, -1);
     
     // 游戏层
@@ -47,6 +52,24 @@ void GameScene::initLayers()
     // UI层
     _uiLayer = Layer::create();
     this->addChild(_uiLayer, Constants::ZOrder::UI);
+}
+
+void GameScene::initMapSystem()
+{
+    // 创建地图生成器
+    _mapGenerator = MapGenerator::create();
+    _mapGenerator->generateMap();
+    _gameLayer->addChild(_mapGenerator);
+    
+    // 创建小地图
+    _miniMap = MiniMap::create();
+    _miniMap->initFromMapGenerator(_mapGenerator);
+    _uiLayer->addChild(_miniMap);
+    
+    // 设置当前房间
+    _currentRoom = _mapGenerator->getBeginRoom();
+    
+    GAME_LOG("Map system initialized with %d rooms", _mapGenerator->getRoomCount());
 }
 
 void GameScene::createPlayer()
@@ -63,11 +86,13 @@ void GameScene::createPlayer()
     _player->setPosition(SCREEN_CENTER);
     
     // 创建玩家精灵（临时使用纯色方块）
-    auto playerSprite = Sprite::create();
     auto drawNode = DrawNode::create();
-    drawNode->drawSolidRect(Vec2(-25, -25), Vec2(25, 25), Color4F::BLUE);
-    playerSprite->addChild(drawNode);
-    _player->bindSprite(playerSprite);
+    drawNode->drawSolidRect(Vec2(-15, -15), Vec2(15, 15), Color4F::BLUE);
+    drawNode->setGlobalZOrder(Constants::ZOrder::ENTITY);
+    _player->addChild(drawNode);
+    
+    // 设置玩家的全局Z顺序
+    _player->setGlobalZOrder(Constants::ZOrder::ENTITY);
     
     _gameLayer->addChild(_player);
     
@@ -142,9 +167,79 @@ void GameScene::update(float dt)
     Scene::update(dt);
     
     updatePlayer(dt);
+    updateMapSystem(dt);  // 更新地图系统
     updateEnemies(dt);
     updateHUD(dt);
     checkCollisions();
+}
+
+void GameScene::updateMapSystem(float dt)
+{
+    if (_mapGenerator == nullptr || _player == nullptr) return;
+    
+    // 检测玩家当前所在房间
+    Room* newRoom = _mapGenerator->updatePlayerRoom(_player);
+    
+    if (newRoom != nullptr && newRoom != _currentRoom)
+    {
+        // 玩家进入了新房间
+        _currentRoom = newRoom;
+        
+        // 更新小地图
+        if (_miniMap)
+        {
+            _miniMap->updateCurrentRoom(_currentRoom);
+        }
+        
+        GAME_LOG("Player entered room (%d, %d), type: %d", 
+                 _currentRoom->getGridX(), 
+                 _currentRoom->getGridY(),
+                 static_cast<int>(_currentRoom->getRoomType()));
+    }
+    
+    // 限制玩家在当前房间内，但允许从门通过
+    if (_currentRoom != nullptr)
+    {
+        Rect walkable = _currentRoom->getWalkableArea();
+        Vec2 pos = _player->getPosition();
+        Vec2 center = _currentRoom->getCenter();
+        
+        float doorHalfWidth = Constants::DOOR_WIDTH * Constants::FLOOR_TILE_SIZE / 2.0f;
+        
+        // 检查左右边界
+        if (pos.x < walkable.getMinX()) {
+            // 左边界 - 检查是否有左门且在门范围内
+            if (!_currentRoom->hasDoor(Constants::DIR_LEFT) || 
+                pos.y < center.y - doorHalfWidth || pos.y > center.y + doorHalfWidth) {
+                pos.x = walkable.getMinX();
+            }
+        }
+        if (pos.x > walkable.getMaxX()) {
+            // 右边界
+            if (!_currentRoom->hasDoor(Constants::DIR_RIGHT) || 
+                pos.y < center.y - doorHalfWidth || pos.y > center.y + doorHalfWidth) {
+                pos.x = walkable.getMaxX();
+            }
+        }
+        
+        // 检查上下边界
+        if (pos.y < walkable.getMinY()) {
+            // 下边界
+            if (!_currentRoom->hasDoor(Constants::DIR_DOWN) || 
+                pos.x < center.x - doorHalfWidth || pos.x > center.x + doorHalfWidth) {
+                pos.y = walkable.getMinY();
+            }
+        }
+        if (pos.y > walkable.getMaxY()) {
+            // 上边界
+            if (!_currentRoom->hasDoor(Constants::DIR_UP) || 
+                pos.x < center.x - doorHalfWidth || pos.x > center.x + doorHalfWidth) {
+                pos.y = walkable.getMaxY();
+            }
+        }
+        
+        _player->setPosition(pos);
+    }
 }
 
 void GameScene::updatePlayer(float dt)
@@ -214,8 +309,21 @@ void GameScene::updateHUD(float dt)
         
         // 更新Debug信息
         char debugText[128];
-        sprintf(debugText, "Enemies: %d\nPos: (%.0f, %.0f)", 
-                (int)_enemies.size(),
+        const char* roomTypeStr = "Unknown";
+        if (_currentRoom) {
+            switch (_currentRoom->getRoomType()) {
+                case Constants::RoomType::BEGIN: roomTypeStr = "Start"; break;
+                case Constants::RoomType::NORMAL: roomTypeStr = "Normal"; break;
+                case Constants::RoomType::BOSS: roomTypeStr = "Boss"; break;
+                case Constants::RoomType::END: roomTypeStr = "End"; break;
+                case Constants::RoomType::WEAPON: roomTypeStr = "Weapon"; break;
+                case Constants::RoomType::PROP: roomTypeStr = "Prop"; break;
+                default: break;
+            }
+        }
+        sprintf(debugText, "Room: %s\nRooms: %d\nPos: (%.0f, %.0f)", 
+                roomTypeStr,
+                _mapGenerator ? _mapGenerator->getRoomCount() : 0,
                 _player->getPositionX(),
                 _player->getPositionY());
         _debugLabel->setString(debugText);
