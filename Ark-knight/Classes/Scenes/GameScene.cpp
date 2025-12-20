@@ -1,6 +1,7 @@
 ﻿#include "GameScene.h"
 #include "MainMenuScene.h"
 #include "Entities/Player/Mage.h"
+#include <algorithm>
 
 Scene* GameScene::createScene()
 {
@@ -85,13 +86,12 @@ void GameScene::createPlayer()
     _player->setPosition(SCREEN_CENTER);
     
     // 创建玩家精灵（临时使用纯色方块）
-    auto playerSprite = Sprite::create();
     auto drawNode = DrawNode::create();
     drawNode->drawSolidRect(Vec2(-15, -15), Vec2(15, 15), Color4F::BLUE);
-    playerSprite->addChild(drawNode);
-    _player->bindSprite(playerSprite);
+    drawNode->setGlobalZOrder(Constants::ZOrder::ENTITY);
+    _player->addChild(drawNode);
     
-    // 设置玩家的全局Z顺序，确保在地板上方显示
+    // 设置玩家的全局Z顺序
     _player->setGlobalZOrder(Constants::ZOrder::ENTITY);
     
     _gameLayer->addChild(_player);
@@ -195,6 +195,19 @@ void GameScene::updateMapSystem(float dt)
                  _currentRoom->getGridX(), 
                  _currentRoom->getGridY(),
                  static_cast<int>(_currentRoom->getRoomType()));
+    }
+    
+    // 限制玩家在当前房间内
+    if (_currentRoom != nullptr)
+    {
+        Rect walkable = _currentRoom->getWalkableArea();
+        Vec2 pos = _player->getPosition();
+        
+        float margin = 20.0f;
+        pos.x = std::max(walkable.getMinX() + margin, std::min(walkable.getMaxX() - margin, pos.x));
+        pos.y = std::max(walkable.getMinY() + margin, std::min(walkable.getMaxY() - margin, pos.y));
+        
+        _player->setPosition(pos);
     }
 }
 

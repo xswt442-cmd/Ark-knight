@@ -49,6 +49,7 @@ void GameEntity::bindSprite(Sprite* sprite, int zOrder)
     if (_sprite != nullptr)
     {
         this->addChild(_sprite, zOrder);
+        _sprite->setGlobalZOrder(static_cast<float>(zOrder));
     }
 }
 
