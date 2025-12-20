@@ -197,14 +197,46 @@ void GameScene::updateMapSystem(float dt)
                  static_cast<int>(_currentRoom->getRoomType()));
     }
     
-    // 限制玩家在当前房间内
+    // 限制玩家在当前房间内，但允许从门通过
     if (_currentRoom != nullptr)
     {
         Rect walkable = _currentRoom->getWalkableArea();
         Vec2 pos = _player->getPosition();
+        Vec2 center = _currentRoom->getCenter();
         
-        pos.x = std::max(walkable.getMinX(), std::min(walkable.getMaxX(), pos.x));
-        pos.y = std::max(walkable.getMinY(), std::min(walkable.getMaxY(), pos.y));
+        float doorHalfWidth = Constants::DOOR_WIDTH * Constants::FLOOR_TILE_SIZE / 2.0f;
+        
+        // 检查左右边界
+        if (pos.x < walkable.getMinX()) {
+            // 左边界 - 检查是否有左门且在门范围内
+            if (!_currentRoom->hasDoor(Constants::DIR_LEFT) || 
+                pos.y < center.y - doorHalfWidth || pos.y > center.y + doorHalfWidth) {
+                pos.x = walkable.getMinX();
+            }
+        }
+        if (pos.x > walkable.getMaxX()) {
+            // 右边界
+            if (!_currentRoom->hasDoor(Constants::DIR_RIGHT) || 
+                pos.y < center.y - doorHalfWidth || pos.y > center.y + doorHalfWidth) {
+                pos.x = walkable.getMaxX();
+            }
+        }
+        
+        // 检查上下边界
+        if (pos.y < walkable.getMinY()) {
+            // 下边界
+            if (!_currentRoom->hasDoor(Constants::DIR_DOWN) || 
+                pos.x < center.x - doorHalfWidth || pos.x > center.x + doorHalfWidth) {
+                pos.y = walkable.getMinY();
+            }
+        }
+        if (pos.y > walkable.getMaxY()) {
+            // 上边界
+            if (!_currentRoom->hasDoor(Constants::DIR_UP) || 
+                pos.x < center.x - doorHalfWidth || pos.x > center.x + doorHalfWidth) {
+                pos.y = walkable.getMaxY();
+            }
+        }
         
         _player->setPosition(pos);
     }

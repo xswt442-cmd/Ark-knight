@@ -184,8 +184,9 @@ void MiniMap::initFromMapGenerator(MapGenerator* generator) {
             if (room) {
                 MiniRoom* miniRoom = MiniRoom::create();
                 
+                // 计算位置（不翻转Y轴）
                 float posX = x * (_roomSize + _gap) + _roomSize / 2;
-                float posY = (Constants::MAP_GRID_SIZE - 1 - y) * (_roomSize + _gap) + _roomSize / 2;
+                float posY = y * (_roomSize + _gap) + _roomSize / 2;
                 miniRoom->setPosition(Vec2(posX, posY));
                 
                 miniRoom->setRoomColor(room->getRoomType());
