@@ -87,9 +87,12 @@ void GameScene::createPlayer()
     // 创建玩家精灵（临时使用纯色方块）
     auto playerSprite = Sprite::create();
     auto drawNode = DrawNode::create();
-    drawNode->drawSolidRect(Vec2(-25, -25), Vec2(25, 25), Color4F::BLUE);
+    drawNode->drawSolidRect(Vec2(-15, -15), Vec2(15, 15), Color4F::BLUE);
     playerSprite->addChild(drawNode);
     _player->bindSprite(playerSprite);
+    
+    // 设置玩家的全局Z顺序，确保在地板上方显示
+    _player->setGlobalZOrder(Constants::ZOrder::ENTITY);
     
     _gameLayer->addChild(_player);
     
