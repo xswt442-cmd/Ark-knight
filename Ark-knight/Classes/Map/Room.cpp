@@ -56,13 +56,14 @@ void Room::setCenter(float x, float y) {
     _centerY = y;
     
     float tileSize = Constants::FLOOR_TILE_SIZE;
-    float halfWidth = tileSize * (_tilesWidth / 2);
-    float halfHeight = tileSize * (_tilesHeight / 2);
+    float halfWidth = tileSize * (_tilesWidth / 2.0f);
+    float halfHeight = tileSize * (_tilesHeight / 2.0f);
     
-    _leftX = _centerX - halfWidth + tileSize;
-    _rightX = _centerX + halfWidth - tileSize;
-    _topY = _centerY + halfHeight - tileSize;
-    _bottomY = _centerY - halfHeight + tileSize;
+    // 房间内部可行走区域（排除墙壁）
+    _leftX = _centerX - halfWidth + tileSize * 1.5f;
+    _rightX = _centerX + halfWidth - tileSize * 1.5f;
+    _topY = _centerY + halfHeight - tileSize * 1.5f;
+    _bottomY = _centerY - halfHeight + tileSize * 1.5f;
 }
 
 void Room::createMap() {
@@ -280,10 +281,10 @@ bool Room::isPlayerInRoom(Player* player) const {
 }
 
 Rect Room::getWalkableArea() const {
-    float margin = Constants::FLOOR_TILE_SIZE;
-    float width = _rightX - _leftX - margin * 2;
-    float height = _topY - _bottomY - margin * 2;
-    return Rect(_leftX + margin, _bottomY + margin, width, height);
+    // 直接返回已计算好的边界
+    float width = _rightX - _leftX;
+    float height = _topY - _bottomY;
+    return Rect(_leftX, _bottomY, width, height);
 }
 
 void Room::moveBy(float dx, float dy) {

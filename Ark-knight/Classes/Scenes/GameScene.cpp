@@ -203,9 +203,8 @@ void GameScene::updateMapSystem(float dt)
         Rect walkable = _currentRoom->getWalkableArea();
         Vec2 pos = _player->getPosition();
         
-        float margin = 20.0f;
-        pos.x = std::max(walkable.getMinX() + margin, std::min(walkable.getMaxX() - margin, pos.x));
-        pos.y = std::max(walkable.getMinY() + margin, std::min(walkable.getMaxY() - margin, pos.y));
+        pos.x = std::max(walkable.getMinX(), std::min(walkable.getMaxX(), pos.x));
+        pos.y = std::max(walkable.getMinY(), std::min(walkable.getMaxY(), pos.y));
         
         _player->setPosition(pos);
     }
