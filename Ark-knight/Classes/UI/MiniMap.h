@@ -56,7 +56,7 @@ public:
     
 private:
     // 5x5 小地图房间矩阵
-    MiniRoom* _miniRooms[Constants::Map::MAP_SIZE][Constants::Map::MAP_SIZE];
+    MiniRoom* _miniRooms[Constants::MAP_GRID_SIZE][Constants::MAP_GRID_SIZE];
     
     // 小地图配置
     float _roomSize;      // 每个房间的显示大小

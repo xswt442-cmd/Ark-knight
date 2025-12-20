@@ -33,40 +33,22 @@ namespace Constants {
     }
     
     // ==================== 地图配置 ====================
-    namespace Map {
-        constexpr int ROOM_WIDTH = 800;
-        constexpr int ROOM_HEIGHT = 600;
-        constexpr int MAX_ROOMS = 6;      // 最大房间数量
-        constexpr int MAP_SIZE = 5;        // 5x5 地图矩阵
-        
-        // 地板和墙壁尺寸 (像素)
-        constexpr float FLOOR_WIDTH = 32.0f;
-        constexpr float FLOOR_HEIGHT = 32.0f;
-        constexpr float WALL_HEIGHT = 48.0f;
-        
-        // 房间尺寸 (地板数量)
-        constexpr int ROOM_TILES_WIDTH = 15;   // 房间宽度(地板块数)
-        constexpr int ROOM_TILES_HEIGHT = 11;  // 房间高度(地板块数)
-        
-        // 房间中心距离
-        constexpr float CENTER_DISTANCE = 600.0f;
-        
-        // 走廊尺寸
-        constexpr int HALL_WIDTH = 5;   // 走廊宽度(地板块数)
-    }
+    // 注意：不要用Map作为命名空间名，会和cocos2d::Map冲突
+    constexpr int MAP_MAX_ROOMS = 6;           // 最大房间数量
+    constexpr int MAP_GRID_SIZE = 5;           // 5x5 地图矩阵
+    constexpr float FLOOR_TILE_SIZE = 32.0f;   // 地板尺寸
+    constexpr int ROOM_TILES_W = 15;           // 房间宽度(地板块数)
+    constexpr int ROOM_TILES_H = 11;           // 房间高度(地板块数)
+    constexpr float ROOM_CENTER_DIST = 600.0f; // 房间中心距离
+    constexpr int DOOR_WIDTH = 5;              // 门宽度(地板块数)
     
     // ==================== 方向定义 ====================
-    namespace Direction {
-        constexpr int UP = 0;
-        constexpr int RIGHT = 1;
-        constexpr int DOWN = 2;
-        constexpr int LEFT = 3;
-        constexpr int COUNT = 4;
-        
-        // 方向偏移 (X, Y) - 使用inline constexpr避免多重定义
-        inline constexpr int DX[] = {0, 1, 0, -1};
-        inline constexpr int DY[] = {1, 0, -1, 0};
-    }
+    constexpr int DIR_UP = 0;
+    constexpr int DIR_RIGHT = 1;
+    constexpr int DIR_DOWN = 2;
+    constexpr int DIR_LEFT = 3;
+    constexpr int DIR_COUNT = 4;
+    // 方向偏移在cpp中定义
     
     // ==================== 战斗配置 ====================
     namespace Combat {

@@ -4,8 +4,6 @@
 
 USING_NS_CC;
 
-using namespace Constants;
-
 // ==================== MiniRoom Implementation ====================
 
 MiniRoom* MiniRoom::create() {
@@ -25,11 +23,9 @@ bool MiniRoom::init() {
     
     _isCurrent = false;
     
-    // 创建背景绘制节点
     _background = DrawNode::create();
     this->addChild(_background);
     
-    // 创建四个方向的门绘制节点
     for (int i = 0; i < 4; i++) {
         _doors[i] = DrawNode::create();
         _doors[i]->setVisible(false);
@@ -39,54 +35,45 @@ bool MiniRoom::init() {
     return true;
 }
 
-void MiniRoom::setRoomColor(RoomType type) {
+void MiniRoom::setRoomColor(Constants::RoomType type) {
     Color4F color;
     
     switch (type) {
-        case RoomType::BEGIN:
-            color = Color4F(0.0f, 0.9f, 0.0f, 0.6f);  // 绿色
+        case Constants::RoomType::BEGIN:
+            color = Color4F(0.0f, 0.9f, 0.0f, 0.6f);
             break;
-        case RoomType::END:
-            color = Color4F(0.0f, 0.0f, 1.0f, 0.7f);  // 蓝色
+        case Constants::RoomType::END:
+            color = Color4F(0.0f, 0.0f, 1.0f, 0.7f);
             break;
-        case RoomType::BOSS:
-            color = Color4F(0.9f, 0.0f, 0.0f, 0.6f);  // 红色
+        case Constants::RoomType::BOSS:
+            color = Color4F(0.9f, 0.0f, 0.0f, 0.6f);
             break;
-        case RoomType::WEAPON:
-            color = Color4F(0.8f, 0.5f, 0.0f, 0.6f);  // 橙色
+        case Constants::RoomType::WEAPON:
+            color = Color4F(0.8f, 0.5f, 0.0f, 0.6f);
             break;
-        case RoomType::PROP:
-            color = Color4F(1.0f, 0.8f, 0.0f, 0.6f);  // 黄色
+        case Constants::RoomType::PROP:
+            color = Color4F(1.0f, 0.8f, 0.0f, 0.6f);
             break;
-        case RoomType::NORMAL:
+        case Constants::RoomType::NORMAL:
         default:
-            color = Color4F(0.3f, 0.3f, 0.3f, 0.6f);  // 灰色
+            color = Color4F(0.3f, 0.3f, 0.3f, 0.6f);
             break;
     }
     
-    float size = 16.0f;  // 房间大小
+    float size = 16.0f;
     _background->clear();
     _background->drawSolidRect(Vec2(-size/2, -size/2), Vec2(size/2, size/2), color);
     
-    // 边框
     Color4F borderColor = _isCurrent ? Color4F::WHITE : Color4F(0.5f, 0.5f, 0.5f, 0.8f);
-    float borderWidth = _isCurrent ? 2.0f : 1.0f;
     _background->drawRect(Vec2(-size/2, -size/2), Vec2(size/2, size/2), borderColor);
 }
 
 void MiniRoom::setCurrent(bool isCurrent) {
     _isCurrent = isCurrent;
-    
-    // 重绘边框
-    float size = 16.0f;
-    Color4F borderColor = _isCurrent ? Color4F::WHITE : Color4F(0.5f, 0.5f, 0.5f, 0.8f);
-    
-    // 不清空背景，只更新边框（需要重新设置颜色）
 }
 
 void MiniRoom::setVisited(bool visited) {
     if (visited) {
-        // 已访问的房间变暗
         this->setOpacity(128);
     } else {
         this->setOpacity(255);
@@ -98,26 +85,25 @@ void MiniRoom::setDoorVisible(int direction, bool visible) {
         _doors[direction]->setVisible(visible);
         
         if (visible) {
-            // 绘制门连接线
             _doors[direction]->clear();
             
             float lineLength = 6.0f;
             Vec2 start, end;
             
             switch (direction) {
-                case Direction::UP:
+                case Constants::DIR_UP:
                     start = Vec2(0, 8);
                     end = Vec2(0, 8 + lineLength);
                     break;
-                case Direction::RIGHT:
+                case Constants::DIR_RIGHT:
                     start = Vec2(8, 0);
                     end = Vec2(8 + lineLength, 0);
                     break;
-                case Direction::DOWN:
+                case Constants::DIR_DOWN:
                     start = Vec2(0, -8);
                     end = Vec2(0, -8 - lineLength);
                     break;
-                case Direction::LEFT:
+                case Constants::DIR_LEFT:
                     start = Vec2(-8, 0);
                     end = Vec2(-8 - lineLength, 0);
                     break;
@@ -145,24 +131,21 @@ bool MiniMap::init() {
         return false;
     }
     
-    // 初始化小地图配置
     _roomSize = 16.0f;
     _gap = 6.0f;
-    _totalWidth = Map::MAP_SIZE * (_roomSize + _gap);
-    _totalHeight = Map::MAP_SIZE * (_roomSize + _gap);
+    _totalWidth = Constants::MAP_GRID_SIZE * (_roomSize + _gap);
+    _totalHeight = Constants::MAP_GRID_SIZE * (_roomSize + _gap);
     
     _currentRoom = nullptr;
     _currentGridX = -1;
     _currentGridY = -1;
     
-    // 初始化矩阵为nullptr
-    for (int y = 0; y < Map::MAP_SIZE; y++) {
-        for (int x = 0; x < Map::MAP_SIZE; x++) {
+    for (int y = 0; y < Constants::MAP_GRID_SIZE; y++) {
+        for (int x = 0; x < Constants::MAP_GRID_SIZE; x++) {
             _miniRooms[x][y] = nullptr;
         }
     }
     
-    // 创建背景
     auto background = DrawNode::create();
     float bgPadding = 10.0f;
     background->drawSolidRect(
@@ -172,15 +155,13 @@ bool MiniMap::init() {
     );
     this->addChild(background, -1);
     
-    // 设置小地图位置（右上角）
     Size visibleSize = Director::getInstance()->getVisibleSize();
     this->setPosition(Vec2(
         visibleSize.width - _totalWidth - 20,
         visibleSize.height - _totalHeight - 20
     ));
     
-    // 设置Z序
-    this->setGlobalZOrder(ZOrder::MINIMAP);
+    this->setGlobalZOrder(Constants::ZOrder::MINIMAP);
     
     return true;
 }
@@ -188,9 +169,8 @@ bool MiniMap::init() {
 void MiniMap::initFromMapGenerator(MapGenerator* generator) {
     if (!generator) return;
     
-    // 清理旧的小地图房间
-    for (int y = 0; y < Map::MAP_SIZE; y++) {
-        for (int x = 0; x < Map::MAP_SIZE; x++) {
+    for (int y = 0; y < Constants::MAP_GRID_SIZE; y++) {
+        for (int x = 0; x < Constants::MAP_GRID_SIZE; x++) {
             if (_miniRooms[x][y]) {
                 _miniRooms[x][y]->removeFromParent();
                 _miniRooms[x][y] = nullptr;
@@ -198,28 +178,23 @@ void MiniMap::initFromMapGenerator(MapGenerator* generator) {
         }
     }
     
-    // 根据地图生成器创建小地图房间
-    for (int y = 0; y < Map::MAP_SIZE; y++) {
-        for (int x = 0; x < Map::MAP_SIZE; x++) {
+    for (int y = 0; y < Constants::MAP_GRID_SIZE; y++) {
+        for (int x = 0; x < Constants::MAP_GRID_SIZE; x++) {
             Room* room = generator->getRoom(x, y);
             if (room) {
                 MiniRoom* miniRoom = MiniRoom::create();
                 
-                // 计算位置（y轴翻转，使小地图上方为北）
                 float posX = x * (_roomSize + _gap) + _roomSize / 2;
-                float posY = (Map::MAP_SIZE - 1 - y) * (_roomSize + _gap) + _roomSize / 2;
+                float posY = (Constants::MAP_GRID_SIZE - 1 - y) * (_roomSize + _gap) + _roomSize / 2;
                 miniRoom->setPosition(Vec2(posX, posY));
                 
-                // 设置房间类型颜色
                 miniRoom->setRoomColor(room->getRoomType());
                 
-                // 设置门连接
-                for (int dir = 0; dir < Direction::COUNT; dir++) {
+                for (int dir = 0; dir < Constants::DIR_COUNT; dir++) {
                     miniRoom->setDoorVisible(dir, room->hasDoor(dir));
                 }
                 
-                // 未访问的房间先隐藏（除了起始房间）
-                if (room->getRoomType() != RoomType::BEGIN && !room->isVisited()) {
+                if (room->getRoomType() != Constants::RoomType::BEGIN && !room->isVisited()) {
                     miniRoom->setVisible(false);
                 }
                 
@@ -229,7 +204,6 @@ void MiniMap::initFromMapGenerator(MapGenerator* generator) {
         }
     }
     
-    // 设置起始房间为当前房间
     Room* beginRoom = generator->getBeginRoom();
     if (beginRoom) {
         updateCurrentRoom(beginRoom);
@@ -239,7 +213,6 @@ void MiniMap::initFromMapGenerator(MapGenerator* generator) {
 void MiniMap::updateCurrentRoom(Room* currentRoom) {
     if (!currentRoom) return;
     
-    // 取消之前的高亮
     if (_currentGridX >= 0 && _currentGridY >= 0) {
         MiniRoom* prevMiniRoom = _miniRooms[_currentGridX][_currentGridY];
         if (prevMiniRoom) {
@@ -252,21 +225,23 @@ void MiniMap::updateCurrentRoom(Room* currentRoom) {
     _currentGridX = currentRoom->getGridX();
     _currentGridY = currentRoom->getGridY();
     
-    // 设置新的高亮
     MiniRoom* miniRoom = _miniRooms[_currentGridX][_currentGridY];
     if (miniRoom) {
         miniRoom->setVisible(true);
         miniRoom->setCurrent(true);
         miniRoom->setRoomColor(currentRoom->getRoomType());
         
-        // 显示相邻房间
-        for (int dir = 0; dir < Direction::COUNT; dir++) {
+        // 方向偏移数组
+        static const int DIR_DX[] = {0, 1, 0, -1};
+        static const int DIR_DY[] = {1, 0, -1, 0};
+        
+        for (int dir = 0; dir < Constants::DIR_COUNT; dir++) {
             if (currentRoom->hasDoor(dir)) {
-                int adjX = _currentGridX + Direction::DX[dir];
-                int adjY = _currentGridY + Direction::DY[dir];
+                int adjX = _currentGridX + DIR_DX[dir];
+                int adjY = _currentGridY + DIR_DY[dir];
                 
-                if (adjX >= 0 && adjX < Map::MAP_SIZE &&
-                    adjY >= 0 && adjY < Map::MAP_SIZE) {
+                if (adjX >= 0 && adjX < Constants::MAP_GRID_SIZE &&
+                    adjY >= 0 && adjY < Constants::MAP_GRID_SIZE) {
                     MiniRoom* adjMiniRoom = _miniRooms[adjX][adjY];
                     if (adjMiniRoom) {
                         adjMiniRoom->setVisible(true);
@@ -278,8 +253,8 @@ void MiniMap::updateCurrentRoom(Room* currentRoom) {
 }
 
 void MiniMap::updateRoomVisited(int gridX, int gridY) {
-    if (gridX < 0 || gridX >= Map::MAP_SIZE ||
-        gridY < 0 || gridY >= Map::MAP_SIZE) {
+    if (gridX < 0 || gridX >= Constants::MAP_GRID_SIZE ||
+        gridY < 0 || gridY >= Constants::MAP_GRID_SIZE) {
         return;
     }
     
@@ -291,7 +266,8 @@ void MiniMap::updateRoomVisited(int gridX, int gridY) {
 }
 
 MiniRoom* MiniMap::getMiniRoom(int x, int y) {
-    if (x < 0 || x >= Map::MAP_SIZE || y < 0 || y >= Map::MAP_SIZE) {
+    if (x < 0 || x >= Constants::MAP_GRID_SIZE || 
+        y < 0 || y >= Constants::MAP_GRID_SIZE) {
         return nullptr;
     }
     return _miniRooms[x][y];

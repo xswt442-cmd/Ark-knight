@@ -62,7 +62,7 @@ private:
     
 private:
     // 5x5 房间矩阵
-    Room* _roomMatrix[Constants::Map::MAP_SIZE][Constants::Map::MAP_SIZE];
+    Room* _roomMatrix[Constants::MAP_GRID_SIZE][Constants::MAP_GRID_SIZE];
     
     // 房间计数
     int _roomCount;
