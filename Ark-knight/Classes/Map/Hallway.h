@@ -16,6 +16,7 @@ public:
     
     void createMap();
     void setCenter(float x, float y);
+    void setGapSize(float gapSize);  // 设置实际空隙大小
     
     int getDirection() const { return _direction; }
     cocos2d::Vec2 getCenter() const { return cocos2d::Vec2(_centerX, _centerY); }

@@ -30,25 +30,30 @@ bool Hallway::initWithDirection(int direction) {
     _centerX = 0.0f;
     _centerY = 0.0f;
     
-    // 走廊填充房间之间的空隙
-    // 水平空隙 = 960 - 832 = 128px = 4瓦片
-    // 垂直空隙 = 960 - 576 = 384px = 12瓦片
-    // 额外增加2瓦片确保完全覆盖（与房间门口重叠）
-    float tileSize = Constants::FLOOR_TILE_SIZE;
-    
+    // 默认瓦片数，会在setGapSize中根据实际空隙重新计算
     if (_direction == Constants::DIR_UP || _direction == Constants::DIR_DOWN) {
         // 垂直走廊：宽度 = 门宽 + 2（左右墙各1格）
         _tilesWidth = Constants::DOOR_WIDTH + 2;
-        float verticalGap = Constants::ROOM_CENTER_DIST - Constants::ROOM_TILES_H * tileSize;
-        _tilesHeight = static_cast<int>(std::ceil(verticalGap / tileSize)) + 2;  // +2确保覆盖
+        _tilesHeight = 12;  // 默认值，会被覆盖
     } else {
         // 水平走廊：高度 = 门宽 + 2（上下墙各1格）
-        float horizontalGap = Constants::ROOM_CENTER_DIST - Constants::ROOM_TILES_W * tileSize;
-        _tilesWidth = static_cast<int>(std::ceil(horizontalGap / tileSize)) + 2;  // +2确保覆盖
+        _tilesWidth = 6;  // 默认值，会被覆盖
         _tilesHeight = Constants::DOOR_WIDTH + 2;
     }
     
     return true;
+}
+
+void Hallway::setGapSize(float gapSize) {
+    float tileSize = Constants::FLOOR_TILE_SIZE;
+    // 根据实际空隙大小计算瓦片数，+2确保完全覆盖
+    int tilesNeeded = static_cast<int>(std::ceil(gapSize / tileSize)) + 2;
+    
+    if (_direction == Constants::DIR_UP || _direction == Constants::DIR_DOWN) {
+        _tilesHeight = tilesNeeded;
+    } else {
+        _tilesWidth = tilesNeeded;
+    }
 }
 
 void Hallway::setCenter(float x, float y) {
