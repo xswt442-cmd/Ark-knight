@@ -100,16 +100,17 @@ void Hallway::createMap() {
         }
     }
     
-    // 更新实际可行走边界（排除墙壁）
+    // 更新实际可行走边界（排除墙壁和玩家半径）
+    float playerRadius = tileSize * 0.5f;  // 玩家碰撞半径
+    
     if (_direction == Constants::DIR_LEFT || _direction == Constants::DIR_RIGHT) {
         // 水平走廊：排除上下墙壁
-        // 第1行是墙，可行走从第2行开始
-        _topY = startY - tileSize;  // 顶部墙的下边缘
-        _bottomY = startY - tileSize * (_tilesHeight - 1);  // 底部墙的上边缘
+        _topY = startY - tileSize * 0.5f - playerRadius;  // 顶墙下边缘 - 玩家半径
+        _bottomY = startY - tileSize * (_tilesHeight - 1) + tileSize * 0.5f + playerRadius;  // 底墙上边缘 + 玩家半径
     } else {
         // 垂直走廊：排除左右墙壁
-        _leftX = startX + tileSize;  // 左墙的右边缘
-        _rightX = startX + tileSize * (_tilesWidth - 1);  // 右墙的左边缘
+        _leftX = startX + tileSize * 0.5f + playerRadius;  // 左墙右边缘 + 玩家半径
+        _rightX = startX + tileSize * (_tilesWidth - 1) - tileSize * 0.5f - playerRadius;  // 右墙左边缘 - 玩家半径
     }
 }
 
