@@ -245,9 +245,9 @@ void GameScene::createHUD()
     _uiLayer->addChild(_debugLabel);
     
     // 操作提示
-    auto hintLabel = Label::createWithSystemFont(
-        "Controls:\nWASD - Move\nJ - Attack\nK - Skill\nSPACE - Dash\nESC - Pause",
-        "Arial", 18);
+    auto hintLabel = Label::createWithTTF(
+        u8"操作说明：\nWASD - 移动\nJ - 攻击\nK - 技能\n空格 - 冲刺\nESC - 暂停",
+        "fonts/msyh.ttf", 18);
     hintLabel->setPosition(Vec2(origin.x + 120, origin.y + 100));
     hintLabel->setTextColor(Color4B::WHITE);
     hintLabel->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL);
@@ -581,7 +581,7 @@ void GameScene::pauseGame()
     
     // 创建暂停菜单UI - 直接添加到_uiLayer，使用绝对位置
     // 标题
-    auto titleLabel = Label::createWithSystemFont("PAUSED", "Arial", 56);
+    auto titleLabel = Label::createWithTTF(u8"游戏已暂停", "fonts/msyh.ttf", 56);
     titleLabel->setPosition(Vec2(SCREEN_CENTER.x, SCREEN_CENTER.y + 120));
     titleLabel->setTextColor(Color4B::WHITE);
     titleLabel->setName("pauseTitle");
@@ -590,7 +590,8 @@ void GameScene::pauseGame()
     
     // 继续游戏按钮
     auto resumeButton = ui::Button::create();
-    resumeButton->setTitleText("Resume");
+    resumeButton->setTitleText(u8"继续游戏");
+    resumeButton->setTitleFontName("fonts/msyh.ttf");
     resumeButton->setTitleFontSize(32);
     resumeButton->setPosition(Vec2(SCREEN_CENTER.x, SCREEN_CENTER.y + 20));
     resumeButton->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL + 1);
@@ -602,7 +603,8 @@ void GameScene::pauseGame()
     
     // 返回主菜单按钮
     auto menuButton = ui::Button::create();
-    menuButton->setTitleText("Main Menu");
+    menuButton->setTitleText(u8"返回主菜单");
+    menuButton->setTitleFontName("fonts/msyh.ttf");
     menuButton->setTitleFontSize(32);
     menuButton->setPosition(Vec2(SCREEN_CENTER.x, SCREEN_CENTER.y - 60));
     menuButton->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL + 1);
@@ -615,7 +617,8 @@ void GameScene::pauseGame()
     
     // 退出游戏按钮
     auto exitButton = ui::Button::create();
-    exitButton->setTitleText("Exit Game");
+    exitButton->setTitleText(u8"退出游戏");
+    exitButton->setTitleFontName("fonts/msyh.ttf");
     exitButton->setTitleFontSize(32);
     exitButton->setPosition(Vec2(SCREEN_CENTER.x, SCREEN_CENTER.y - 140));
     exitButton->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL + 1);
@@ -689,7 +692,7 @@ void GameScene::showGameOver()
     _uiLayer->addChild(mask);
     
     // 显示游戏结束文字
-    auto gameOverLabel = Label::createWithSystemFont("GAME OVER", "Arial", 64);
+    auto gameOverLabel = Label::createWithTTF(u8"游戏结束", "fonts/msyh.ttf", 64);
     gameOverLabel->setPosition(Vec2(SCREEN_CENTER.x, SCREEN_CENTER.y + 50));
     gameOverLabel->setTextColor(Color4B::RED);
     gameOverLabel->setName("gameOverLabel");
@@ -697,7 +700,7 @@ void GameScene::showGameOver()
     _uiLayer->addChild(gameOverLabel);
     
     // 显示重新开始提示
-    auto hintLabel = Label::createWithSystemFont("Press R to Restart\nPress Q to Quit", "Arial", 32);
+    auto hintLabel = Label::createWithTTF(u8"按 R 重新开始\n按 Q 退出到主菜单", "fonts/msyh.ttf", 32);
     hintLabel->setPosition(Vec2(SCREEN_CENTER.x, SCREEN_CENTER.y - 50));
     hintLabel->setTextColor(Color4B::WHITE);
     hintLabel->setName("gameOverHint");

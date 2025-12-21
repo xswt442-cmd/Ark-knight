@@ -61,7 +61,8 @@ void MainMenuScene::createButtons()
     
     // 开始游戏按钮
     auto startButton = Button::create();
-    startButton->setTitleText("Start Game");
+    startButton->setTitleText(u8"开始游戏");
+    startButton->setTitleFontName("fonts/msyh.ttf");
     startButton->setTitleFontSize(32);
     startButton->setPosition(Vec2(centerX, startY));
     startButton->addClickEventListener(CC_CALLBACK_1(MainMenuScene::onStartGame, this));
@@ -69,7 +70,8 @@ void MainMenuScene::createButtons()
     
     // 选择角色按钮
     auto selectButton = Button::create();
-    selectButton->setTitleText("Select Character");
+    selectButton->setTitleText(u8"选择角色");
+    selectButton->setTitleFontName("fonts/msyh.ttf");
     selectButton->setTitleFontSize(32);
     selectButton->setPosition(Vec2(centerX, startY - spacing));
     selectButton->addClickEventListener(CC_CALLBACK_1(MainMenuScene::onSelectCharacter, this));
@@ -77,7 +79,8 @@ void MainMenuScene::createButtons()
     
     // 设置按钮
     auto settingsButton = Button::create();
-    settingsButton->setTitleText("Settings");
+    settingsButton->setTitleText(u8"设置");
+    settingsButton->setTitleFontName("fonts/msyh.ttf");
     settingsButton->setTitleFontSize(32);
     settingsButton->setPosition(Vec2(centerX, startY - spacing * 2));
     settingsButton->addClickEventListener(CC_CALLBACK_1(MainMenuScene::onSettings, this));
@@ -85,7 +88,8 @@ void MainMenuScene::createButtons()
     
     // 退出按钮
     auto exitButton = Button::create();
-    exitButton->setTitleText("Exit");
+    exitButton->setTitleText(u8"退出游戏");
+    exitButton->setTitleFontName("fonts/msyh.ttf");
     exitButton->setTitleFontSize(32);
     exitButton->setPosition(Vec2(centerX, startY - spacing * 3));
     exitButton->addClickEventListener(CC_CALLBACK_1(MainMenuScene::onExit, this));
@@ -109,7 +113,7 @@ void MainMenuScene::onSelectCharacter(Ref* sender)
     this->removeChildByName("hintLabel");
     
     // TODO: 实现角色选择界面
-    auto label = Label::createWithSystemFont("Character Selection - Coming Soon!", "Arial", 24);
+    auto label = Label::createWithSystemFont(u8"角色选择功能 - 敬请期待！", "Arial", 24);
     label->setPosition(Vec2(SCREEN_CENTER.x, SCREEN_CENTER.y + 100));
     label->setTextColor(Color4B::YELLOW);
     label->setName("hintLabel");
@@ -129,7 +133,7 @@ void MainMenuScene::onSettings(Ref* sender)
     this->removeChildByName("hintLabel");
     
     // TODO: 实现设置界面
-    auto label = Label::createWithSystemFont("Settings - Coming Soon!", "Arial", 24);
+    auto label = Label::createWithSystemFont(u8"设置功能 - 敬请期待！", "Arial", 24);
     label->setPosition(Vec2(SCREEN_CENTER.x, SCREEN_CENTER.y + 100));
     label->setTextColor(Color4B::YELLOW);
     label->setName("hintLabel");
