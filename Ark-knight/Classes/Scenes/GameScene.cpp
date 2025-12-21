@@ -1,6 +1,7 @@
 ﻿#include "GameScene.h"
 #include "MainMenuScene.h"
 #include "Entities/Player/Mage.h"
+#include "ui/CocosGUI.h"
 #include <algorithm>
 
 Scene* GameScene::createScene()
@@ -245,7 +246,7 @@ void GameScene::createHUD()
     
     // 操作提示
     auto hintLabel = Label::createWithSystemFont(
-        "操作说明：\nWASD - 移动\nJ - 攻击\nK - 技能\n空格 - 冲刺\nESC - 暂停",
+        "Controls:\nWASD - Move\nJ - Attack\nK - Skill\nSPACE - Dash\nESC - Pause",
         "Arial", 18);
     hintLabel->setPosition(Vec2(origin.x + 120, origin.y + 100));
     hintLabel->setTextColor(Color4B::WHITE);
@@ -556,18 +557,73 @@ void GameScene::pauseGame()
 {
     _isPaused = true;
     
-    // 显示暂停菜单
-    auto pauseLabel = Label::createWithSystemFont("PAUSED\nPress ESC to resume\nQ to quit", 
-                                                   "Arial", 48);
-    pauseLabel->setPosition(SCREEN_CENTER);
-    pauseLabel->setTextColor(Color4B::WHITE);
-    pauseLabel->setName("pauseLabel");
-    _uiLayer->addChild(pauseLabel, 1000);
+    // 停止玩家输入和更新
+    if (_player) {
+        _player->removeInputEvents();
+        _player->pause();
+    }
+    
+    // 停止所有敌人
+    for (auto enemy : _enemies) {
+        if (enemy) {
+            enemy->pause();
+        }
+    }
+    
+    // 暂停游戏层更新（包括相机等）
+    _gameLayer->pause();
     
     // 添加半透明遮罩
-    auto mask = LayerColor::create(Color4B(0, 0, 0, 150));
+    auto mask = LayerColor::create(Color4B(0, 0, 0, 180));
     mask->setName("pauseMask");
-    _uiLayer->addChild(mask, 999);
+    mask->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL);
+    _uiLayer->addChild(mask);
+    
+    // 创建暂停菜单UI - 直接添加到_uiLayer，使用绝对位置
+    // 标题
+    auto titleLabel = Label::createWithSystemFont("PAUSED", "Arial", 56);
+    titleLabel->setPosition(Vec2(SCREEN_CENTER.x, SCREEN_CENTER.y + 120));
+    titleLabel->setTextColor(Color4B::WHITE);
+    titleLabel->setName("pauseTitle");
+    titleLabel->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL + 1);
+    _uiLayer->addChild(titleLabel);
+    
+    // 继续游戏按钮
+    auto resumeButton = ui::Button::create();
+    resumeButton->setTitleText("Resume");
+    resumeButton->setTitleFontSize(32);
+    resumeButton->setPosition(Vec2(SCREEN_CENTER.x, SCREEN_CENTER.y + 20));
+    resumeButton->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL + 1);
+    resumeButton->setName("pauseResumeBtn");
+    resumeButton->addClickEventListener([this](Ref* sender) {
+        resumeGame();
+    });
+    _uiLayer->addChild(resumeButton);
+    
+    // 返回主菜单按钮
+    auto menuButton = ui::Button::create();
+    menuButton->setTitleText("Main Menu");
+    menuButton->setTitleFontSize(32);
+    menuButton->setPosition(Vec2(SCREEN_CENTER.x, SCREEN_CENTER.y - 60));
+    menuButton->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL + 1);
+    menuButton->setName("pauseMenuBtn");
+    menuButton->addClickEventListener([](Ref* sender) {
+        auto menuScene = MainMenuScene::createScene();
+        Director::getInstance()->replaceScene(TransitionFade::create(0.5f, menuScene));
+    });
+    _uiLayer->addChild(menuButton);
+    
+    // 退出游戏按钮
+    auto exitButton = ui::Button::create();
+    exitButton->setTitleText("Exit Game");
+    exitButton->setTitleFontSize(32);
+    exitButton->setPosition(Vec2(SCREEN_CENTER.x, SCREEN_CENTER.y - 140));
+    exitButton->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL + 1);
+    exitButton->setName("pauseExitBtn");
+    exitButton->addClickEventListener([](Ref* sender) {
+        Director::getInstance()->end();
+    });
+    _uiLayer->addChild(exitButton);
     
     GAME_LOG("Game paused");
 }
@@ -576,8 +632,27 @@ void GameScene::resumeGame()
 {
     _isPaused = false;
     
-    // 移除暂停菜单
-    _uiLayer->removeChildByName("pauseLabel");
+    // 恢复玩家输入和更新
+    if (_player) {
+        _player->registerInputEvents();
+        _player->resume();
+    }
+    
+    // 恢复所有敌人
+    for (auto enemy : _enemies) {
+        if (enemy) {
+            enemy->resume();
+        }
+    }
+    
+    // 恢复游戏层更新
+    _gameLayer->resume();
+    
+    // 移除暂停菜单UI元素
+    _uiLayer->removeChildByName("pauseTitle");
+    _uiLayer->removeChildByName("pauseResumeBtn");
+    _uiLayer->removeChildByName("pauseMenuBtn");
+    _uiLayer->removeChildByName("pauseExitBtn");
     _uiLayer->removeChildByName("pauseMask");
     
     GAME_LOG("Game resumed");
@@ -610,21 +685,25 @@ void GameScene::showGameOver()
     // 添加半透明遮罩
     auto mask = LayerColor::create(Color4B(0, 0, 0, 180));
     mask->setName("gameOverMask");
-    _uiLayer->addChild(mask, 999);
+    mask->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL);
+    _uiLayer->addChild(mask);
     
     // 显示游戏结束文字
     auto gameOverLabel = Label::createWithSystemFont("GAME OVER", "Arial", 64);
     gameOverLabel->setPosition(Vec2(SCREEN_CENTER.x, SCREEN_CENTER.y + 50));
     gameOverLabel->setTextColor(Color4B::RED);
     gameOverLabel->setName("gameOverLabel");
-    _uiLayer->addChild(gameOverLabel, 1000);
+    gameOverLabel->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL + 1);
+    _uiLayer->addChild(gameOverLabel);
     
     // 显示重新开始提示
     auto hintLabel = Label::createWithSystemFont("Press R to Restart\nPress Q to Quit", "Arial", 32);
     hintLabel->setPosition(Vec2(SCREEN_CENTER.x, SCREEN_CENTER.y - 50));
     hintLabel->setTextColor(Color4B::WHITE);
     hintLabel->setName("gameOverHint");
-    _uiLayer->addChild(hintLabel, 1000);
+    hintLabel->setAlignment(TextHAlignment::CENTER);
+    hintLabel->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL + 1);
+    _uiLayer->addChild(hintLabel);
     
     // 添加重新开始的键盘监听 - 使用this捕获
     auto listener = EventListenerKeyboard::create();
