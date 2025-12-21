@@ -4,6 +4,7 @@
 #include "cocos2d.h"
 #include "Core/Constants.h"
 #include "Room.h"
+#include "Hallway.h"
 #include <queue>
 #include <vector>
 
@@ -60,9 +61,15 @@ private:
     // 连接所有相邻房间的门
     void connectAdjacentRooms();
     
+    // 生成走廊
+    void generateHallways();
+    
 private:
     // 5x5 房间矩阵
     Room* _roomMatrix[Constants::MAP_GRID_SIZE][Constants::MAP_GRID_SIZE];
+    
+    // 走廊容器
+    std::vector<Hallway*> _hallways;
     
     // 房间计数
     int _roomCount;

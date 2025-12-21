@@ -1,5 +1,6 @@
 ﻿#include "MapGenerator.h"
 #include "Entities/Player/Player.h"
+#include "Hallway.h"
 #include <algorithm>
 #include <ctime>
 #include <cstdlib>
@@ -55,6 +56,7 @@ void MapGenerator::generateMap() {
     randomGenerate(startX, startY);
     assignRoomTypes();
     connectAdjacentRooms();
+    generateHallways();  // 添加走廊生成
     
     for (int y = 0; y < Constants::MAP_GRID_SIZE; y++) {
         for (int x = 0; x < Constants::MAP_GRID_SIZE; x++) {
@@ -66,9 +68,15 @@ void MapGenerator::generateMap() {
         }
     }
     
+    // 添加走廊到场景
+    for (auto hallway : _hallways) {
+        hallway->createMap();
+        this->addChild(hallway);
+    }
+    
     _currentRoom = _beginRoom;
     
-    log("MapGenerator: Generated %d rooms", _roomCount);
+    log("MapGenerator: Generated %d rooms and %d hallways", _roomCount, static_cast<int>(_hallways.size()));
 }
 
 void MapGenerator::randomGenerate(int startX, int startY) {
@@ -227,6 +235,58 @@ void MapGenerator::connectAdjacentRooms() {
     }
 }
 
+void MapGenerator::generateHallways() {
+    _hallways.clear();
+    
+    for (int y = 0; y < Constants::MAP_GRID_SIZE; y++) {
+        for (int x = 0; x < Constants::MAP_GRID_SIZE; x++) {
+            Room* room = _roomMatrix[x][y];
+            if (room == nullptr) continue;
+            
+            Vec2 roomCenter = room->getCenter();
+            
+            // 只检查右边和下边，避免重复生成
+            // 检查右边（DIR_RIGHT）
+            if (room->hasDoor(Constants::DIR_RIGHT)) {
+                int toX = x + DIR_DX[Constants::DIR_RIGHT];
+                int toY = y + DIR_DY[Constants::DIR_RIGHT];
+                
+                if (toX < Constants::MAP_GRID_SIZE && _roomMatrix[toX][toY] != nullptr) {
+                    Room* rightRoom = _roomMatrix[toX][toY];
+                    Vec2 rightCenter = rightRoom->getCenter();
+                    
+                    // 计算走廊中心位置（两个房间中心之间）
+                    float hallwayCenterX = (roomCenter.x + rightCenter.x) / 2.0f;
+                    float hallwayCenterY = roomCenter.y;
+                    
+                    Hallway* hallway = Hallway::create(Constants::DIR_RIGHT);
+                    hallway->setCenter(hallwayCenterX, hallwayCenterY);
+                    _hallways.push_back(hallway);
+                }
+            }
+            
+            // 检查下边（DIR_DOWN）
+            if (room->hasDoor(Constants::DIR_DOWN)) {
+                int toX = x + DIR_DX[Constants::DIR_DOWN];
+                int toY = y + DIR_DY[Constants::DIR_DOWN];
+                
+                if (toY >= 0 && _roomMatrix[toX][toY] != nullptr) {
+                    Room* downRoom = _roomMatrix[toX][toY];
+                    Vec2 downCenter = downRoom->getCenter();
+                    
+                    // 计算走廊中心位置
+                    float hallwayCenterX = roomCenter.x;
+                    float hallwayCenterY = (roomCenter.y + downCenter.y) / 2.0f;
+                    
+                    Hallway* hallway = Hallway::create(Constants::DIR_DOWN);
+                    hallway->setCenter(hallwayCenterX, hallwayCenterY);
+                    _hallways.push_back(hallway);
+                }
+            }
+        }
+    }
+}
+
 Room* MapGenerator::getRoom(int x, int y) {
     if (x < 0 || x >= Constants::MAP_GRID_SIZE || 
         y < 0 || y >= Constants::MAP_GRID_SIZE) {
@@ -292,6 +352,12 @@ void MapGenerator::clearMap() {
             }
         }
     }
+    
+    // 清理走廊
+    for (auto hallway : _hallways) {
+        hallway->removeFromParent();
+    }
+    _hallways.clear();
     
     _roomCount = 0;
     _beginRoom = nullptr;
