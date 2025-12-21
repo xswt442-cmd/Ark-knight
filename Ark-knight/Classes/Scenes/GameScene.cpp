@@ -65,6 +65,7 @@ void GameScene::initMapSystem()
     // 创建小地图
     _miniMap = MiniMap::create();
     _miniMap->initFromMapGenerator(_mapGenerator);
+    _miniMap->setGlobalZOrder(500);
     _uiLayer->addChild(_miniMap);
     
     // 设置当前房间
@@ -225,18 +226,21 @@ void GameScene::createHUD()
     _hpLabel = Label::createWithSystemFont("HP: 100/100", "Arial", 24);
     _hpLabel->setPosition(Vec2(origin.x + 100, origin.y + visibleSize.height - 30));
     _hpLabel->setTextColor(Color4B::GREEN);
+    _hpLabel->setGlobalZOrder(500);
     _uiLayer->addChild(_hpLabel);
     
     // MP标签
     _mpLabel = Label::createWithSystemFont("MP: 100/100", "Arial", 24);
     _mpLabel->setPosition(Vec2(origin.x + 100, origin.y + visibleSize.height - 60));
     _mpLabel->setTextColor(Color4B::BLUE);
+    _mpLabel->setGlobalZOrder(500);
     _uiLayer->addChild(_mpLabel);
     
     // Debug信息
     _debugLabel = Label::createWithSystemFont("", "Arial", 18);
     _debugLabel->setPosition(Vec2(origin.x + visibleSize.width - 150, origin.y + visibleSize.height - 30));
     _debugLabel->setTextColor(Color4B::YELLOW);
+    _debugLabel->setGlobalZOrder(500);
     _uiLayer->addChild(_debugLabel);
     
     // 操作提示
@@ -245,6 +249,7 @@ void GameScene::createHUD()
         "Arial", 18);
     hintLabel->setPosition(Vec2(origin.x + 120, origin.y + 100));
     hintLabel->setTextColor(Color4B::WHITE);
+    hintLabel->setGlobalZOrder(500);
     _uiLayer->addChild(hintLabel);
 }
 
