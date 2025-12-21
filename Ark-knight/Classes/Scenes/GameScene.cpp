@@ -75,42 +75,18 @@ void GameScene::initMapSystem()
 
 void GameScene::initCamera()
 {
-    auto visibleSize = Director::getInstance()->getVisibleSize();
+    // 不创建自定义相机，使用默认相机
+    // 通过移动游戏层来实现相机跟随效果
+    _camera = nullptr;
     
-    // 创建正交相机（适合2D游戏）
-    _camera = Camera::createOrthographic(visibleSize.width, visibleSize.height, 1, 1000);
-    
-    if (_camera && _player)
-    {
-        // 设置相机初始位置（跟随玩家）
-        Vec3 playerPos3D(_player->getPositionX(), _player->getPositionY(), 0);
-        _camera->setPosition3D(Vec3(playerPos3D.x, playerPos3D.y, 100));
-        _camera->lookAt(playerPos3D, Vec3(0, 1, 0));
-        
-        // 将相机添加到游戏层
-        _gameLayer->addChild(_camera);
-        
-        // 不要设置整个游戏层的CameraMask，让子节点继承默认相机
-        // 这样就不会出现一片黑的问题
-        _camera->setCameraFlag(CameraFlag::USER1);
-        
-        // 设置地图生成器和玩家使用自定义相机
-        if (_mapGenerator) {
-            _mapGenerator->setCameraMask((unsigned short)CameraFlag::USER1);
-        }
-        if (_player) {
-            _player->setCameraMask((unsigned short)CameraFlag::USER1);
-        }
-        
-        GAME_LOG("Camera initialized at player position (%.1f, %.1f)", 
-                 _player->getPositionX(), _player->getPositionY());
-    }
+    GAME_LOG("Camera system initialized (using default camera with layer movement)");
 }
 
 void GameScene::updateCamera(float dt)
 {
-    if (!_camera || !_player || !_mapGenerator) return;
+    if (!_player || !_mapGenerator) return;
     
+    auto visibleSize = Director::getInstance()->getVisibleSize();
     Vec2 playerPos = _player->getPosition();
     
     // 计算地图总边界（所有房间的范围）
@@ -134,44 +110,45 @@ void GameScene::updateCamera(float dt)
         }
     }
     
-    // 获取屏幕尺寸的一半（相机可见范围）
-    auto visibleSize = Director::getInstance()->getVisibleSize();
+    // 获取屏幕尺寸的一半（可见范围）
     float halfWidth = visibleSize.width / 2.0f;
     float halfHeight = visibleSize.height / 2.0f;
     
-    // 限制相机位置，使其不超出地图边界
-    float camX = playerPos.x;
-    float camY = playerPos.y;
+    // 计算游戏层应该的位置（相机跟随的反向）
+    // 玩家在屏幕中心，所以游戏层要向相反方向移动
+    float targetX = halfWidth - playerPos.x;
+    float targetY = halfHeight - playerPos.y;
     
-    // 限制X轴
+    // 限制游戏层位置，使其不超出地图边界
     if (maxX - minX > visibleSize.width) {
-        // 地图宽度大于屏幕，限制相机不显示地图外区域
-        camX = std::max(minX + halfWidth, camX);
-        camX = std::min(maxX - halfWidth, camX);
+        // 地图宽度大于屏幕
+        float minLayerX = visibleSize.width - maxX;
+        float maxLayerX = -minX;
+        targetX = std::max(minLayerX, std::min(maxLayerX, targetX));
     } else {
-        // 地图宽度小于屏幕，相机居中显示整个地图
-        camX = (minX + maxX) / 2.0f;
+        // 地图宽度小于屏幕，居中显示
+        targetX = halfWidth - (minX + maxX) / 2.0f;
     }
     
-    // 限制Y轴
     if (maxY - minY > visibleSize.height) {
-        // 地图高度大于屏幕，限制相机不显示地图外区域
-        camY = std::max(minY + halfHeight, camY);
-        camY = std::min(maxY - halfHeight, camY);
+        // 地图高度大于屏幕
+        float minLayerY = visibleSize.height - maxY;
+        float maxLayerY = -minY;
+        targetY = std::max(minLayerY, std::min(maxLayerY, targetY));
     } else {
-        // 地图高度小于屏幕，相机居中显示整个地图
-        camY = (minY + maxY) / 2.0f;
+        // 地图高度小于屏幕，居中显示
+        targetY = halfHeight - (minY + maxY) / 2.0f;
     }
     
-    // 平滑跟随（使用线性插值）
-    Vec3 currentPos = _camera->getPosition3D();
-    float smoothFactor = 0.1f;  // 平滑系数，越小越平滑但响应越慢
+    // 平滑移动游戏层
+    Vec2 currentPos = _gameLayer->getPosition();
+    float smoothFactor = 0.1f;
     
-    Vec3 targetPos(camX, camY, 100);
-    Vec3 newPos = currentPos + (targetPos - currentPos) * smoothFactor;
+    Vec2 newPos;
+    newPos.x = currentPos.x + (targetX - currentPos.x) * smoothFactor;
+    newPos.y = currentPos.y + (targetY - currentPos.y) * smoothFactor;
     
-    _camera->setPosition3D(newPos);
-    _camera->lookAt(Vec3(newPos.x, newPos.y, 0), Vec3(0, 1, 0));
+    _gameLayer->setPosition(newPos);
 }
 
 void GameScene::createPlayer()
