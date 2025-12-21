@@ -270,6 +270,9 @@ void MapGenerator::generateHallways() {
                     Hallway* hallway = Hallway::create(Constants::DIR_RIGHT);
                     hallway->setCenter(hallwayCenterX, hallwayCenterY);
                     _hallways.push_back(hallway);
+                    
+                    log("Created horizontal hallway at (%.1f, %.1f) connecting rooms (%d,%d) and (%d,%d)", 
+                        hallwayCenterX, hallwayCenterY, x, y, toX, toY);
                 }
             }
             
@@ -291,6 +294,9 @@ void MapGenerator::generateHallways() {
                     Hallway* hallway = Hallway::create(Constants::DIR_DOWN);
                     hallway->setCenter(hallwayCenterX, hallwayCenterY);
                     _hallways.push_back(hallway);
+                    
+                    log("Created vertical hallway at (%.1f, %.1f) connecting rooms (%d,%d) and (%d,%d)", 
+                        hallwayCenterX, hallwayCenterY, x, y, toX, toY);
                 }
             }
         }

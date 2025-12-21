@@ -32,23 +32,25 @@ bool Hallway::initWithDirection(int direction) {
     // 计算走廊尺寸
     // 房间中心距离 = 900px，房间宽度 = 800px，房间高度 = 544px
     // 两个房间边缘之间的距离 = 100px（宽度）或 356px（高度）
-    // 走廊瓦片数 = 间隔 / 瓦片大小
+    // 走廊应该填满这个间隔，包括两端连接房间的部分
     
     float tileSize = Constants::FLOOR_TILE_SIZE;
     
     if (_direction == Constants::DIR_UP || _direction == Constants::DIR_DOWN) {
-        // 垂直走廊
+        // 垂直走廊：宽度与门一致
         _tilesWidth = Constants::DOOR_WIDTH;
-        // 垂直间隔：900 - 544 = 356px = 11.125 瓦片，取 11
+        // 垂直间隔：900 - 544 = 356px = 11.125 瓦片，向上取整为 12 来填满空隙
         float gap = Constants::ROOM_CENTER_DIST - Constants::ROOM_TILES_H * tileSize;
-        _tilesHeight = static_cast<int>(gap / tileSize);
+        _tilesHeight = static_cast<int>(gap / tileSize) + 1;
     } else {
-        // 水平走廊
-        // 水平间隔：900 - 800 = 100px = 3.125 瓦片，取 3
+        // 水平走廊：宽度填满间隔
+        // 水平间隔：900 - 800 = 100px = 3.125 瓦片，向上取整为 4 来填满空隙
         float gap = Constants::ROOM_CENTER_DIST - Constants::ROOM_TILES_W * tileSize;
-        _tilesWidth = static_cast<int>(gap / tileSize);
+        _tilesWidth = static_cast<int>(gap / tileSize) + 1;
         _tilesHeight = Constants::DOOR_WIDTH;
     }
+    
+    log("Hallway created: direction=%d, size=(%d, %d)", direction, _tilesWidth, _tilesHeight);
     
     return true;
 }
@@ -66,29 +68,18 @@ void Hallway::createMap() {
     float curX = startX;
     float curY = startY;
     
+    // 走廊只生成地板，不生成墙壁（墙壁由房间提供）
     for (int h = _tilesHeight - 1; h >= 0; h--) {
         for (int w = 0; w < _tilesWidth; w++) {
-            // 只在最外层添加墙壁，中间全是地板
-            bool isTopEdge = (h == _tilesHeight - 1);
-            bool isBottomEdge = (h == 0);
-            bool isLeftEdge = (w == 0);
-            bool isRightEdge = (w == _tilesWidth - 1);
-            bool isEdge = isTopEdge || isBottomEdge || isLeftEdge || isRightEdge;
-            
-            if (isEdge) {
-                // 边缘是墙壁
-                int zOrder = isTopEdge ? Constants::ZOrder::WALL_BELOW : Constants::ZOrder::WALL_ABOVE;
-                generateWall(curX, curY, zOrder);
-            } else {
-                // 内部是地板
-                generateFloor(curX, curY);
-            }
-            
+            // 所有位置都是地板
+            generateFloor(curX, curY);
             curX += tileSize;
         }
         curX = startX;
         curY -= tileSize;
     }
+    
+    log("Hallway map created at (%.1f, %.1f), tiles: %d x %d", _centerX, _centerY, _tilesWidth, _tilesHeight);
 }
 
 void Hallway::generateFloor(float x, float y) {
@@ -122,14 +113,14 @@ void Hallway::generateWall(float x, float y, int zOrder) {
 Rect Hallway::getWalkableArea() const {
     float tileSize = Constants::FLOOR_TILE_SIZE;
     
-    // 计算走廊的可行走区域（排除外层墙壁）
+    // 走廊全部都是可行走区域（没有内部墙壁）
     float startX = _centerX - tileSize * (_tilesWidth / 2.0f);
     float startY = _centerY + tileSize * (_tilesHeight / 2.0f);
     
-    float minX = startX + tileSize;
-    float maxX = startX + tileSize * _tilesWidth - tileSize;
-    float maxY = startY - tileSize;
-    float minY = startY - tileSize * _tilesHeight + tileSize;
+    float minX = startX;
+    float maxX = startX + tileSize * _tilesWidth;
+    float maxY = startY;
+    float minY = startY - tileSize * _tilesHeight;
     
     return Rect(minX, minY, maxX - minX, maxY - minY);
 }
