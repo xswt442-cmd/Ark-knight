@@ -245,7 +245,7 @@ void GameScene::createHUD()
     
     // 操作提示
     auto hintLabel = Label::createWithSystemFont(
-        "Controls:\nWASD - Move\nJ - Attack\nK - Skill\nSPACE - Dash\nESC - Pause",
+        "操作说明：\nWASD - 移动\nJ - 攻击\nK - 技能\n空格 - 冲刺\nESC - 暂停",
         "Arial", 18);
     hintLabel->setPosition(Vec2(origin.x + 120, origin.y + 100));
     hintLabel->setTextColor(Color4B::WHITE);
