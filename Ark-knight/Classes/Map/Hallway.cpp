@@ -30,20 +30,21 @@ bool Hallway::initWithDirection(int direction) {
     _centerX = 0.0f;
     _centerY = 0.0f;
     
-    // 走廊只填充房间之间的空隙，不覆盖房间内部
+    // 走廊填充房间之间的空隙
     // 水平空隙 = 960 - 832 = 128px = 4瓦片
     // 垂直空隙 = 960 - 576 = 384px = 12瓦片
+    // 额外增加2瓦片确保完全覆盖（与房间门口重叠）
     float tileSize = Constants::FLOOR_TILE_SIZE;
     
     if (_direction == Constants::DIR_UP || _direction == Constants::DIR_DOWN) {
         // 垂直走廊：宽度 = 门宽 + 2（左右墙各1格）
         _tilesWidth = Constants::DOOR_WIDTH + 2;
         float verticalGap = Constants::ROOM_CENTER_DIST - Constants::ROOM_TILES_H * tileSize;
-        _tilesHeight = static_cast<int>(std::ceil(verticalGap / tileSize));
+        _tilesHeight = static_cast<int>(std::ceil(verticalGap / tileSize)) + 2;  // +2确保覆盖
     } else {
         // 水平走廊：高度 = 门宽 + 2（上下墙各1格）
         float horizontalGap = Constants::ROOM_CENTER_DIST - Constants::ROOM_TILES_W * tileSize;
-        _tilesWidth = static_cast<int>(std::ceil(horizontalGap / tileSize));
+        _tilesWidth = static_cast<int>(std::ceil(horizontalGap / tileSize)) + 2;  // +2确保覆盖
         _tilesHeight = Constants::DOOR_WIDTH + 2;
     }
     
@@ -95,19 +96,23 @@ void Hallway::createMap() {
         }
     }
     
-    // 更新实际可行走边界（考虑玩家半径，留出半格余量）
+    // 更新实际可行走边界（考虑玩家半径，边界往内缩）
     float playerHalfSize = 15.0f;  // 玩家半径约15像素
     
     if (_direction == Constants::DIR_LEFT || _direction == Constants::DIR_RIGHT) {
         // 水平走廊：纵向排除上下墙，并考虑玩家尺寸
         _leftX = startX;
         _rightX = startX + tileSize * (_tilesWidth - 1);
-        _topY = startY - tileSize + tileSize / 2 - playerHalfSize;  // 顶墙下边缘往下半格
-        _bottomY = startY - tileSize * (_tilesHeight - 2) - tileSize / 2 + playerHalfSize;  // 底墙上边缘往上半格
+        // 上墙在h=0，其下边缘在 startY - tileSize/2，再往下缩playerHalfSize
+        _topY = startY - tileSize / 2 - playerHalfSize;
+        // 下墙在h=_tilesHeight-1，其上边缘在 startY - (_tilesHeight-1)*tileSize + tileSize/2，再往上缩
+        _bottomY = startY - (_tilesHeight - 1) * tileSize + tileSize / 2 + playerHalfSize;
     } else {
         // 垂直走廊：横向排除左右墙，并考虑玩家尺寸
-        _leftX = startX + tileSize + tileSize / 2 - playerHalfSize;  // 左墙右边缘往右
-        _rightX = startX + tileSize * (_tilesWidth - 2) + tileSize / 2 + playerHalfSize;  // 右墙左边缘往左
+        // 左墙在w=0，其右边缘在 startX + tileSize/2，再往右缩playerHalfSize
+        _leftX = startX + tileSize / 2 + playerHalfSize;
+        // 右墙在w=_tilesWidth-1，其左边缘在 startX + (_tilesWidth-1)*tileSize - tileSize/2，再往左缩
+        _rightX = startX + (_tilesWidth - 1) * tileSize - tileSize / 2 - playerHalfSize;
         _topY = startY;
         _bottomY = startY - tileSize * (_tilesHeight - 1);
     }
