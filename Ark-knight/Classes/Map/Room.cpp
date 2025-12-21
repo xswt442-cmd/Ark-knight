@@ -278,8 +278,11 @@ void Room::closeDoors() {
 bool Room::isPlayerInRoom(Player* player) const {
     if (!player) return false;
     
-    // 获取玩家的世界坐标
-    Vec2 pos = player->getParent()->convertToWorldSpace(player->getPosition());
+    // 直接使用玩家的本地坐标（相对于_gameLayer）
+    // 房间边界也是相对于_gameLayer的，所以不需要坐标转换
+    Vec2 pos = player->getPosition();
+    
+    // 检测是否在房间核心区域内
     return (pos.x >= _leftX && pos.x <= _rightX &&
             pos.y >= _bottomY && pos.y <= _topY);
 }
@@ -303,4 +306,76 @@ void Room::moveBy(float dx, float dy) {
         Vec2 pos = child->getPosition();
         child->setPosition(pos.x + dx, pos.y + dy);
     }
+}
+
+bool Room::checkPlayerPosition(Player* player, float& speedX, float& speedY) {
+    if (!player) return false;
+    
+    // 直接使用玩家的本地坐标（相对于_gameLayer）
+    // 房间边界也是相对于_gameLayer的，所以不需要坐标转换
+    Vec2 pos = player->getPosition();
+    float tileSize = Constants::FLOOR_TILE_SIZE;
+    
+    // 扩展检测范围（一格容差，用于检测是否在房间或门口附近）
+    float extendedLeft = _leftX - tileSize;
+    float extendedRight = _rightX + tileSize;
+    float extendedTop = _topY + tileSize;
+    float extendedBottom = _bottomY - tileSize;
+    
+    // 检查玩家是否在房间扩展范围内
+    if (pos.x >= extendedLeft && pos.x <= extendedRight &&
+        pos.y >= extendedBottom && pos.y <= extendedTop) {
+        
+        // 门口区域的半宽度
+        float doorHalfWidth = Constants::DOOR_WIDTH * tileSize / 2.0f;
+        
+        // 检查是否所有敌人都被击杀
+        bool canPassDoor = allEnemiesKilled();
+        
+        if (!canPassDoor) {
+            // 敌人未全部击杀，不能通过任何门，限制在房间内
+            if (speedX > 0 && pos.x >= _rightX) speedX = 0.0f;
+            if (speedX < 0 && pos.x <= _leftX) speedX = 0.0f;
+            if (speedY > 0 && pos.y >= _topY) speedY = 0.0f;
+            if (speedY < 0 && pos.y <= _bottomY) speedY = 0.0f;
+        }
+        else {
+            // 敌人已击杀，检查门口
+            // 左右方向检测
+            bool atVerticalDoorLevel = std::abs(pos.y - _centerY) <= doorHalfWidth;
+            
+            // 右边墙检测
+            if (speedX > 0 && pos.x >= _rightX) {
+                if (!_doorDirections[Constants::DIR_RIGHT] || !atVerticalDoorLevel) {
+                    speedX = 0.0f;
+                }
+            }
+            // 左边墙检测
+            if (speedX < 0 && pos.x <= _leftX) {
+                if (!_doorDirections[Constants::DIR_LEFT] || !atVerticalDoorLevel) {
+                    speedX = 0.0f;
+                }
+            }
+            
+            // 上下方向检测
+            bool atHorizontalDoorLevel = std::abs(pos.x - _centerX) <= doorHalfWidth;
+            
+            // 上边墙检测
+            if (speedY > 0 && pos.y >= _topY) {
+                if (!_doorDirections[Constants::DIR_UP] || !atHorizontalDoorLevel) {
+                    speedY = 0.0f;
+                }
+            }
+            // 下边墙检测
+            if (speedY < 0 && pos.y <= _bottomY) {
+                if (!_doorDirections[Constants::DIR_DOWN] || !atHorizontalDoorLevel) {
+                    speedY = 0.0f;
+                }
+            }
+        }
+        
+        return true;  // 玩家在房间范围内
+    }
+    
+    return false;  // 玩家不在房间范围内
 }

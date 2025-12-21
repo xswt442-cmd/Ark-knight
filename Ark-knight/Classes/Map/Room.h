@@ -46,6 +46,9 @@ public:
     cocos2d::Rect getWalkableArea() const;
     void moveBy(float dx, float dy);
     
+    // 检查玩家位置并修改速度（参考学长实现）
+    bool checkPlayerPosition(Player* player, float& speedX, float& speedY);
+    
     void setVisited(bool visited) { _visited = visited; }
     bool isVisited() const { return _visited; }
     

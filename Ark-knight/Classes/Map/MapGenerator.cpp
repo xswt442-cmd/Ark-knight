@@ -272,6 +272,8 @@ void MapGenerator::generateHallways() {
                     Hallway* hallway = Hallway::create(Constants::DIR_RIGHT);
                     hallway->setCenter(hallwayCenterX, hallwayCenterY);
                     _hallways.push_back(hallway);
+                    log("Generated RIGHT hallway at (%.1f, %.1f) connecting (%d,%d) -> (%d,%d)",
+                        hallwayCenterX, hallwayCenterY, x, y, toX, toY);
                 }
             }
             
@@ -280,7 +282,7 @@ void MapGenerator::generateHallways() {
                 int toX = x + DIR_DX[Constants::DIR_DOWN];
                 int toY = y + DIR_DY[Constants::DIR_DOWN];
                 
-                if (toY >= 0 && _roomMatrix[toX][toY] != nullptr) {
+                if (toY >= 0 && toY < Constants::MAP_GRID_SIZE && _roomMatrix[toX][toY] != nullptr) {
                     Room* downRoom = _roomMatrix[toX][toY];
                     Vec2 downCenter = downRoom->getCenter();
                     float downRoomHeight = downRoom->getTilesHeight() * tileSize;
@@ -294,6 +296,8 @@ void MapGenerator::generateHallways() {
                     Hallway* hallway = Hallway::create(Constants::DIR_DOWN);
                     hallway->setCenter(hallwayCenterX, hallwayCenterY);
                     _hallways.push_back(hallway);
+                    log("Generated DOWN hallway at (%.1f, %.1f) connecting (%d,%d) -> (%d,%d)",
+                        hallwayCenterX, hallwayCenterY, x, y, toX, toY);
                 }
             }
         }
@@ -365,6 +369,18 @@ Hallway* MapGenerator::getPlayerHallway(Player* player) {
         }
     }
     return nullptr;
+}
+
+std::vector<Room*> MapGenerator::getAllRooms() const {
+    std::vector<Room*> rooms;
+    for (int y = 0; y < Constants::MAP_GRID_SIZE; y++) {
+        for (int x = 0; x < Constants::MAP_GRID_SIZE; x++) {
+            if (_roomMatrix[x][y] != nullptr) {
+                rooms.push_back(_roomMatrix[x][y]);
+            }
+        }
+    }
+    return rooms;
 }
 
 void MapGenerator::clearMap() {

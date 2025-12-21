@@ -48,6 +48,12 @@ public:
     // 获取玩家所在的走廊
     Hallway* getPlayerHallway(class Player* player);
     
+    // 获取所有房间（用于遍历检测）
+    std::vector<Room*> getAllRooms() const;
+    
+    // 获取所有走廊
+    const std::vector<Hallway*>& getAllHallways() const { return _hallways; }
+    
     // 清理地图
     void clearMap();
     

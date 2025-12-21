@@ -95,25 +95,24 @@ void Hallway::createMap() {
         }
     }
     
-    // 更新实际可行走边界（排除墙壁）
-    float tileHalf = tileSize * 0.5f;
-    
+    // 更新实际可行走边界
+    // 走廊应该严格填充房间之间的空隙，边界要准确
     if (_direction == Constants::DIR_LEFT || _direction == Constants::DIR_RIGHT) {
-        // 水平走廊
-        _leftX = startX - tileHalf;  // 走廊左边缘
-        _rightX = startX + tileSize * _tilesWidth - tileHalf;  // 走廊右边缘
-        _topY = startY - tileSize + tileHalf;  // 顶墙下边缘（可行走区域上边）
-        _bottomY = startY - tileSize * (_tilesHeight - 2) - tileHalf;  // 底墙上边缘（可行走区域下边）
+        // 水平走廊：横向是整个走廊宽度，纵向排除上下墙
+        _leftX = startX;  
+        _rightX = startX + tileSize * (_tilesWidth - 1);  
+        _topY = startY - tileSize;  // 顶墙下方一格
+        _bottomY = startY - tileSize * (_tilesHeight - 1);  // 底墙上方一格
     } else {
-        // 垂直走廊
-        _leftX = startX + tileSize - tileHalf;  // 左墙右边缘
-        _rightX = startX + tileSize * (_tilesWidth - 2) + tileHalf;  // 右墙左边缘
-        _topY = startY + tileHalf;  // 走廊上边缘
-        _bottomY = startY - tileSize * _tilesHeight + tileHalf;  // 走廊下边缘
+        // 垂直走廊：纵向是整个走廊高度，横向排除左右墙
+        _leftX = startX + tileSize;  // 左墙右侧一格
+        _rightX = startX + tileSize * (_tilesWidth - 1);  // 右墙左侧一格
+        _topY = startY;  
+        _bottomY = startY - tileSize * (_tilesHeight - 1);  
     }
     
-    log("Hallway dir=%d center=(%.1f,%.1f) walkable: X[%.1f,%.1f] Y[%.1f,%.1f]",
-        _direction, _centerX, _centerY, _leftX, _rightX, _bottomY, _topY);
+    log("Hallway dir=%d center=(%.1f,%.1f) tiles=%dx%d walkable: X[%.1f,%.1f] Y[%.1f,%.1f]",
+        _direction, _centerX, _centerY, _tilesWidth, _tilesHeight, _leftX, _rightX, _bottomY, _topY);
 }
 
 void Hallway::generateFloor(float x, float y) {
@@ -147,49 +146,41 @@ void Hallway::generateWall(float x, float y, int zOrder) {
 bool Hallway::checkPlayerPosition(Player* player, float& speedX, float& speedY) {
     if (!player) return false;
     
-    // 获取玩家的世界坐标
-    Vec2 pos = player->getParent()->convertToWorldSpace(player->getPosition());
+    // 直接使用玩家的本地坐标（相对于_gameLayer）
+    Vec2 pos = player->getPosition();
     float tileSize = Constants::FLOOR_TILE_SIZE;
-    float halfTile = tileSize / 2.0f;
     
-    // 根据走廊方向限制玩家位置
+    // 根据走廊方向检测
     if (_direction == Constants::DIR_LEFT || _direction == Constants::DIR_RIGHT) {
-        // 水平走廊：只限制Y轴（检测是否在走廊X范围和扩展的Y范围内）
-        if (pos.x >= _leftX - halfTile && pos.x <= _rightX + halfTile &&
-            pos.y <= _topY + tileSize && pos.y >= _bottomY - tileSize) {
+        // 水平走廊：扩展X方向检测范围，严格限制Y方向
+        if (pos.x >= _leftX - tileSize && pos.x <= _rightX + tileSize &&
+            pos.y <= _topY + tileSize + 30 && pos.y >= _bottomY - tileSize - 15) {
             
-            // 限制Y轴不能超出走廊可行走区域
-            if (pos.y > _topY) {
-                pos.y = _topY;
-                // 转换回本地坐标
-                Vec2 localPos = player->getParent()->convertToNodeSpace(pos);
-                player->setPosition(localPos);
+            // 限制Y轴（不能穿过上下墙）
+            if (speedY > 0 && pos.y >= _topY + tileSize / 2) speedY = 0.0f;
+            if (speedY < 0 && pos.y <= _bottomY) speedY = 0.0f;
+            
+            // 严格判断是否在走廊内部
+            if (pos.x > _leftX - tileSize && pos.x < _rightX + tileSize &&
+                pos.y < _topY + tileSize && pos.y > _bottomY - tileSize) {
+                return true;
             }
-            else if (pos.y < _bottomY) {
-                pos.y = _bottomY;
-                Vec2 localPos = player->getParent()->convertToNodeSpace(pos);
-                player->setPosition(localPos);
-            }
-            return true;
         }
     }
     else {
-        // 垂直走廊：只限制X轴（检测是否在走廊Y范围和扩展的X范围内）
-        if (pos.x >= _leftX - tileSize && pos.x <= _rightX + tileSize &&
-            pos.y <= _topY + halfTile && pos.y >= _bottomY - halfTile) {
+        // 垂直走廊：扩展Y方向检测范围，严格限制X方向
+        if (pos.x >= _leftX - tileSize - 30 && pos.x <= _rightX + tileSize + 30 &&
+            pos.y <= _topY + tileSize && pos.y >= _bottomY - tileSize) {
             
-            // 限制X轴不能超出走廊可行走区域
-            if (pos.x > _rightX) {
-                pos.x = _rightX;
-                Vec2 localPos = player->getParent()->convertToNodeSpace(pos);
-                player->setPosition(localPos);
+            // 限制X轴（不能穿过左右墙）
+            if (speedX > 0 && pos.x >= _rightX) speedX = 0.0f;
+            if (speedX < 0 && pos.x <= _leftX) speedX = 0.0f;
+            
+            // 严格判断是否在走廊内部
+            if (pos.x > _leftX - tileSize && pos.x < _rightX + tileSize &&
+                pos.y < _topY + tileSize && pos.y > _bottomY - tileSize) {
+                return true;
             }
-            else if (pos.x < _leftX) {
-                pos.x = _leftX;
-                Vec2 localPos = player->getParent()->convertToNodeSpace(pos);
-                player->setPosition(localPos);
-            }
-            return true;
         }
     }
     
@@ -199,11 +190,10 @@ bool Hallway::checkPlayerPosition(Player* player, float& speedX, float& speedY) 
 bool Hallway::isPlayerInHallway(Player* player) const {
     if (!player) return false;
     
-    // 获取玩家的世界坐标
-    Vec2 pos = player->getParent()->convertToWorldSpace(player->getPosition());
-    float tileSize = Constants::FLOOR_TILE_SIZE;
+    // 直接使用玩家的本地坐标
+    Vec2 pos = player->getPosition();
     
-    // 扩大一点范围来检测
-    return (pos.x > _leftX - tileSize && pos.x < _rightX + tileSize &&
-            pos.y < _topY + tileSize && pos.y > _bottomY - tileSize);
+    // 严格检测是否在走廊区域内
+    return (pos.x >= _leftX && pos.x <= _rightX &&
+            pos.y >= _bottomY && pos.y <= _topY);
 }
