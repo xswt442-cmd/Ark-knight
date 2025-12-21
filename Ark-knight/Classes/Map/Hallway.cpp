@@ -28,14 +28,25 @@ bool Hallway::initWithDirection(int direction) {
     _centerX = 0.0f;
     _centerY = 0.0f;
     
-    // 根据方向设置走廊尺寸
+    // 计算走廊尺寸
+    // 房间宽度 = 25 * 32 = 800px，中心距离 = 900px
+    // 走廊长度 = 900 - 800 = 100px ≈ 3瓦片
+    // 房间高度 = 17 * 32 = 544px，中心距离 = 900px  
+    // 走廊长度 = 900 - 544 = 356px ≈ 11瓦片
+    
+    float tileSize = Constants::FLOOR_TILE_SIZE;
+    
     if (_direction == Constants::DIR_UP || _direction == Constants::DIR_DOWN) {
-        // 垂直走廊
+        // 垂直走廊：宽度为门宽，长度为垂直间隔
         _tilesWidth = Constants::DOOR_WIDTH;
-        _tilesHeight = 8;  // 走廊长度
+        // 计算垂直间隔瓦片数
+        float gap = Constants::ROOM_CENTER_DIST - Constants::ROOM_TILES_H * tileSize;
+        _tilesHeight = static_cast<int>(gap / tileSize);
     } else {
-        // 水平走廊
-        _tilesWidth = 8;
+        // 水平走廊：长度为水平间隔，宽度为门宽
+        // 计算水平间隔瓦片数
+        float gap = Constants::ROOM_CENTER_DIST - Constants::ROOM_TILES_W * tileSize;
+        _tilesWidth = static_cast<int>(gap / tileSize);
         _tilesHeight = Constants::DOOR_WIDTH;
     }
     
@@ -57,11 +68,15 @@ void Hallway::createMap() {
     
     for (int h = _tilesHeight - 1; h >= 0; h--) {
         for (int w = 0; w < _tilesWidth; w++) {
-            bool isEdge = (h == 0 || h == _tilesHeight - 1 || w == 0 || w == _tilesWidth - 1);
+            // 只在最外层添加墙壁，中间全是地板
+            bool isTopEdge = (h == _tilesHeight - 1);
+            bool isBottomEdge = (h == 0);
+            bool isLeftEdge = (w == 0);
+            bool isRightEdge = (w == _tilesWidth - 1);
+            bool isEdge = isTopEdge || isBottomEdge || isLeftEdge || isRightEdge;
             
             if (isEdge) {
                 // 边缘是墙壁
-                bool isTopEdge = (h == _tilesHeight - 1);
                 int zOrder = isTopEdge ? Constants::ZOrder::WALL_BELOW : Constants::ZOrder::WALL_ABOVE;
                 generateWall(curX, curY, zOrder);
             } else {

@@ -238,6 +238,10 @@ void MapGenerator::connectAdjacentRooms() {
 void MapGenerator::generateHallways() {
     _hallways.clear();
     
+    float tileSize = Constants::FLOOR_TILE_SIZE;
+    float roomWidth = Constants::ROOM_TILES_W * tileSize;
+    float roomHeight = Constants::ROOM_TILES_H * tileSize;
+    
     for (int y = 0; y < Constants::MAP_GRID_SIZE; y++) {
         for (int x = 0; x < Constants::MAP_GRID_SIZE; x++) {
             Room* room = _roomMatrix[x][y];
@@ -255,8 +259,12 @@ void MapGenerator::generateHallways() {
                     Room* rightRoom = _roomMatrix[toX][toY];
                     Vec2 rightCenter = rightRoom->getCenter();
                     
-                    // 计算走廊中心位置（两个房间中心之间）
-                    float hallwayCenterX = (roomCenter.x + rightCenter.x) / 2.0f;
+                    // 水平走廊应该在两个房间的右边缘和左边缘之间
+                    // 房间右边缘 = 中心 + 宽度/2
+                    // 走廊中心 = 左房间右边缘 + (右房间左边缘 - 左房间右边缘) / 2
+                    float leftRoomRightEdge = roomCenter.x + roomWidth / 2.0f;
+                    float rightRoomLeftEdge = rightCenter.x - roomWidth / 2.0f;
+                    float hallwayCenterX = (leftRoomRightEdge + rightRoomLeftEdge) / 2.0f;
                     float hallwayCenterY = roomCenter.y;
                     
                     Hallway* hallway = Hallway::create(Constants::DIR_RIGHT);
@@ -274,9 +282,11 @@ void MapGenerator::generateHallways() {
                     Room* downRoom = _roomMatrix[toX][toY];
                     Vec2 downCenter = downRoom->getCenter();
                     
-                    // 计算走廊中心位置
+                    // 垂直走廊应该在两个房间的下边缘和上边缘之间
+                    float topRoomBottomEdge = roomCenter.y - roomHeight / 2.0f;
+                    float bottomRoomTopEdge = downCenter.y + roomHeight / 2.0f;
+                    float hallwayCenterY = (topRoomBottomEdge + bottomRoomTopEdge) / 2.0f;
                     float hallwayCenterX = roomCenter.x;
-                    float hallwayCenterY = (roomCenter.y + downCenter.y) / 2.0f;
                     
                     Hallway* hallway = Hallway::create(Constants::DIR_DOWN);
                     hallway->setCenter(hallwayCenterX, hallwayCenterY);
