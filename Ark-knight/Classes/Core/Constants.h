@@ -37,10 +37,10 @@ namespace Constants {
     constexpr int MAP_MAX_ROOMS = 6;           // 最大房间数量
     constexpr int MAP_GRID_SIZE = 5;           // 5x5 地图矩阵
     constexpr float FLOOR_TILE_SIZE = 32.0f;   // 地板尺寸
-    constexpr int ROOM_TILES_W = 25;           // 房间宽度(地板块数)
-    constexpr int ROOM_TILES_H = 17;           // 房间高度(地板块数)
-    constexpr float ROOM_CENTER_DIST = 900.0f; // 房间中心距离
-    constexpr int DOOR_WIDTH = 5;              // 门宽度(地板块数)
+    constexpr int ROOM_TILES_W = 26;           // 房间宽度(地板块数) - 偶数
+    constexpr int ROOM_TILES_H = 18;           // 房间高度(地板块数) - 偶数
+    constexpr float ROOM_CENTER_DIST = 960.0f; // 房间中心距离
+    constexpr int DOOR_WIDTH = 4;              // 门宽度(地板块数) - 偶数
     
     // ==================== 方向定义 ====================
     constexpr int DIR_UP = 0;

@@ -60,10 +60,12 @@ void Room::setCenter(float x, float y) {
     float halfHeight = tileSize * (_tilesHeight / 2.0f);
     
     // 房间内部可行走区域（排除墙壁）
-    _leftX = _centerX - halfWidth + tileSize * 1.5f;
-    _rightX = _centerX + halfWidth - tileSize * 1.5f;
-    _topY = _centerY + halfHeight - tileSize * 1.5f;
-    _bottomY = _centerY - halfHeight + tileSize * 1.5f;
+    // 偶数瓦片：墙壁在最外一圈，边界紧贴墙壁内侧
+    // halfWidth = 26*32/2 = 416, 墙壁边缘在 ±416，可行走边界在 ±(416-32)
+    _leftX = _centerX - halfWidth + tileSize;   // 左墙右边缘
+    _rightX = _centerX + halfWidth - tileSize;  // 右墙左边缘
+    _topY = _centerY + halfHeight - tileSize;   // 上墙下边缘
+    _bottomY = _centerY - halfHeight + tileSize; // 下墙上边缘
 }
 
 void Room::createMap() {

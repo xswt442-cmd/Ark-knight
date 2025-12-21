@@ -103,12 +103,13 @@ void Hallway::createMap() {
     // 更新实际可行走边界（排除墙壁）
     if (_direction == Constants::DIR_LEFT || _direction == Constants::DIR_RIGHT) {
         // 水平走廊：排除上下墙壁
-        _topY = startY - tileSize;
-        _bottomY = startY - tileSize * (_tilesHeight - 1);
+        // 第1行是墙，可行走从第2行开始
+        _topY = startY - tileSize;  // 顶部墙的下边缘
+        _bottomY = startY - tileSize * (_tilesHeight - 1);  // 底部墙的上边缘
     } else {
         // 垂直走廊：排除左右墙壁
-        _leftX = startX + tileSize;
-        _rightX = startX + tileSize * (_tilesWidth - 1);
+        _leftX = startX + tileSize;  // 左墙的右边缘
+        _rightX = startX + tileSize * (_tilesWidth - 1);  // 右墙的左边缘
     }
 }
 
