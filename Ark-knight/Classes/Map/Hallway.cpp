@@ -57,8 +57,9 @@ void Hallway::setCenter(float x, float y) {
 
 void Hallway::createMap() {
     float tileSize = Constants::FLOOR_TILE_SIZE;
-    float startX = _centerX - tileSize * (_tilesWidth / 2.0f);
-    float startY = _centerY + tileSize * (_tilesHeight / 2.0f);
+    // 对于偶数瓦片，中心在两个瓦片之间
+    float startX = _centerX - tileSize * (_tilesWidth / 2.0f - 0.5f);
+    float startY = _centerY + tileSize * (_tilesHeight / 2.0f - 0.5f);
     
     // 计算边界（包括墙壁）
     _leftX = startX;

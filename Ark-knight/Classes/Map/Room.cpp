@@ -91,8 +91,10 @@ void Room::createMap() {
     setCenter(_centerX, _centerY);
     
     float tileSize = Constants::FLOOR_TILE_SIZE;
-    float startX = _centerX - tileSize * (_tilesWidth / 2.0f);
-    float startY = _centerY + tileSize * (_tilesHeight / 2.0f);
+    // 对于偶数瓦片，中心在两个瓦片之间
+    // 第0列瓦片中心 = centerX - tileSize * (width/2 - 0.5)
+    float startX = _centerX - tileSize * (_tilesWidth / 2.0f - 0.5f);
+    float startY = _centerY + tileSize * (_tilesHeight / 2.0f - 0.5f);
     
     float curX = startX;
     float curY = startY;
