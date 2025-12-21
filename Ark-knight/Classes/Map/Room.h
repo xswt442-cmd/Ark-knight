@@ -71,6 +71,7 @@ private:
     bool _doorDirections[4];
     bool _doorsOpen;
     bool _visited;
+    int _floorTextureIndex;  // 随机选择的地板纹理索引(1-5)
     
     cocos2d::Vector<cocos2d::Sprite*> _floors;
     cocos2d::Vector<cocos2d::Sprite*> _walls;

@@ -36,6 +36,7 @@ bool Room::init() {
     _roomType = Constants::RoomType::NORMAL;
     _doorsOpen = true;
     _visited = false;
+    _floorTextureIndex = (rand() % 5) + 1;  // 随机选择1-5号地板
     
     for (int i = 0; i < Constants::DIR_COUNT; i++) {
         _doorDirections[i] = false;
@@ -162,7 +163,9 @@ void Room::createMap() {
 }
 
 void Room::generateFloor(float x, float y) {
-    auto floor = Sprite::create("res/floor.png");
+    // 使用房间随机选定的地板纹理(Floor_0001 ~ Floor_0005)
+    std::string floorPath = "Map/Floor/Floor_000" + std::to_string(_floorTextureIndex) + ".png";
+    auto floor = Sprite::create(floorPath);
     if (!floor) {
         floor = Sprite::create();
         floor->setTextureRect(Rect(0, 0, Constants::FLOOR_TILE_SIZE, Constants::FLOOR_TILE_SIZE));
@@ -176,7 +179,7 @@ void Room::generateFloor(float x, float y) {
 }
 
 void Room::generateWall(float x, float y, int zOrder) {
-    auto wall = Sprite::create("res/wall.png");
+    auto wall = Sprite::create("Map/Wall/Wall_0001.png");
     if (!wall) {
         wall = Sprite::create();
         wall->setTextureRect(Rect(0, 0, Constants::FLOOR_TILE_SIZE, Constants::FLOOR_TILE_SIZE));
@@ -192,7 +195,7 @@ void Room::generateWall(float x, float y, int zOrder) {
 void Room::generateDoor(float x, float y, int direction) {
     float tileSize = Constants::FLOOR_TILE_SIZE;
     
-    auto doorOpen = Sprite::create("res/door_open.png");
+    auto doorOpen = Sprite::create("Map/Door/Door_open.png");
     if (!doorOpen) {
         doorOpen = Sprite::create();
         doorOpen->setTextureRect(Rect(0, 0, tileSize, tileSize));
@@ -203,7 +206,7 @@ void Room::generateDoor(float x, float y, int direction) {
     this->addChild(doorOpen, Constants::ZOrder::DOOR);
     _doorsOpenSprites.pushBack(doorOpen);
     
-    auto doorClosed = Sprite::create("res/door_closed.png");
+    auto doorClosed = Sprite::create("Map/Door/Door_closed.png");
     if (!doorClosed) {
         doorClosed = Sprite::create();
         doorClosed->setTextureRect(Rect(0, 0, tileSize, tileSize));
