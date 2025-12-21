@@ -18,13 +18,10 @@ public:
     void setCenter(float x, float y);
     
     int getDirection() const { return _direction; }
-    cocos2d::Rect getWalkableArea() const;
     cocos2d::Vec2 getCenter() const { return cocos2d::Vec2(_centerX, _centerY); }
-    bool isPlayerInHallway(class Player* player) const;
     
 private:
     void generateFloor(float x, float y);
-    void generateWall(float x, float y, int zOrder);
     
     float _centerX;
     float _centerY;
@@ -33,7 +30,6 @@ private:
     int _tilesHeight;
     
     cocos2d::Vector<cocos2d::Sprite*> _floors;
-    cocos2d::Vector<cocos2d::Sprite*> _walls;
 };
 
 #endif // __HALLWAY_H__

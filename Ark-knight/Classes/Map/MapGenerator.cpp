@@ -259,9 +259,7 @@ void MapGenerator::generateHallways() {
                     Room* rightRoom = _roomMatrix[toX][toY];
                     Vec2 rightCenter = rightRoom->getCenter();
                     
-                    // 水平走廊应该在两个房间的右边缘和左边缘之间
-                    // 房间右边缘 = 中心 + 宽度/2
-                    // 走廊中心 = 左房间右边缘 + (右房间左边缘 - 左房间右边缘) / 2
+                    // 水平走廊在两个房间边缘之间
                     float leftRoomRightEdge = roomCenter.x + roomWidth / 2.0f;
                     float rightRoomLeftEdge = rightCenter.x - roomWidth / 2.0f;
                     float hallwayCenterX = (leftRoomRightEdge + rightRoomLeftEdge) / 2.0f;
@@ -271,8 +269,9 @@ void MapGenerator::generateHallways() {
                     hallway->setCenter(hallwayCenterX, hallwayCenterY);
                     _hallways.push_back(hallway);
                     
-                    log("Created horizontal hallway at (%.1f, %.1f) connecting rooms (%d,%d) and (%d,%d)", 
-                        hallwayCenterX, hallwayCenterY, x, y, toX, toY);
+                    log("Horizontal hallway at (%.1f, %.1f), rooms: (%.1f, %.1f) -> (%.1f, %.1f)", 
+                        hallwayCenterX, hallwayCenterY, 
+                        roomCenter.x, roomCenter.y, rightCenter.x, rightCenter.y);
                 }
             }
             
@@ -285,7 +284,7 @@ void MapGenerator::generateHallways() {
                     Room* downRoom = _roomMatrix[toX][toY];
                     Vec2 downCenter = downRoom->getCenter();
                     
-                    // 垂直走廊应该在两个房间的下边缘和上边缘之间
+                    // 垂直走廊在两个房间边缘之间
                     float topRoomBottomEdge = roomCenter.y - roomHeight / 2.0f;
                     float bottomRoomTopEdge = downCenter.y + roomHeight / 2.0f;
                     float hallwayCenterY = (topRoomBottomEdge + bottomRoomTopEdge) / 2.0f;
@@ -295,8 +294,9 @@ void MapGenerator::generateHallways() {
                     hallway->setCenter(hallwayCenterX, hallwayCenterY);
                     _hallways.push_back(hallway);
                     
-                    log("Created vertical hallway at (%.1f, %.1f) connecting rooms (%d,%d) and (%d,%d)", 
-                        hallwayCenterX, hallwayCenterY, x, y, toX, toY);
+                    log("Vertical hallway at (%.1f, %.1f), rooms: (%.1f, %.1f) -> (%.1f, %.1f)", 
+                        hallwayCenterX, hallwayCenterY,
+                        roomCenter.x, roomCenter.y, downCenter.x, downCenter.y);
                 }
             }
         }

@@ -177,24 +177,7 @@ void GameScene::updateMapSystem(float dt)
 {
     if (_mapGenerator == nullptr || _player == nullptr) return;
     
-    // 首先检查玩家是否在走廊中
-    Hallway* currentHallway = _mapGenerator->getPlayerHallway(_player);
-    
-    // 如果在走廊中，限制在走廊的可行走区域内
-    if (currentHallway != nullptr)
-    {
-        Rect hallwayWalkable = currentHallway->getWalkableArea();
-        Vec2 pos = _player->getPosition();
-        
-        // 限制在走廊边界内
-        if (pos.x < hallwayWalkable.getMinX()) pos.x = hallwayWalkable.getMinX();
-        if (pos.x > hallwayWalkable.getMaxX()) pos.x = hallwayWalkable.getMaxX();
-        if (pos.y < hallwayWalkable.getMinY()) pos.y = hallwayWalkable.getMinY();
-        if (pos.y > hallwayWalkable.getMaxY()) pos.y = hallwayWalkable.getMaxY();
-        
-        _player->setPosition(pos);
-        return;  // 在走廊中时不再处理房间边界
-    }
+    Vec2 playerPos = _player->getPosition();
     
     // 检测玩家当前所在房间
     Room* newRoom = _mapGenerator->updatePlayerRoom(_player);
@@ -223,20 +206,26 @@ void GameScene::updateMapSystem(float dt)
         Vec2 pos = _player->getPosition();
         Vec2 center = _currentRoom->getCenter();
         
+        // 扩大门口区域判定范围，包含走廊入口
         float doorHalfWidth = Constants::DOOR_WIDTH * Constants::FLOOR_TILE_SIZE / 2.0f;
+        float doorExtend = Constants::FLOOR_TILE_SIZE * 3.0f; // 扩展3个瓦片的范围
         
         // 检查左右边界
         if (pos.x < walkable.getMinX()) {
-            // 左边界 - 检查是否有左门且在门范围内
-            if (!_currentRoom->hasDoor(Constants::DIR_LEFT) || 
-                pos.y < center.y - doorHalfWidth || pos.y > center.y + doorHalfWidth) {
+            // 左边界 - 检查是否有左门且在扩展的门范围内
+            bool inDoorArea = _currentRoom->hasDoor(Constants::DIR_LEFT) && 
+                             pos.y >= center.y - doorHalfWidth - doorExtend && 
+                             pos.y <= center.y + doorHalfWidth + doorExtend;
+            if (!inDoorArea) {
                 pos.x = walkable.getMinX();
             }
         }
         if (pos.x > walkable.getMaxX()) {
             // 右边界
-            if (!_currentRoom->hasDoor(Constants::DIR_RIGHT) || 
-                pos.y < center.y - doorHalfWidth || pos.y > center.y + doorHalfWidth) {
+            bool inDoorArea = _currentRoom->hasDoor(Constants::DIR_RIGHT) && 
+                             pos.y >= center.y - doorHalfWidth - doorExtend && 
+                             pos.y <= center.y + doorHalfWidth + doorExtend;
+            if (!inDoorArea) {
                 pos.x = walkable.getMaxX();
             }
         }
@@ -244,15 +233,19 @@ void GameScene::updateMapSystem(float dt)
         // 检查上下边界
         if (pos.y < walkable.getMinY()) {
             // 下边界
-            if (!_currentRoom->hasDoor(Constants::DIR_DOWN) || 
-                pos.x < center.x - doorHalfWidth || pos.x > center.x + doorHalfWidth) {
+            bool inDoorArea = _currentRoom->hasDoor(Constants::DIR_DOWN) && 
+                             pos.x >= center.x - doorHalfWidth - doorExtend && 
+                             pos.x <= center.x + doorHalfWidth + doorExtend;
+            if (!inDoorArea) {
                 pos.y = walkable.getMinY();
             }
         }
         if (pos.y > walkable.getMaxY()) {
             // 上边界
-            if (!_currentRoom->hasDoor(Constants::DIR_UP) || 
-                pos.x < center.x - doorHalfWidth || pos.x > center.x + doorHalfWidth) {
+            bool inDoorArea = _currentRoom->hasDoor(Constants::DIR_UP) && 
+                             pos.x >= center.x - doorHalfWidth - doorExtend && 
+                             pos.x <= center.x + doorHalfWidth + doorExtend;
+            if (!inDoorArea) {
                 pos.y = walkable.getMaxY();
             }
         }

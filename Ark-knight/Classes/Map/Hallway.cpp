@@ -1,5 +1,4 @@
 ﻿#include "Hallway.h"
-#include "Entities/Player/Player.h"
 
 USING_NS_CC;
 
@@ -29,24 +28,21 @@ bool Hallway::initWithDirection(int direction) {
     _centerX = 0.0f;
     _centerY = 0.0f;
     
-    // 计算走廊尺寸
+    // 走廊只在房间之间的空隙区域
     // 房间中心距离 = 900px，房间宽度 = 800px，房间高度 = 544px
-    // 两个房间边缘之间的距离 = 100px（宽度）或 356px（高度）
-    // 走廊应该填满这个间隔，包括两端连接房间的部分
+    // 空隙 = 900 - 800 = 100px (水平) 或 900 - 544 = 356px (垂直)
     
     float tileSize = Constants::FLOOR_TILE_SIZE;
     
     if (_direction == Constants::DIR_UP || _direction == Constants::DIR_DOWN) {
-        // 垂直走廊：宽度与门一致
+        // 垂直走廊
         _tilesWidth = Constants::DOOR_WIDTH;
-        // 垂直间隔：900 - 544 = 356px = 11.125 瓦片，向上取整为 12 来填满空隙
         float gap = Constants::ROOM_CENTER_DIST - Constants::ROOM_TILES_H * tileSize;
-        _tilesHeight = static_cast<int>(gap / tileSize) + 1;
+        _tilesHeight = static_cast<int>(gap / tileSize);
     } else {
-        // 水平走廊：宽度填满间隔
-        // 水平间隔：900 - 800 = 100px = 3.125 瓦片，向上取整为 4 来填满空隙
+        // 水平走廊  
         float gap = Constants::ROOM_CENTER_DIST - Constants::ROOM_TILES_W * tileSize;
-        _tilesWidth = static_cast<int>(gap / tileSize) + 1;
+        _tilesWidth = static_cast<int>(gap / tileSize);
         _tilesHeight = Constants::DOOR_WIDTH;
     }
     
