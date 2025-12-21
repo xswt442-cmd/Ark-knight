@@ -161,8 +161,22 @@ void GameScene::createPlayer()
         return;
     }
     
-    // 设置玩家初始位置
-    _player->setPosition(SCREEN_CENTER);
+    // 设置玩家初始位置在起始房间的中心
+    if (_currentRoom) {
+        Vec2 roomCenter = _currentRoom->getCenter();
+        _player->setPosition(roomCenter);
+        GAME_LOG("Player created at room center (%.1f, %.1f)", roomCenter.x, roomCenter.y);
+        GAME_LOG("Room walkable area: X[%.1f, %.1f], Y[%.1f, %.1f]",
+                 _currentRoom->getWalkableArea().getMinX(),
+                 _currentRoom->getWalkableArea().getMaxX(),
+                 _currentRoom->getWalkableArea().getMinY(),
+                 _currentRoom->getWalkableArea().getMaxY());
+    } else {
+        // 如果没有当前房间，使用屏幕中心作为后备
+        _player->setPosition(SCREEN_CENTER);
+        GAME_LOG("Player created at screen center (%.1f, %.1f)", 
+                 SCREEN_CENTER.x, SCREEN_CENTER.y);
+    }
     
     // 创建玩家精灵（临时使用纯色方块）
     auto drawNode = DrawNode::create();
@@ -174,8 +188,6 @@ void GameScene::createPlayer()
     _player->setGlobalZOrder(Constants::ZOrder::ENTITY);
     
     _gameLayer->addChild(_player);
-    
-    GAME_LOG("Player created at position (%.1f, %.1f)", _player->getPositionX(), _player->getPositionY());
 }
 
 void GameScene::createTestEnemies()
@@ -257,7 +269,8 @@ void GameScene::updateMapSystem(float dt)
 {
     if (_mapGenerator == nullptr || _player == nullptr) return;
     
-    Vec2 pos = _player->getPosition();
+    // 获取玩家的世界坐标（而不是相对于gameLayer的本地坐标）
+    Vec2 pos = _player->getParent()->convertToWorldSpace(_player->getPosition());
     
     // 首先检查玩家是否在走廊中
     Hallway* currentHallway = _mapGenerator->getPlayerHallway(_player);
