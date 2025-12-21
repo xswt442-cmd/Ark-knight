@@ -58,13 +58,14 @@ void Room::setCenter(float x, float y) {
     float tileSize = Constants::FLOOR_TILE_SIZE;
     float halfWidth = tileSize * (_tilesWidth / 2.0f);
     float halfHeight = tileSize * (_tilesHeight / 2.0f);
+    float playerHalfSize = 15.0f;  // 玩家半径约15像素
     
-    // 房间内部可行走区域（排除墙壁）
-    // 只排除墙壁本身，不额外缩进玩家半径（让玩家中心能贴近墙壁）
-    _leftX = _centerX - halfWidth + tileSize;   // 左墙右边缘
-    _rightX = _centerX + halfWidth - tileSize;  // 右墙左边缘
-    _topY = _centerY + halfHeight - tileSize;   // 上墙下边缘
-    _bottomY = _centerY - halfHeight + tileSize; // 下墙上边缘
+    // 房间内部可行走区域（排除墙壁并考虑玩家尺寸）
+    // 边界要留出玩家半径的距离，防止卡墙
+    _leftX = _centerX - halfWidth + tileSize + playerHalfSize;   // 左墙右边缘 + 玩家半径
+    _rightX = _centerX + halfWidth - tileSize - playerHalfSize;  // 右墙左边缘 - 玩家半径
+    _topY = _centerY + halfHeight - tileSize - playerHalfSize;   // 上墙下边缘 - 玩家半径
+    _bottomY = _centerY - halfHeight + tileSize + playerHalfSize; // 下墙上边缘 + 玩家半径
 }
 
 void Room::createMap() {
