@@ -59,11 +59,16 @@ void Room::setCenter(float x, float y) {
     float halfWidth = tileSize * (_tilesWidth / 2.0f);
     float halfHeight = tileSize * (_tilesHeight / 2.0f);
     
-    // 房间内部可行走区域（排除墙壁）
-    _leftX = _centerX - halfWidth + tileSize * 1.5f;
-    _rightX = _centerX + halfWidth - tileSize * 1.5f;
-    _topY = _centerY + halfHeight - tileSize * 1.5f;
-    _bottomY = _centerY - halfHeight + tileSize * 1.5f;
+    // 房间内部可行走区域（排除墙壁和玩家半径）
+    // halfWidth/halfHeight 是从中心到房间边缘的距离
+    // 顶部墙中心 = centerY + halfHeight - tileSize*0.5（从边缘向内半个瓦片）
+    // 顶部墙下边缘 = 顶部墙中心 - tileSize*0.5
+    float playerRadius = tileSize * 0.5f;  // 玩家碰撞半径
+    
+    _leftX = _centerX - halfWidth + tileSize * 1.5f;   // 左墙右边缘 + 玩家半径
+    _rightX = _centerX + halfWidth - tileSize * 1.5f;  // 右墙左边缘 - 玩家半径
+    _topY = _centerY + halfHeight - tileSize * 1.5f;   // 上墙下边缘 - 玩家半径
+    _bottomY = _centerY - halfHeight + tileSize * 1.5f; // 下墙上边缘 + 玩家半径
 }
 
 void Room::createMap() {
@@ -86,8 +91,10 @@ void Room::createMap() {
     setCenter(_centerX, _centerY);
     
     float tileSize = Constants::FLOOR_TILE_SIZE;
-    float startX = _centerX - tileSize * (_tilesWidth / 2);
-    float startY = _centerY + tileSize * (_tilesHeight / 2);
+    // 对于偶数瓦片，中心在两个瓦片之间
+    // 第0列瓦片中心 = centerX - tileSize * (width/2 - 0.5)
+    float startX = _centerX - tileSize * (_tilesWidth / 2.0f - 0.5f);
+    float startY = _centerY + tileSize * (_tilesHeight / 2.0f - 0.5f);
     
     float curX = startX;
     float curY = startY;
