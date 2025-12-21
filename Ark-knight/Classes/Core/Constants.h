@@ -110,6 +110,7 @@ namespace Constants {
         constexpr int EFFECT = 70;
         constexpr int MINIMAP = 90;
         constexpr int UI = 100;
+        constexpr int UI_GLOBAL = 500;     // UI元素的全局Z序（确保不被遮挡）
     }
     
     // ==================== 房间类型 ====================

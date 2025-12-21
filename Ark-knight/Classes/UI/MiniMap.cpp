@@ -24,11 +24,13 @@ bool MiniRoom::init() {
     _isCurrent = false;
     
     _background = DrawNode::create();
+    _background->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL);
     this->addChild(_background);
     
     for (int i = 0; i < 4; i++) {
         _doors[i] = DrawNode::create();
         _doors[i]->setVisible(false);
+        _doors[i]->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL);
         this->addChild(_doors[i]);
     }
     
@@ -153,6 +155,7 @@ bool MiniMap::init() {
         Vec2(_totalWidth + bgPadding, _totalHeight + bgPadding),
         Color4F(0.0f, 0.0f, 0.0f, 0.3f)
     );
+    background->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL);
     this->addChild(background, -1);
     
     Size visibleSize = Director::getInstance()->getVisibleSize();
@@ -161,7 +164,7 @@ bool MiniMap::init() {
         visibleSize.height - _totalHeight - 20
     ));
     
-    this->setGlobalZOrder(Constants::ZOrder::MINIMAP);
+    this->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL);
     
     return true;
 }
