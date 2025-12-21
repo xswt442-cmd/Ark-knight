@@ -55,6 +55,16 @@ private:
     void initMapSystem();
     
     /**
+     * 初始化相机系统
+     */
+    void initCamera();
+    
+    /**
+     * 更新相机位置（跟随玩家）
+     */
+    void updateCamera(float dt);
+    
+    /**
      * 更新地图和房间
      */
     void updateMapSystem(float dt);
@@ -115,6 +125,9 @@ private:
     MapGenerator* _mapGenerator;
     MiniMap* _miniMap;
     Room* _currentRoom;
+    
+    // 相机系统
+    Camera* _camera;
     
     // HUD元素
     Label* _hpLabel;

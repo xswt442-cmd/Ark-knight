@@ -24,6 +24,7 @@ bool GameScene::init()
     initLayers();
     initMapSystem();    // 初始化地图系统
     createPlayer();
+    initCamera();       // 初始化相机
     // createTestEnemies();  // 敌人由房间生成，不再单独创建
     createHUD();
     setupKeyboardListener();
@@ -70,6 +71,107 @@ void GameScene::initMapSystem()
     _currentRoom = _mapGenerator->getBeginRoom();
     
     GAME_LOG("Map system initialized with %d rooms", _mapGenerator->getRoomCount());
+}
+
+void GameScene::initCamera()
+{
+    auto visibleSize = Director::getInstance()->getVisibleSize();
+    
+    // 创建正交相机（适合2D游戏）
+    _camera = Camera::createOrthographic(visibleSize.width, visibleSize.height, 1, 1000);
+    
+    if (_camera && _player)
+    {
+        // 设置相机初始位置（跟随玩家）
+        Vec3 playerPos3D(_player->getPositionX(), _player->getPositionY(), 0);
+        _camera->setPosition3D(Vec3(playerPos3D.x, playerPos3D.y, 100));
+        _camera->lookAt(playerPos3D, Vec3(0, 1, 0));
+        
+        // 将相机添加到游戏层
+        _gameLayer->addChild(_camera);
+        
+        // 不要设置整个游戏层的CameraMask，让子节点继承默认相机
+        // 这样就不会出现一片黑的问题
+        _camera->setCameraFlag(CameraFlag::USER1);
+        
+        // 设置地图生成器和玩家使用自定义相机
+        if (_mapGenerator) {
+            _mapGenerator->setCameraMask((unsigned short)CameraFlag::USER1);
+        }
+        if (_player) {
+            _player->setCameraMask((unsigned short)CameraFlag::USER1);
+        }
+        
+        GAME_LOG("Camera initialized at player position (%.1f, %.1f)", 
+                 _player->getPositionX(), _player->getPositionY());
+    }
+}
+
+void GameScene::updateCamera(float dt)
+{
+    if (!_camera || !_player || !_mapGenerator) return;
+    
+    Vec2 playerPos = _player->getPosition();
+    
+    // 计算地图总边界（所有房间的范围）
+    float minX = FLT_MAX, maxX = -FLT_MAX;
+    float minY = FLT_MAX, maxY = -FLT_MAX;
+    
+    // 遍历所有房间，找到地图边界
+    for (int y = 0; y < Constants::MAP_GRID_SIZE; y++) {
+        for (int x = 0; x < Constants::MAP_GRID_SIZE; x++) {
+            Room* room = _mapGenerator->getRoom(x, y);
+            if (room) {
+                Vec2 center = room->getCenter();
+                float roomWidth = Constants::ROOM_TILES_W * Constants::FLOOR_TILE_SIZE;
+                float roomHeight = Constants::ROOM_TILES_H * Constants::FLOOR_TILE_SIZE;
+                
+                minX = std::min(minX, center.x - roomWidth / 2.0f);
+                maxX = std::max(maxX, center.x + roomWidth / 2.0f);
+                minY = std::min(minY, center.y - roomHeight / 2.0f);
+                maxY = std::max(maxY, center.y + roomHeight / 2.0f);
+            }
+        }
+    }
+    
+    // 获取屏幕尺寸的一半（相机可见范围）
+    auto visibleSize = Director::getInstance()->getVisibleSize();
+    float halfWidth = visibleSize.width / 2.0f;
+    float halfHeight = visibleSize.height / 2.0f;
+    
+    // 限制相机位置，使其不超出地图边界
+    float camX = playerPos.x;
+    float camY = playerPos.y;
+    
+    // 限制X轴
+    if (maxX - minX > visibleSize.width) {
+        // 地图宽度大于屏幕，限制相机不显示地图外区域
+        camX = std::max(minX + halfWidth, camX);
+        camX = std::min(maxX - halfWidth, camX);
+    } else {
+        // 地图宽度小于屏幕，相机居中显示整个地图
+        camX = (minX + maxX) / 2.0f;
+    }
+    
+    // 限制Y轴
+    if (maxY - minY > visibleSize.height) {
+        // 地图高度大于屏幕，限制相机不显示地图外区域
+        camY = std::max(minY + halfHeight, camY);
+        camY = std::min(maxY - halfHeight, camY);
+    } else {
+        // 地图高度小于屏幕，相机居中显示整个地图
+        camY = (minY + maxY) / 2.0f;
+    }
+    
+    // 平滑跟随（使用线性插值）
+    Vec3 currentPos = _camera->getPosition3D();
+    float smoothFactor = 0.1f;  // 平滑系数，越小越平滑但响应越慢
+    
+    Vec3 targetPos(camX, camY, 100);
+    Vec3 newPos = currentPos + (targetPos - currentPos) * smoothFactor;
+    
+    _camera->setPosition3D(newPos);
+    _camera->lookAt(Vec3(newPos.x, newPos.y, 0), Vec3(0, 1, 0));
 }
 
 void GameScene::createPlayer()
@@ -167,6 +269,7 @@ void GameScene::update(float dt)
     Scene::update(dt);
     
     updatePlayer(dt);
+    updateCamera(dt);     // 更新相机位置
     updateMapSystem(dt);  // 更新地图系统
     updateEnemies(dt);
     updateHUD(dt);
