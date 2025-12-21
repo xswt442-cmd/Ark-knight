@@ -25,6 +25,8 @@ public:
     void setGridPosition(int x, int y) { _gridX = x; _gridY = y; }
     int getGridX() const { return _gridX; }
     int getGridY() const { return _gridY; }
+    int getTilesWidth() const { return _tilesWidth; }
+    int getTilesHeight() const { return _tilesHeight; }
     
     void setRoomType(Constants::RoomType type) { _roomType = type; }
     Constants::RoomType getRoomType() const { return _roomType; }
@@ -43,6 +45,9 @@ public:
     bool isPlayerInRoom(Player* player) const;
     cocos2d::Rect getWalkableArea() const;
     void moveBy(float dx, float dy);
+    
+    // 检查玩家位置并修改速度（参考学长实现）
+    bool checkPlayerPosition(Player* player, float& speedX, float& speedY);
     
     void setVisited(bool visited) { _visited = visited; }
     bool isVisited() const { return _visited; }

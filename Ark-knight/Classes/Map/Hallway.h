@@ -16,9 +16,15 @@ public:
     
     void createMap();
     void setCenter(float x, float y);
+    void setGapSize(float gapSize);  // 设置实际空隙大小
     
     int getDirection() const { return _direction; }
     cocos2d::Vec2 getCenter() const { return cocos2d::Vec2(_centerX, _centerY); }
+    cocos2d::Rect getWalkableArea() const { 
+        float width = _rightX - _leftX;
+        float height = _topY - _bottomY;
+        return cocos2d::Rect(_leftX, _bottomY, width, height);
+    }
     
     // 检查玩家位置并限制在走廊内
     bool checkPlayerPosition(class Player* player, float& speedX, float& speedY);

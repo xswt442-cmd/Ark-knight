@@ -148,18 +148,7 @@ void Character::move(const Vec2& direction, float dt)
     // 计算新位置
     Vec2 newPos = this->getPosition() + normalizedDir * _moveSpeed * dt;
     
-    // 边界限制 - 确保不走出屏幕
-    auto visibleSize = Director::getInstance()->getVisibleSize();
-    auto origin = Director::getInstance()->getVisibleOrigin();
-    
-    float margin = 30.0f;  // 边距
-    float minX = origin.x + margin;
-    float maxX = origin.x + visibleSize.width - margin;
-    float minY = origin.y + margin;
-    float maxY = origin.y + visibleSize.height - margin;
-    
-    newPos.x = std::max(minX, std::min(maxX, newPos.x));
-    newPos.y = std::max(minY, std::min(maxY, newPos.y));
+    // 移除了旧的屏幕边界限制，现在由地图系统的Room和Hallway来处理边界
     
     this->setPosition(newPos);
     

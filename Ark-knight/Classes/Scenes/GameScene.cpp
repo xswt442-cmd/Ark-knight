@@ -24,6 +24,7 @@ bool GameScene::init()
     initLayers();
     initMapSystem();    // 初始化地图系统
     createPlayer();
+    initCamera();       // 初始化相机
     // createTestEnemies();  // 敌人由房间生成，不再单独创建
     createHUD();
     setupKeyboardListener();
@@ -72,6 +73,84 @@ void GameScene::initMapSystem()
     GAME_LOG("Map system initialized with %d rooms", _mapGenerator->getRoomCount());
 }
 
+void GameScene::initCamera()
+{
+    // 不创建自定义相机，使用默认相机
+    // 通过移动游戏层来实现相机跟随效果
+    _camera = nullptr;
+    
+    GAME_LOG("Camera system initialized (using default camera with layer movement)");
+}
+
+void GameScene::updateCamera(float dt)
+{
+    if (!_player || !_mapGenerator) return;
+    
+    auto visibleSize = Director::getInstance()->getVisibleSize();
+    Vec2 playerPos = _player->getPosition();
+    
+    // 计算地图总边界（所有房间的范围）
+    float minX = FLT_MAX, maxX = -FLT_MAX;
+    float minY = FLT_MAX, maxY = -FLT_MAX;
+    
+    // 遍历所有房间，找到地图边界
+    for (int y = 0; y < Constants::MAP_GRID_SIZE; y++) {
+        for (int x = 0; x < Constants::MAP_GRID_SIZE; x++) {
+            Room* room = _mapGenerator->getRoom(x, y);
+            if (room) {
+                Vec2 center = room->getCenter();
+                float roomWidth = Constants::ROOM_TILES_W * Constants::FLOOR_TILE_SIZE;
+                float roomHeight = Constants::ROOM_TILES_H * Constants::FLOOR_TILE_SIZE;
+                
+                minX = std::min(minX, center.x - roomWidth / 2.0f);
+                maxX = std::max(maxX, center.x + roomWidth / 2.0f);
+                minY = std::min(minY, center.y - roomHeight / 2.0f);
+                maxY = std::max(maxY, center.y + roomHeight / 2.0f);
+            }
+        }
+    }
+    
+    // 获取屏幕尺寸的一半（可见范围）
+    float halfWidth = visibleSize.width / 2.0f;
+    float halfHeight = visibleSize.height / 2.0f;
+    
+    // 计算游戏层应该的位置（相机跟随的反向）
+    // 玩家在屏幕中心，所以游戏层要向相反方向移动
+    float targetX = halfWidth - playerPos.x;
+    float targetY = halfHeight - playerPos.y;
+    
+    // 限制游戏层位置，使其不超出地图边界
+    if (maxX - minX > visibleSize.width) {
+        // 地图宽度大于屏幕
+        float minLayerX = visibleSize.width - maxX;
+        float maxLayerX = -minX;
+        targetX = std::max(minLayerX, std::min(maxLayerX, targetX));
+    } else {
+        // 地图宽度小于屏幕，居中显示
+        targetX = halfWidth - (minX + maxX) / 2.0f;
+    }
+    
+    if (maxY - minY > visibleSize.height) {
+        // 地图高度大于屏幕
+        float minLayerY = visibleSize.height - maxY;
+        float maxLayerY = -minY;
+        targetY = std::max(minLayerY, std::min(maxLayerY, targetY));
+    } else {
+        // 地图高度小于屏幕，居中显示
+        targetY = halfHeight - (minY + maxY) / 2.0f;
+    }
+    
+    // 平滑移动游戏层
+    Vec2 currentPos = _gameLayer->getPosition();
+    float smoothFactor = 0.1f;
+    
+    Vec2 newPos;
+    newPos.x = currentPos.x + (targetX - currentPos.x) * smoothFactor;
+    newPos.y = currentPos.y + (targetY - currentPos.y) * smoothFactor;
+    
+    _gameLayer->setPosition(newPos);
+}
+
 void GameScene::createPlayer()
 {
     // 创建法师角色
@@ -82,8 +161,22 @@ void GameScene::createPlayer()
         return;
     }
     
-    // 设置玩家初始位置
-    _player->setPosition(SCREEN_CENTER);
+    // 设置玩家初始位置在起始房间的中心
+    if (_currentRoom) {
+        Vec2 roomCenter = _currentRoom->getCenter();
+        _player->setPosition(roomCenter);
+        GAME_LOG("Player created at room center (%.1f, %.1f)", roomCenter.x, roomCenter.y);
+        GAME_LOG("Room walkable area: X[%.1f, %.1f], Y[%.1f, %.1f]",
+                 _currentRoom->getWalkableArea().getMinX(),
+                 _currentRoom->getWalkableArea().getMaxX(),
+                 _currentRoom->getWalkableArea().getMinY(),
+                 _currentRoom->getWalkableArea().getMaxY());
+    } else {
+        // 如果没有当前房间，使用屏幕中心作为后备
+        _player->setPosition(SCREEN_CENTER);
+        GAME_LOG("Player created at screen center (%.1f, %.1f)", 
+                 SCREEN_CENTER.x, SCREEN_CENTER.y);
+    }
     
     // 创建玩家精灵（临时使用纯色方块）
     auto drawNode = DrawNode::create();
@@ -95,8 +188,6 @@ void GameScene::createPlayer()
     _player->setGlobalZOrder(Constants::ZOrder::ENTITY);
     
     _gameLayer->addChild(_player);
-    
-    GAME_LOG("Player created at position (%.1f, %.1f)", _player->getPositionX(), _player->getPositionY());
 }
 
 void GameScene::createTestEnemies()
@@ -167,6 +258,7 @@ void GameScene::update(float dt)
     Scene::update(dt);
     
     updatePlayer(dt);
+    updateCamera(dt);     // 更新相机位置
     updateMapSystem(dt);  // 更新地图系统
     updateEnemies(dt);
     updateHUD(dt);
@@ -177,25 +269,16 @@ void GameScene::updateMapSystem(float dt)
 {
     if (_mapGenerator == nullptr || _player == nullptr) return;
     
-    Vec2 pos = _player->getPosition();
-    
-    // 首先检查玩家是否在走廊中
-    Hallway* currentHallway = _mapGenerator->getPlayerHallway(_player);
-    
-    if (currentHallway != nullptr) {
-        // 在走廊中，使用走廊的边界检测
-        float dummyX = 0, dummyY = 0;
-        currentHallway->checkPlayerPosition(_player, dummyX, dummyY);
-        return;
-    }
+    // 使用玩家的本地坐标（相对于_gameLayer）
+    Vec2 playerPos = _player->getPosition();
     
     // 检测玩家当前所在房间
-    Room* newRoom = _mapGenerator->updatePlayerRoom(_player);
+    Room* detectedRoom = _mapGenerator->updatePlayerRoom(_player);
     
-    if (newRoom != nullptr && newRoom != _currentRoom)
+    if (detectedRoom != nullptr && detectedRoom != _currentRoom)
     {
         // 玩家进入了新房间
-        _currentRoom = newRoom;
+        _currentRoom = detectedRoom;
         
         // 更新小地图
         if (_miniMap)
@@ -203,67 +286,127 @@ void GameScene::updateMapSystem(float dt)
             _miniMap->updateCurrentRoom(_currentRoom);
         }
         
-        GAME_LOG("Player entered room (%d, %d), type: %d", 
+        GAME_LOG("Player entered room (%d, %d)", 
                  _currentRoom->getGridX(), 
-                 _currentRoom->getGridY(),
-                 static_cast<int>(_currentRoom->getRoomType()));
+                 _currentRoom->getGridY());
     }
     
-    // 在房间内，使用房间的边界检测
-    if (_currentRoom != nullptr)
-    {
-        Rect walkable = _currentRoom->getWalkableArea();
-        Vec2 center = _currentRoom->getCenter();
+    // 边界检测和修正
+    float tileSize = Constants::FLOOR_TILE_SIZE;
+    bool positionCorrected = false;
+    Vec2 correctedPos = playerPos;
+    
+    // 遍历所有房间检测
+    bool inAnyRoom = false;
+    for (auto room : _mapGenerator->getAllRooms()) {
+        if (room == nullptr) continue;
         
-        float doorHalfWidth = Constants::DOOR_WIDTH * Constants::FLOOR_TILE_SIZE / 2.0f;
-        bool modified = false;
+        Rect walkable = room->getWalkableArea();
+        Vec2 center = room->getCenter();
+        float doorHalfWidth = Constants::DOOR_WIDTH * tileSize / 2.0f;
         
-        // 检查边界，但允许在门口区域通过
-        if (pos.x < walkable.getMinX()) {
-            // 左边界：如果有门且在门范围内，允许通过；否则阻挡
-            if (_currentRoom->hasDoor(Constants::DIR_LEFT) && 
-                std::abs(pos.y - center.y) <= doorHalfWidth) {
-                // 在门口区域，允许通过
-            } else {
-                pos.x = walkable.getMinX();
-                modified = true;
+        // 检查是否在房间扩展范围内
+        float extLeft = walkable.getMinX() - tileSize;
+        float extRight = walkable.getMaxX() + tileSize;
+        float extTop = walkable.getMaxY() + tileSize;
+        float extBottom = walkable.getMinY() - tileSize;
+        
+        if (playerPos.x >= extLeft && playerPos.x <= extRight &&
+            playerPos.y >= extBottom && playerPos.y <= extTop) {
+            
+            inAnyRoom = true;
+            bool canPassDoor = room->allEnemiesKilled();
+            
+            // 检测并修正左边界
+            if (playerPos.x < walkable.getMinX()) {
+                bool canPassLeft = canPassDoor && room->hasDoor(Constants::DIR_LEFT) && 
+                                   std::abs(playerPos.y - center.y) <= doorHalfWidth;
+                if (!canPassLeft) {
+                    correctedPos.x = walkable.getMinX();
+                    positionCorrected = true;
+                }
+            }
+            // 检测并修正右边界
+            if (playerPos.x > walkable.getMaxX()) {
+                bool canPassRight = canPassDoor && room->hasDoor(Constants::DIR_RIGHT) && 
+                                    std::abs(playerPos.y - center.y) <= doorHalfWidth;
+                if (!canPassRight) {
+                    correctedPos.x = walkable.getMaxX();
+                    positionCorrected = true;
+                }
+            }
+            // 检测并修正下边界
+            if (playerPos.y < walkable.getMinY()) {
+                bool canPassDown = canPassDoor && room->hasDoor(Constants::DIR_DOWN) && 
+                                   std::abs(playerPos.x - center.x) <= doorHalfWidth;
+                if (!canPassDown) {
+                    correctedPos.y = walkable.getMinY();
+                    positionCorrected = true;
+                }
+            }
+            // 检测并修正上边界
+            if (playerPos.y > walkable.getMaxY()) {
+                bool canPassUp = canPassDoor && room->hasDoor(Constants::DIR_UP) && 
+                                 std::abs(playerPos.x - center.x) <= doorHalfWidth;
+                if (!canPassUp) {
+                    correctedPos.y = walkable.getMaxY();
+                    positionCorrected = true;
+                }
+            }
+            
+            break;  // 找到所在房间后退出
+        }
+    }
+    
+    // 如果不在任何房间内，检测走廊
+    if (!inAnyRoom) {
+        for (auto hallway : _mapGenerator->getAllHallways()) {
+            if (hallway == nullptr) continue;
+            
+            Rect bounds = hallway->getWalkableArea();
+            int dir = hallway->getDirection();
+            
+            // 扩展检测范围
+            float extLeft = bounds.getMinX() - tileSize;
+            float extRight = bounds.getMaxX() + tileSize;
+            float extTop = bounds.getMaxY() + tileSize;
+            float extBottom = bounds.getMinY() - tileSize;
+            
+            if (playerPos.x >= extLeft && playerPos.x <= extRight &&
+                playerPos.y >= extBottom && playerPos.y <= extTop) {
+                
+                // 根据走廊方向限制
+                if (dir == Constants::DIR_LEFT || dir == Constants::DIR_RIGHT) {
+                    // 水平走廊：限制Y方向
+                    if (playerPos.y > bounds.getMaxY()) {
+                        correctedPos.y = bounds.getMaxY();
+                        positionCorrected = true;
+                    }
+                    if (playerPos.y < bounds.getMinY()) {
+                        correctedPos.y = bounds.getMinY();
+                        positionCorrected = true;
+                    }
+                }
+                else {
+                    // 垂直走廊：限制X方向
+                    if (playerPos.x > bounds.getMaxX()) {
+                        correctedPos.x = bounds.getMaxX();
+                        positionCorrected = true;
+                    }
+                    if (playerPos.x < bounds.getMinX()) {
+                        correctedPos.x = bounds.getMinX();
+                        positionCorrected = true;
+                    }
+                }
+                
+                break;  // 找到所在走廊后退出
             }
         }
-        else if (pos.x > walkable.getMaxX()) {
-            // 右边界
-            if (_currentRoom->hasDoor(Constants::DIR_RIGHT) && 
-                std::abs(pos.y - center.y) <= doorHalfWidth) {
-                // 在门口区域，允许通过
-            } else {
-                pos.x = walkable.getMaxX();
-                modified = true;
-            }
-        }
-        
-        if (pos.y < walkable.getMinY()) {
-            // 下边界
-            if (_currentRoom->hasDoor(Constants::DIR_DOWN) && 
-                std::abs(pos.x - center.x) <= doorHalfWidth) {
-                // 在门口区域，允许通过
-            } else {
-                pos.y = walkable.getMinY();
-                modified = true;
-            }
-        }
-        else if (pos.y > walkable.getMaxY()) {
-            // 上边界
-            if (_currentRoom->hasDoor(Constants::DIR_UP) && 
-                std::abs(pos.x - center.x) <= doorHalfWidth) {
-                // 在门口区域，允许通过
-            } else {
-                pos.y = walkable.getMaxY();
-                modified = true;
-            }
-        }
-        
-        if (modified) {
-            _player->setPosition(pos);
-        }
+    }
+    
+    // 应用位置修正
+    if (positionCorrected) {
+        _player->setPosition(correctedPos);
     }
 }
 
