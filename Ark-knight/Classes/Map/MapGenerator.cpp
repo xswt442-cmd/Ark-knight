@@ -56,8 +56,8 @@ void MapGenerator::generateMap() {
     randomGenerate(startX, startY);
     assignRoomTypes();
     connectAdjacentRooms();
-    generateHallways();  // 添加走廊生成
     
+    // 先创建房间地图（确保房间尺寸已根据类型调整）
     for (int y = 0; y < Constants::MAP_GRID_SIZE; y++) {
         for (int x = 0; x < Constants::MAP_GRID_SIZE; x++) {
             Room* room = _roomMatrix[x][y];
@@ -67,6 +67,9 @@ void MapGenerator::generateMap() {
             }
         }
     }
+    
+    // 在房间尺寸确定后再生成走廊
+    generateHallways();
     
     // 添加走廊到场景
     for (auto hallway : _hallways) {
@@ -239,8 +242,6 @@ void MapGenerator::generateHallways() {
     _hallways.clear();
     
     float tileSize = Constants::FLOOR_TILE_SIZE;
-    float roomWidth = Constants::ROOM_TILES_W * tileSize;   // 800px
-    float roomHeight = Constants::ROOM_TILES_H * tileSize;  // 544px
     
     for (int y = 0; y < Constants::MAP_GRID_SIZE; y++) {
         for (int x = 0; x < Constants::MAP_GRID_SIZE; x++) {
@@ -248,6 +249,8 @@ void MapGenerator::generateHallways() {
             if (room == nullptr) continue;
             
             Vec2 roomCenter = room->getCenter();
+            float roomWidth = room->getTilesWidth() * tileSize;
+            float roomHeight = room->getTilesHeight() * tileSize;
             
             // 只检查右边和下边，避免重复生成
             // 检查右边（DIR_RIGHT）
@@ -258,10 +261,11 @@ void MapGenerator::generateHallways() {
                 if (toX < Constants::MAP_GRID_SIZE && _roomMatrix[toX][toY] != nullptr) {
                     Room* rightRoom = _roomMatrix[toX][toY];
                     Vec2 rightCenter = rightRoom->getCenter();
+                    float rightRoomWidth = rightRoom->getTilesWidth() * tileSize;
                     
                     // 水平走廊：在两个房间的右/左边缘之间
                     float leftRoomRightEdge = roomCenter.x + roomWidth / 2.0f;
-                    float rightRoomLeftEdge = rightCenter.x - roomWidth / 2.0f;
+                    float rightRoomLeftEdge = rightCenter.x - rightRoomWidth / 2.0f;
                     float hallwayCenterX = (leftRoomRightEdge + rightRoomLeftEdge) / 2.0f;
                     float hallwayCenterY = roomCenter.y;
                     
@@ -279,10 +283,11 @@ void MapGenerator::generateHallways() {
                 if (toY >= 0 && _roomMatrix[toX][toY] != nullptr) {
                     Room* downRoom = _roomMatrix[toX][toY];
                     Vec2 downCenter = downRoom->getCenter();
+                    float downRoomHeight = downRoom->getTilesHeight() * tileSize;
                     
                     // 垂直走廊：在两个房间的上/下边缘之间
                     float topRoomBottomEdge = roomCenter.y - roomHeight / 2.0f;
-                    float bottomRoomTopEdge = downCenter.y + roomHeight / 2.0f;
+                    float bottomRoomTopEdge = downCenter.y + downRoomHeight / 2.0f;
                     float hallwayCenterY = (topRoomBottomEdge + bottomRoomTopEdge) / 2.0f;
                     float hallwayCenterX = roomCenter.x;
                     

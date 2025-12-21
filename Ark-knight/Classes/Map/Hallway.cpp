@@ -61,12 +61,6 @@ void Hallway::createMap() {
     float startX = _centerX - tileSize * (_tilesWidth / 2.0f - 0.5f);
     float startY = _centerY + tileSize * (_tilesHeight / 2.0f - 0.5f);
     
-    // 计算边界（包括墙壁）
-    _leftX = startX;
-    _rightX = startX + tileSize * _tilesWidth;
-    _topY = startY;
-    _bottomY = startY - tileSize * _tilesHeight;
-    
     // 生成地板和墙壁
     for (int h = 0; h < _tilesHeight; h++) {
         for (int w = 0; w < _tilesWidth; w++) {
@@ -102,17 +96,24 @@ void Hallway::createMap() {
     }
     
     // 更新实际可行走边界（排除墙壁）
-    float playerRadius = tileSize * 0.5f;  // 玩家碰撞半径
+    float tileHalf = tileSize * 0.5f;
     
     if (_direction == Constants::DIR_LEFT || _direction == Constants::DIR_RIGHT) {
-        // 水平走廊：排除上下墙壁（不额外缩进玩家半径）
-        _topY = startY - tileSize;  // 顶墙下边缘
-        _bottomY = startY - tileSize * (_tilesHeight - 1);  // 底墙上边缘
+        // 水平走廊
+        _leftX = startX - tileHalf;  // 走廊左边缘
+        _rightX = startX + tileSize * _tilesWidth - tileHalf;  // 走廊右边缘
+        _topY = startY - tileSize + tileHalf;  // 顶墙下边缘（可行走区域上边）
+        _bottomY = startY - tileSize * (_tilesHeight - 2) - tileHalf;  // 底墙上边缘（可行走区域下边）
     } else {
-        // 垂直走廊：排除左右墙壁（不额外缩进玩家半径）
-        _leftX = startX + tileSize;  // 左墙右边缘
-        _rightX = startX + tileSize * (_tilesWidth - 1);  // 右墙左边缘
+        // 垂直走廊
+        _leftX = startX + tileSize - tileHalf;  // 左墙右边缘
+        _rightX = startX + tileSize * (_tilesWidth - 2) + tileHalf;  // 右墙左边缘
+        _topY = startY + tileHalf;  // 走廊上边缘
+        _bottomY = startY - tileSize * _tilesHeight + tileHalf;  // 走廊下边缘
     }
+    
+    log("Hallway dir=%d center=(%.1f,%.1f) walkable: X[%.1f,%.1f] Y[%.1f,%.1f]",
+        _direction, _centerX, _centerY, _leftX, _rightX, _bottomY, _topY);
 }
 
 void Hallway::generateFloor(float x, float y) {

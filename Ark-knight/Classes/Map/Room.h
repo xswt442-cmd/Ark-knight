@@ -25,6 +25,8 @@ public:
     void setGridPosition(int x, int y) { _gridX = x; _gridY = y; }
     int getGridX() const { return _gridX; }
     int getGridY() const { return _gridY; }
+    int getTilesWidth() const { return _tilesWidth; }
+    int getTilesHeight() const { return _tilesHeight; }
     
     void setRoomType(Constants::RoomType type) { _roomType = type; }
     Constants::RoomType getRoomType() const { return _roomType; }
