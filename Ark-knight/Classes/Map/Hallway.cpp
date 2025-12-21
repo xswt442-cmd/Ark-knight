@@ -60,19 +60,55 @@ void Hallway::createMap() {
     float startX = _centerX - tileSize * (_tilesWidth / 2.0f);
     float startY = _centerY + tileSize * (_tilesHeight / 2.0f);
     
-    // 计算边界
+    // 计算边界（包括墙壁）
     _leftX = startX;
     _rightX = startX + tileSize * _tilesWidth;
     _topY = startY;
     _bottomY = startY - tileSize * _tilesHeight;
     
-    // 走廊只生成地板
+    // 生成地板和墙壁
     for (int h = 0; h < _tilesHeight; h++) {
         for (int w = 0; w < _tilesWidth; w++) {
             float x = startX + w * tileSize;
             float y = startY - h * tileSize;
-            generateFloor(x, y);
+            
+            bool isWall = false;
+            int zOrder = Constants::ZOrder::WALL_ABOVE;
+            
+            if (_direction == Constants::DIR_LEFT || _direction == Constants::DIR_RIGHT) {
+                // 水平走廊：上下两侧是墙
+                if (h == 0) {
+                    isWall = true;
+                    zOrder = Constants::ZOrder::WALL_BELOW;
+                } else if (h == _tilesHeight - 1) {
+                    isWall = true;
+                    zOrder = Constants::ZOrder::WALL_ABOVE;
+                }
+            } else {
+                // 垂直走廊：左右两侧是墙
+                if (w == 0 || w == _tilesWidth - 1) {
+                    isWall = true;
+                    zOrder = Constants::ZOrder::WALL_ABOVE;
+                }
+            }
+            
+            if (isWall) {
+                generateWall(x, y, zOrder);
+            } else {
+                generateFloor(x, y);
+            }
         }
+    }
+    
+    // 更新实际可行走边界（排除墙壁）
+    if (_direction == Constants::DIR_LEFT || _direction == Constants::DIR_RIGHT) {
+        // 水平走廊：排除上下墙壁
+        _topY = startY - tileSize;
+        _bottomY = startY - tileSize * (_tilesHeight - 1);
+    } else {
+        // 垂直走廊：排除左右墙壁
+        _leftX = startX + tileSize;
+        _rightX = startX + tileSize * (_tilesWidth - 1);
     }
 }
 
@@ -90,39 +126,58 @@ void Hallway::generateFloor(float x, float y) {
     _floors.pushBack(floor);
 }
 
+void Hallway::generateWall(float x, float y, int zOrder) {
+    auto wall = Sprite::create("res/wall.png");
+    if (!wall) {
+        wall = Sprite::create();
+        wall->setTextureRect(Rect(0, 0, Constants::FLOOR_TILE_SIZE, Constants::FLOOR_TILE_SIZE));
+        wall->setColor(Color3B(80, 80, 100));
+    }
+    
+    wall->setPosition(Vec2(x, y));
+    wall->setGlobalZOrder(zOrder);
+    this->addChild(wall, zOrder);
+    _walls.pushBack(wall);
+}
+
 bool Hallway::checkPlayerPosition(Player* player, float& speedX, float& speedY) {
     if (!player) return false;
     
     Vec2 pos = player->getPosition();
     float tileSize = Constants::FLOOR_TILE_SIZE;
+    float halfTile = tileSize / 2.0f;
     
-    // 根据走廊方向限制玩家移动
+    // 根据走廊方向限制玩家位置
     if (_direction == Constants::DIR_LEFT || _direction == Constants::DIR_RIGHT) {
-        // 水平走廊：只限制Y轴，X轴可以自由通过
-        if (pos.x >= _leftX - tileSize && pos.x <= _rightX + tileSize &&
+        // 水平走廊：只限制Y轴（检测是否在走廊X范围和扩展的Y范围内）
+        if (pos.x >= _leftX - halfTile && pos.x <= _rightX + halfTile &&
             pos.y <= _topY + tileSize && pos.y >= _bottomY - tileSize) {
             
-            // 限制Y轴不能超出走廊宽度
-            if (speedY > 0 && pos.y >= _topY + tileSize / 2) {
-                speedY = 0.0f;
+            // 限制Y轴不能超出走廊可行走区域
+            if (pos.y > _topY) {
+                pos.y = _topY;
+                player->setPosition(pos);
             }
-            else if (speedY < 0 && pos.y <= _bottomY) {
-                speedY = 0.0f;
+            else if (pos.y < _bottomY) {
+                pos.y = _bottomY;
+                player->setPosition(pos);
             }
             return true;
         }
     }
     else {
-        // 垂直走廊：只限制X轴，Y轴可以自由通过
+        // 垂直走廊：只限制X轴（检测是否在走廊Y范围和扩展的X范围内）
         if (pos.x >= _leftX - tileSize && pos.x <= _rightX + tileSize &&
-            pos.y <= _topY + tileSize && pos.y >= _bottomY - tileSize) {
+            pos.y <= _topY + halfTile && pos.y >= _bottomY - halfTile) {
             
-            // 限制X轴不能超出走廊宽度
-            if (speedX > 0 && pos.x >= _rightX) {
-                speedX = 0.0f;
+            // 限制X轴不能超出走廊可行走区域
+            if (pos.x > _rightX) {
+                pos.x = _rightX;
+                player->setPosition(pos);
             }
-            else if (speedX < 0 && pos.x <= _leftX) {
-                speedX = 0.0f;
+            else if (pos.x < _leftX) {
+                pos.x = _leftX;
+                player->setPosition(pos);
             }
             return true;
         }

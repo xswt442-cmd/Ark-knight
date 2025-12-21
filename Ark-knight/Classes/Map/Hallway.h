@@ -28,6 +28,7 @@ public:
     
 private:
     void generateFloor(float x, float y);
+    void generateWall(float x, float y, int zOrder);
     
     float _centerX;
     float _centerY;
@@ -39,6 +40,7 @@ private:
     float _leftX, _rightX, _topY, _bottomY;
     
     cocos2d::Vector<cocos2d::Sprite*> _floors;
+    cocos2d::Vector<cocos2d::Sprite*> _walls;
 };
 
 #endif // __HALLWAY_H__

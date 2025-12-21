@@ -177,17 +177,15 @@ void GameScene::updateMapSystem(float dt)
 {
     if (_mapGenerator == nullptr || _player == nullptr) return;
     
-    Vec2 velocity = _player->getVelocity();
-    float speedX = velocity.x;
-    float speedY = velocity.y;
+    Vec2 pos = _player->getPosition();
     
     // 首先检查玩家是否在走廊中
     Hallway* currentHallway = _mapGenerator->getPlayerHallway(_player);
     
     if (currentHallway != nullptr) {
         // 在走廊中，使用走廊的边界检测
-        currentHallway->checkPlayerPosition(_player, speedX, speedY);
-        _player->setVelocity(Vec2(speedX, speedY));
+        float dummyX = 0, dummyY = 0;
+        currentHallway->checkPlayerPosition(_player, dummyX, dummyY);
         return;
     }
     
@@ -215,29 +213,30 @@ void GameScene::updateMapSystem(float dt)
     if (_currentRoom != nullptr)
     {
         Rect walkable = _currentRoom->getWalkableArea();
-        Vec2 pos = _player->getPosition();
         Vec2 center = _currentRoom->getCenter();
         
         float doorHalfWidth = Constants::DOOR_WIDTH * Constants::FLOOR_TILE_SIZE / 2.0f;
-        float tileSize = Constants::FLOOR_TILE_SIZE;
+        bool modified = false;
         
         // 检查边界，但允许在门口区域通过
         if (pos.x < walkable.getMinX()) {
-            // 左边界：如果有门且在门范围内，允许通过
+            // 左边界：如果有门且在门范围内，允许通过；否则阻挡
             if (_currentRoom->hasDoor(Constants::DIR_LEFT) && 
                 std::abs(pos.y - center.y) <= doorHalfWidth) {
-                // 在门范围内，不限制
+                // 在门口区域，允许通过
             } else {
-                speedX = 0.0f;
+                pos.x = walkable.getMinX();
+                modified = true;
             }
         }
         else if (pos.x > walkable.getMaxX()) {
             // 右边界
             if (_currentRoom->hasDoor(Constants::DIR_RIGHT) && 
                 std::abs(pos.y - center.y) <= doorHalfWidth) {
-                // 在门范围内，不限制
+                // 在门口区域，允许通过
             } else {
-                speedX = 0.0f;
+                pos.x = walkable.getMaxX();
+                modified = true;
             }
         }
         
@@ -245,22 +244,26 @@ void GameScene::updateMapSystem(float dt)
             // 下边界
             if (_currentRoom->hasDoor(Constants::DIR_DOWN) && 
                 std::abs(pos.x - center.x) <= doorHalfWidth) {
-                // 在门范围内，不限制
+                // 在门口区域，允许通过
             } else {
-                speedY = 0.0f;
+                pos.y = walkable.getMinY();
+                modified = true;
             }
         }
         else if (pos.y > walkable.getMaxY()) {
             // 上边界
             if (_currentRoom->hasDoor(Constants::DIR_UP) && 
                 std::abs(pos.x - center.x) <= doorHalfWidth) {
-                // 在门范围内，不限制
+                // 在门口区域，允许通过
             } else {
-                speedY = 0.0f;
+                pos.y = walkable.getMaxY();
+                modified = true;
             }
         }
         
-        _player->setVelocity(Vec2(speedX, speedY));
+        if (modified) {
+            _player->setPosition(pos);
+        }
     }
 }
 
