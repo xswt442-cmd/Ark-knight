@@ -45,6 +45,9 @@ public:
     // 获取房间在世界坐标中的位置
     cocos2d::Vec2 getRoomWorldPosition(int gridX, int gridY);
     
+    // 检查玩家是否在任何走廊中
+    Hallway* getPlayerHallway(class Player* player);
+    
     // 清理地图
     void clearMap();
     

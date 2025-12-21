@@ -177,6 +177,25 @@ void GameScene::updateMapSystem(float dt)
 {
     if (_mapGenerator == nullptr || _player == nullptr) return;
     
+    // 首先检查玩家是否在走廊中
+    Hallway* currentHallway = _mapGenerator->getPlayerHallway(_player);
+    
+    // 如果在走廊中，限制在走廊的可行走区域内
+    if (currentHallway != nullptr)
+    {
+        Rect hallwayWalkable = currentHallway->getWalkableArea();
+        Vec2 pos = _player->getPosition();
+        
+        // 限制在走廊边界内
+        if (pos.x < hallwayWalkable.getMinX()) pos.x = hallwayWalkable.getMinX();
+        if (pos.x > hallwayWalkable.getMaxX()) pos.x = hallwayWalkable.getMaxX();
+        if (pos.y < hallwayWalkable.getMinY()) pos.y = hallwayWalkable.getMinY();
+        if (pos.y > hallwayWalkable.getMaxY()) pos.y = hallwayWalkable.getMaxY();
+        
+        _player->setPosition(pos);
+        return;  // 在走廊中时不再处理房间边界
+    }
+    
     // 检测玩家当前所在房间
     Room* newRoom = _mapGenerator->updatePlayerRoom(_player);
     

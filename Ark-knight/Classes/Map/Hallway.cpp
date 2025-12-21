@@ -1,4 +1,5 @@
 ﻿#include "Hallway.h"
+#include "Entities/Player/Player.h"
 
 USING_NS_CC;
 
@@ -29,22 +30,21 @@ bool Hallway::initWithDirection(int direction) {
     _centerY = 0.0f;
     
     // 计算走廊尺寸
-    // 房间宽度 = 25 * 32 = 800px，中心距离 = 900px
-    // 走廊长度 = 900 - 800 = 100px ≈ 3瓦片
-    // 房间高度 = 17 * 32 = 544px，中心距离 = 900px  
-    // 走廊长度 = 900 - 544 = 356px ≈ 11瓦片
+    // 房间中心距离 = 900px，房间宽度 = 800px，房间高度 = 544px
+    // 两个房间边缘之间的距离 = 100px（宽度）或 356px（高度）
+    // 走廊瓦片数 = 间隔 / 瓦片大小
     
     float tileSize = Constants::FLOOR_TILE_SIZE;
     
     if (_direction == Constants::DIR_UP || _direction == Constants::DIR_DOWN) {
-        // 垂直走廊：宽度为门宽，长度为垂直间隔
+        // 垂直走廊
         _tilesWidth = Constants::DOOR_WIDTH;
-        // 计算垂直间隔瓦片数
+        // 垂直间隔：900 - 544 = 356px = 11.125 瓦片，取 11
         float gap = Constants::ROOM_CENTER_DIST - Constants::ROOM_TILES_H * tileSize;
         _tilesHeight = static_cast<int>(gap / tileSize);
     } else {
-        // 水平走廊：长度为水平间隔，宽度为门宽
-        // 计算水平间隔瓦片数
+        // 水平走廊
+        // 水平间隔：900 - 800 = 100px = 3.125 瓦片，取 3
         float gap = Constants::ROOM_CENTER_DIST - Constants::ROOM_TILES_W * tileSize;
         _tilesWidth = static_cast<int>(gap / tileSize);
         _tilesHeight = Constants::DOOR_WIDTH;
@@ -117,4 +117,24 @@ void Hallway::generateWall(float x, float y, int zOrder) {
     wall->setGlobalZOrder(zOrder);
     this->addChild(wall, zOrder);
     _walls.pushBack(wall);
+}
+
+Rect Hallway::getWalkableArea() const {
+    float tileSize = Constants::FLOOR_TILE_SIZE;
+    
+    // 计算走廊的可行走区域（排除外层墙壁）
+    float startX = _centerX - tileSize * (_tilesWidth / 2.0f);
+    float startY = _centerY + tileSize * (_tilesHeight / 2.0f);
+    
+    float minX = startX + tileSize;
+    float maxX = startX + tileSize * _tilesWidth - tileSize;
+    float maxY = startY - tileSize;
+    float minY = startY - tileSize * _tilesHeight + tileSize;
+    
+    return Rect(minX, minY, maxX - minX, maxY - minY);
+}
+
+bool Hallway::isPlayerInHallway(Player* player) const {
+    if (!player) return false;
+    return getWalkableArea().containsPoint(player->getPosition());
 }

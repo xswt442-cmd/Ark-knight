@@ -353,6 +353,17 @@ Vec2 MapGenerator::getRoomWorldPosition(int gridX, int gridY) {
     return Vec2::ZERO;
 }
 
+Hallway* MapGenerator::getPlayerHallway(Player* player) {
+    if (!player) return nullptr;
+    
+    for (auto hallway : _hallways) {
+        if (hallway && hallway->isPlayerInHallway(player)) {
+            return hallway;
+        }
+    }
+    return nullptr;
+}
+
 void MapGenerator::clearMap() {
     for (int y = 0; y < Constants::MAP_GRID_SIZE; y++) {
         for (int x = 0; x < Constants::MAP_GRID_SIZE; x++) {
