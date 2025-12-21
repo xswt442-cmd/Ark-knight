@@ -1,4 +1,6 @@
 ﻿#include "Hallway.h"
+#include "Entities/Player/Player.h"
+#include <cmath>
 
 USING_NS_CC;
 
@@ -28,25 +30,22 @@ bool Hallway::initWithDirection(int direction) {
     _centerX = 0.0f;
     _centerY = 0.0f;
     
-    // 走廊只在房间之间的空隙区域
-    // 房间中心距离 = 900px，房间宽度 = 800px，房间高度 = 544px
-    // 空隙 = 900 - 800 = 100px (水平) 或 900 - 544 = 356px (垂直)
-    
+    // 走廊只填充房间之间的空隙，不覆盖房间内部
+    // 水平空隙 = 900 - 800 = 100px ≈ 3瓦片
+    // 垂直空隙 = 900 - 544 = 356px ≈ 11瓦片
     float tileSize = Constants::FLOOR_TILE_SIZE;
     
     if (_direction == Constants::DIR_UP || _direction == Constants::DIR_DOWN) {
         // 垂直走廊
         _tilesWidth = Constants::DOOR_WIDTH;
-        float gap = Constants::ROOM_CENTER_DIST - Constants::ROOM_TILES_H * tileSize;
-        _tilesHeight = static_cast<int>(gap / tileSize);
+        float verticalGap = Constants::ROOM_CENTER_DIST - Constants::ROOM_TILES_H * tileSize;
+        _tilesHeight = static_cast<int>(std::ceil(verticalGap / tileSize));
     } else {
-        // 水平走廊  
-        float gap = Constants::ROOM_CENTER_DIST - Constants::ROOM_TILES_W * tileSize;
-        _tilesWidth = static_cast<int>(gap / tileSize);
+        // 水平走廊
+        float horizontalGap = Constants::ROOM_CENTER_DIST - Constants::ROOM_TILES_W * tileSize;
+        _tilesWidth = static_cast<int>(std::ceil(horizontalGap / tileSize));
         _tilesHeight = Constants::DOOR_WIDTH;
     }
-    
-    log("Hallway created: direction=%d, size=(%d, %d)", direction, _tilesWidth, _tilesHeight);
     
     return true;
 }
@@ -61,21 +60,20 @@ void Hallway::createMap() {
     float startX = _centerX - tileSize * (_tilesWidth / 2.0f);
     float startY = _centerY + tileSize * (_tilesHeight / 2.0f);
     
-    float curX = startX;
-    float curY = startY;
+    // 计算边界
+    _leftX = startX;
+    _rightX = startX + tileSize * _tilesWidth;
+    _topY = startY;
+    _bottomY = startY - tileSize * _tilesHeight;
     
-    // 走廊只生成地板，不生成墙壁（墙壁由房间提供）
-    for (int h = _tilesHeight - 1; h >= 0; h--) {
+    // 走廊只生成地板
+    for (int h = 0; h < _tilesHeight; h++) {
         for (int w = 0; w < _tilesWidth; w++) {
-            // 所有位置都是地板
-            generateFloor(curX, curY);
-            curX += tileSize;
+            float x = startX + w * tileSize;
+            float y = startY - h * tileSize;
+            generateFloor(x, y);
         }
-        curX = startX;
-        curY -= tileSize;
     }
-    
-    log("Hallway map created at (%.1f, %.1f), tiles: %d x %d", _centerX, _centerY, _tilesWidth, _tilesHeight);
 }
 
 void Hallway::generateFloor(float x, float y) {
@@ -92,36 +90,54 @@ void Hallway::generateFloor(float x, float y) {
     _floors.pushBack(floor);
 }
 
-void Hallway::generateWall(float x, float y, int zOrder) {
-    auto wall = Sprite::create("res/wall.png");
-    if (!wall) {
-        wall = Sprite::create();
-        wall->setTextureRect(Rect(0, 0, Constants::FLOOR_TILE_SIZE, Constants::FLOOR_TILE_SIZE));
-        wall->setColor(Color3B(80, 80, 100));
-    }
+bool Hallway::checkPlayerPosition(Player* player, float& speedX, float& speedY) {
+    if (!player) return false;
     
-    wall->setPosition(Vec2(x, y));
-    wall->setGlobalZOrder(zOrder);
-    this->addChild(wall, zOrder);
-    _walls.pushBack(wall);
-}
-
-Rect Hallway::getWalkableArea() const {
+    Vec2 pos = player->getPosition();
     float tileSize = Constants::FLOOR_TILE_SIZE;
     
-    // 走廊全部都是可行走区域（没有内部墙壁）
-    float startX = _centerX - tileSize * (_tilesWidth / 2.0f);
-    float startY = _centerY + tileSize * (_tilesHeight / 2.0f);
+    // 根据走廊方向限制玩家移动
+    if (_direction == Constants::DIR_LEFT || _direction == Constants::DIR_RIGHT) {
+        // 水平走廊：只限制Y轴，X轴可以自由通过
+        if (pos.x >= _leftX - tileSize && pos.x <= _rightX + tileSize &&
+            pos.y <= _topY + tileSize && pos.y >= _bottomY - tileSize) {
+            
+            // 限制Y轴不能超出走廊宽度
+            if (speedY > 0 && pos.y >= _topY + tileSize / 2) {
+                speedY = 0.0f;
+            }
+            else if (speedY < 0 && pos.y <= _bottomY) {
+                speedY = 0.0f;
+            }
+            return true;
+        }
+    }
+    else {
+        // 垂直走廊：只限制X轴，Y轴可以自由通过
+        if (pos.x >= _leftX - tileSize && pos.x <= _rightX + tileSize &&
+            pos.y <= _topY + tileSize && pos.y >= _bottomY - tileSize) {
+            
+            // 限制X轴不能超出走廊宽度
+            if (speedX > 0 && pos.x >= _rightX) {
+                speedX = 0.0f;
+            }
+            else if (speedX < 0 && pos.x <= _leftX) {
+                speedX = 0.0f;
+            }
+            return true;
+        }
+    }
     
-    float minX = startX;
-    float maxX = startX + tileSize * _tilesWidth;
-    float maxY = startY;
-    float minY = startY - tileSize * _tilesHeight;
-    
-    return Rect(minX, minY, maxX - minX, maxY - minY);
+    return false;
 }
 
 bool Hallway::isPlayerInHallway(Player* player) const {
     if (!player) return false;
-    return getWalkableArea().containsPoint(player->getPosition());
+    
+    Vec2 pos = player->getPosition();
+    float tileSize = Constants::FLOOR_TILE_SIZE;
+    
+    // 扩大一点范围来检测
+    return (pos.x > _leftX - tileSize && pos.x < _rightX + tileSize &&
+            pos.y < _topY + tileSize && pos.y > _bottomY - tileSize);
 }

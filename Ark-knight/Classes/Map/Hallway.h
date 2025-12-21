@@ -20,6 +20,12 @@ public:
     int getDirection() const { return _direction; }
     cocos2d::Vec2 getCenter() const { return cocos2d::Vec2(_centerX, _centerY); }
     
+    // 检查玩家位置并限制在走廊内
+    bool checkPlayerPosition(class Player* player, float& speedX, float& speedY);
+    
+    // 检查玩家是否在走廊范围内
+    bool isPlayerInHallway(class Player* player) const;
+    
 private:
     void generateFloor(float x, float y);
     
@@ -28,6 +34,9 @@ private:
     int _direction;  // UP, RIGHT, DOWN, LEFT
     int _tilesWidth;
     int _tilesHeight;
+    
+    // 边界坐标（左上角和右下角）
+    float _leftX, _rightX, _topY, _bottomY;
     
     cocos2d::Vector<cocos2d::Sprite*> _floors;
 };

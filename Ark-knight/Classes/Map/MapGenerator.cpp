@@ -239,8 +239,8 @@ void MapGenerator::generateHallways() {
     _hallways.clear();
     
     float tileSize = Constants::FLOOR_TILE_SIZE;
-    float roomWidth = Constants::ROOM_TILES_W * tileSize;
-    float roomHeight = Constants::ROOM_TILES_H * tileSize;
+    float roomWidth = Constants::ROOM_TILES_W * tileSize;   // 800px
+    float roomHeight = Constants::ROOM_TILES_H * tileSize;  // 544px
     
     for (int y = 0; y < Constants::MAP_GRID_SIZE; y++) {
         for (int x = 0; x < Constants::MAP_GRID_SIZE; x++) {
@@ -259,7 +259,7 @@ void MapGenerator::generateHallways() {
                     Room* rightRoom = _roomMatrix[toX][toY];
                     Vec2 rightCenter = rightRoom->getCenter();
                     
-                    // 水平走廊在两个房间边缘之间
+                    // 水平走廊：在两个房间的右/左边缘之间
                     float leftRoomRightEdge = roomCenter.x + roomWidth / 2.0f;
                     float rightRoomLeftEdge = rightCenter.x - roomWidth / 2.0f;
                     float hallwayCenterX = (leftRoomRightEdge + rightRoomLeftEdge) / 2.0f;
@@ -268,10 +268,6 @@ void MapGenerator::generateHallways() {
                     Hallway* hallway = Hallway::create(Constants::DIR_RIGHT);
                     hallway->setCenter(hallwayCenterX, hallwayCenterY);
                     _hallways.push_back(hallway);
-                    
-                    log("Horizontal hallway at (%.1f, %.1f), rooms: (%.1f, %.1f) -> (%.1f, %.1f)", 
-                        hallwayCenterX, hallwayCenterY, 
-                        roomCenter.x, roomCenter.y, rightCenter.x, rightCenter.y);
                 }
             }
             
@@ -284,7 +280,7 @@ void MapGenerator::generateHallways() {
                     Room* downRoom = _roomMatrix[toX][toY];
                     Vec2 downCenter = downRoom->getCenter();
                     
-                    // 垂直走廊在两个房间边缘之间
+                    // 垂直走廊：在两个房间的上/下边缘之间
                     float topRoomBottomEdge = roomCenter.y - roomHeight / 2.0f;
                     float bottomRoomTopEdge = downCenter.y + roomHeight / 2.0f;
                     float hallwayCenterY = (topRoomBottomEdge + bottomRoomTopEdge) / 2.0f;
@@ -293,10 +289,6 @@ void MapGenerator::generateHallways() {
                     Hallway* hallway = Hallway::create(Constants::DIR_DOWN);
                     hallway->setCenter(hallwayCenterX, hallwayCenterY);
                     _hallways.push_back(hallway);
-                    
-                    log("Vertical hallway at (%.1f, %.1f), rooms: (%.1f, %.1f) -> (%.1f, %.1f)", 
-                        hallwayCenterX, hallwayCenterY,
-                        roomCenter.x, roomCenter.y, downCenter.x, downCenter.y);
                 }
             }
         }

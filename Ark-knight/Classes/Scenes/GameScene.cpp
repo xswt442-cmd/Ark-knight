@@ -177,7 +177,19 @@ void GameScene::updateMapSystem(float dt)
 {
     if (_mapGenerator == nullptr || _player == nullptr) return;
     
-    Vec2 playerPos = _player->getPosition();
+    Vec2 velocity = _player->getVelocity();
+    float speedX = velocity.x;
+    float speedY = velocity.y;
+    
+    // 首先检查玩家是否在走廊中
+    Hallway* currentHallway = _mapGenerator->getPlayerHallway(_player);
+    
+    if (currentHallway != nullptr) {
+        // 在走廊中，使用走廊的边界检测
+        currentHallway->checkPlayerPosition(_player, speedX, speedY);
+        _player->setVelocity(Vec2(speedX, speedY));
+        return;
+    }
     
     // 检测玩家当前所在房间
     Room* newRoom = _mapGenerator->updatePlayerRoom(_player);
@@ -199,58 +211,56 @@ void GameScene::updateMapSystem(float dt)
                  static_cast<int>(_currentRoom->getRoomType()));
     }
     
-    // 限制玩家在当前房间内，但允许从门通过
+    // 在房间内，使用房间的边界检测
     if (_currentRoom != nullptr)
     {
         Rect walkable = _currentRoom->getWalkableArea();
         Vec2 pos = _player->getPosition();
         Vec2 center = _currentRoom->getCenter();
         
-        // 扩大门口区域判定范围，包含走廊入口
         float doorHalfWidth = Constants::DOOR_WIDTH * Constants::FLOOR_TILE_SIZE / 2.0f;
-        float doorExtend = Constants::FLOOR_TILE_SIZE * 3.0f; // 扩展3个瓦片的范围
+        float tileSize = Constants::FLOOR_TILE_SIZE;
         
-        // 检查左右边界
+        // 检查边界，但允许在门口区域通过
         if (pos.x < walkable.getMinX()) {
-            // 左边界 - 检查是否有左门且在扩展的门范围内
-            bool inDoorArea = _currentRoom->hasDoor(Constants::DIR_LEFT) && 
-                             pos.y >= center.y - doorHalfWidth - doorExtend && 
-                             pos.y <= center.y + doorHalfWidth + doorExtend;
-            if (!inDoorArea) {
-                pos.x = walkable.getMinX();
+            // 左边界：如果有门且在门范围内，允许通过
+            if (_currentRoom->hasDoor(Constants::DIR_LEFT) && 
+                std::abs(pos.y - center.y) <= doorHalfWidth) {
+                // 在门范围内，不限制
+            } else {
+                speedX = 0.0f;
             }
         }
-        if (pos.x > walkable.getMaxX()) {
+        else if (pos.x > walkable.getMaxX()) {
             // 右边界
-            bool inDoorArea = _currentRoom->hasDoor(Constants::DIR_RIGHT) && 
-                             pos.y >= center.y - doorHalfWidth - doorExtend && 
-                             pos.y <= center.y + doorHalfWidth + doorExtend;
-            if (!inDoorArea) {
-                pos.x = walkable.getMaxX();
+            if (_currentRoom->hasDoor(Constants::DIR_RIGHT) && 
+                std::abs(pos.y - center.y) <= doorHalfWidth) {
+                // 在门范围内，不限制
+            } else {
+                speedX = 0.0f;
             }
         }
         
-        // 检查上下边界
         if (pos.y < walkable.getMinY()) {
             // 下边界
-            bool inDoorArea = _currentRoom->hasDoor(Constants::DIR_DOWN) && 
-                             pos.x >= center.x - doorHalfWidth - doorExtend && 
-                             pos.x <= center.x + doorHalfWidth + doorExtend;
-            if (!inDoorArea) {
-                pos.y = walkable.getMinY();
+            if (_currentRoom->hasDoor(Constants::DIR_DOWN) && 
+                std::abs(pos.x - center.x) <= doorHalfWidth) {
+                // 在门范围内，不限制
+            } else {
+                speedY = 0.0f;
             }
         }
-        if (pos.y > walkable.getMaxY()) {
+        else if (pos.y > walkable.getMaxY()) {
             // 上边界
-            bool inDoorArea = _currentRoom->hasDoor(Constants::DIR_UP) && 
-                             pos.x >= center.x - doorHalfWidth - doorExtend && 
-                             pos.x <= center.x + doorHalfWidth + doorExtend;
-            if (!inDoorArea) {
-                pos.y = walkable.getMaxY();
+            if (_currentRoom->hasDoor(Constants::DIR_UP) && 
+                std::abs(pos.x - center.x) <= doorHalfWidth) {
+                // 在门范围内，不限制
+            } else {
+                speedY = 0.0f;
             }
         }
         
-        _player->setPosition(pos);
+        _player->setVelocity(Vec2(speedX, speedY));
     }
 }
 
