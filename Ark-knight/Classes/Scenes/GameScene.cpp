@@ -270,13 +270,18 @@ void GameScene::updateMapSystem(float dt)
     if (_mapGenerator == nullptr || _player == nullptr) return;
     
     // 获取玩家的世界坐标（而不是相对于gameLayer的本地坐标）
-    Vec2 pos = _player->getParent()->convertToWorldSpace(_player->getPosition());
+    Vec2 worldPos = _player->getParent()->convertToWorldSpace(_player->getPosition());
+    Vec2 localPos = _player->getPosition();
+    
+    GAME_LOG("Player - Local: (%.1f, %.1f), World: (%.1f, %.1f)", 
+             localPos.x, localPos.y, worldPos.x, worldPos.y);
     
     // 首先检查玩家是否在走廊中
     Hallway* currentHallway = _mapGenerator->getPlayerHallway(_player);
     
     if (currentHallway != nullptr) {
         // 在走廊中，使用走廊的边界检测
+        GAME_LOG("Player in hallway");
         float dummyX = 0, dummyY = 0;
         currentHallway->checkPlayerPosition(_player, dummyX, dummyY);
         return;
@@ -308,8 +313,13 @@ void GameScene::updateMapSystem(float dt)
         Rect walkable = _currentRoom->getWalkableArea();
         Vec2 center = _currentRoom->getCenter();
         
+        GAME_LOG("Room walkable: X[%.1f, %.1f], Y[%.1f, %.1f]",
+                 walkable.getMinX(), walkable.getMaxX(),
+                 walkable.getMinY(), walkable.getMaxY());
+        
         float doorHalfWidth = Constants::DOOR_WIDTH * Constants::FLOOR_TILE_SIZE / 2.0f;
         bool modified = false;
+        Vec2 pos = worldPos;  // 使用世界坐标进行检测
         
         // 检查边界，但允许在门口区域通过
         if (pos.x < walkable.getMinX()) {
@@ -317,9 +327,11 @@ void GameScene::updateMapSystem(float dt)
             if (_currentRoom->hasDoor(Constants::DIR_LEFT) && 
                 std::abs(pos.y - center.y) <= doorHalfWidth) {
                 // 在门口区域，允许通过
+                GAME_LOG("Allow pass through LEFT door");
             } else {
                 pos.x = walkable.getMinX();
                 modified = true;
+                GAME_LOG("Blocked by LEFT wall");
             }
         }
         else if (pos.x > walkable.getMaxX()) {
@@ -327,9 +339,11 @@ void GameScene::updateMapSystem(float dt)
             if (_currentRoom->hasDoor(Constants::DIR_RIGHT) && 
                 std::abs(pos.y - center.y) <= doorHalfWidth) {
                 // 在门口区域，允许通过
+                GAME_LOG("Allow pass through RIGHT door");
             } else {
                 pos.x = walkable.getMaxX();
                 modified = true;
+                GAME_LOG("Blocked by RIGHT wall");
             }
         }
         
@@ -338,9 +352,11 @@ void GameScene::updateMapSystem(float dt)
             if (_currentRoom->hasDoor(Constants::DIR_DOWN) && 
                 std::abs(pos.x - center.x) <= doorHalfWidth) {
                 // 在门口区域，允许通过
+                GAME_LOG("Allow pass through DOWN door");
             } else {
                 pos.y = walkable.getMinY();
                 modified = true;
+                GAME_LOG("Blocked by DOWN wall");
             }
         }
         else if (pos.y > walkable.getMaxY()) {
@@ -348,14 +364,20 @@ void GameScene::updateMapSystem(float dt)
             if (_currentRoom->hasDoor(Constants::DIR_UP) && 
                 std::abs(pos.x - center.x) <= doorHalfWidth) {
                 // 在门口区域，允许通过
+                GAME_LOG("Allow pass through UP door");
             } else {
                 pos.y = walkable.getMaxY();
                 modified = true;
+                GAME_LOG("Blocked by UP wall");
             }
         }
         
         if (modified) {
-            _player->setPosition(pos);
+            // 将世界坐标转换回本地坐标
+            Vec2 newLocalPos = _player->getParent()->convertToNodeSpace(pos);
+            _player->setPosition(newLocalPos);
+            GAME_LOG("Position corrected to World: (%.1f, %.1f), Local: (%.1f, %.1f)",
+                     pos.x, pos.y, newLocalPos.x, newLocalPos.y);
         }
     }
 }
