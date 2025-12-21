@@ -127,7 +127,8 @@ void Hallway::createMap() {
 }
 
 void Hallway::generateFloor(float x, float y) {
-    auto floor = Sprite::create("res/floor.png");
+    // 走廊使用专用地板纹理Floor_cor
+    auto floor = Sprite::create("Map/Floor/Floor_cor.png");
     if (!floor) {
         floor = Sprite::create();
         floor->setTextureRect(Rect(0, 0, Constants::FLOOR_TILE_SIZE, Constants::FLOOR_TILE_SIZE));
@@ -141,7 +142,7 @@ void Hallway::generateFloor(float x, float y) {
 }
 
 void Hallway::generateWall(float x, float y, int zOrder) {
-    auto wall = Sprite::create("res/wall.png");
+    auto wall = Sprite::create("Map/Wall/Wall_0001.png");
     if (!wall) {
         wall = Sprite::create();
         wall->setTextureRect(Rect(0, 0, Constants::FLOOR_TILE_SIZE, Constants::FLOOR_TILE_SIZE));

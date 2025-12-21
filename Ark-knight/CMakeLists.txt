@@ -27,6 +27,10 @@ cmake_minimum_required(VERSION 3.6)
 
 set(APP_NAME Ark-knight)
 
+if (MSVC)
+    add_compile_options("/utf-8")
+endif()
+
 project(${APP_NAME})
 
 if(XCODE)
