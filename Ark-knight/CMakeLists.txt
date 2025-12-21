@@ -71,6 +71,7 @@ list(APPEND GAME_SOURCE
      # Map
      Classes/Map/Room.cpp
      Classes/Map/MapGenerator.cpp
+     Classes/Map/Hallway.cpp
      # UI
      Classes/UI/MiniMap.cpp
      # Managers
