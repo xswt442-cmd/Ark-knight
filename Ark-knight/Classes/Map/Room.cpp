@@ -86,8 +86,8 @@ void Room::createMap() {
     setCenter(_centerX, _centerY);
     
     float tileSize = Constants::FLOOR_TILE_SIZE;
-    float startX = _centerX - tileSize * (_tilesWidth / 2);
-    float startY = _centerY + tileSize * (_tilesHeight / 2);
+    float startX = _centerX - tileSize * (_tilesWidth / 2.0f);
+    float startY = _centerY + tileSize * (_tilesHeight / 2.0f);
     
     float curX = startX;
     float curY = startY;
