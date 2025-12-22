@@ -215,6 +215,9 @@ bool Character::consumeMP(int cost)
 
 void Character::die()
 {
+    // 强制HP归零
+    _hp = 0;
+    
     setState(EntityState::DIE);
     
     GAME_LOG("Character died");

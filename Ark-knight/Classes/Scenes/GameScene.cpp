@@ -646,14 +646,13 @@ void GameScene::updateEnemies(float dt)
 
 void GameScene::updateHUD(float dt)
 {
-    // 玩家死亡或不存在时不更新HUD
-    if (_player == nullptr || _player->isDead())
+    if (_player == nullptr)
     {
         return;
     }
     
-    // 更新HP血条
-    int currentHP = _player->getHP();
+    // 玩家死亡时显示HP为0
+    int currentHP = _player->isDead() ? 0 : _player->getHP();
     int maxHP = _player->getMaxHP();
     float hpPercent = (maxHP > 0) ? (currentHP * 100.0f / maxHP) : 0.0f;
     _hpBar->setPercent(hpPercent);
