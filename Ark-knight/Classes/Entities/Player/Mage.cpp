@@ -70,7 +70,14 @@ void Mage::castFireball()
     auto fireball = Sprite::create("UIs/Skills/Mage/FB500-1.png");
     fireball->setPosition(this->getPosition() + _facingDirection * 50);
     fireball->setTag(Constants::Tag::PROJECTILE);
-    fireball->setScale(0.5f);  // 调整火球大小
+    
+    // 计算缩放比例：使火球大小接近地板分块(32px)
+    float targetSize = Constants::FLOOR_TILE_SIZE * 1.2f;  // 略大于地板分块
+    float scale = targetSize / fireball->getContentSize().width;
+    fireball->setScale(scale);
+    
+    // 设置globalZOrder确保在正确层级显示
+    fireball->setGlobalZOrder(Constants::ZOrder::PROJECTILE);
     
     // 创建火球动画（5帧循环）
     Vector<SpriteFrame*> fireballFrames;

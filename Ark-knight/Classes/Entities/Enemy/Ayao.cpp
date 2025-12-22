@@ -4,6 +4,8 @@ Ayao::Ayao()
     : _moveAnimation(nullptr)
     , _attackAnimation(nullptr)
     , _dieAnimation(nullptr)
+    , _roomBounds(Rect::ZERO)
+    , _hasRoomBounds(false)
 {
 }
 
@@ -33,6 +35,20 @@ bool Ayao::init()
     GAME_LOG("Ayao enemy created");
     
     return true;
+}
+
+void Ayao::update(float dt)
+{
+    Enemy::update(dt);
+    
+    // 限制位置在房间边界内
+    if (_hasRoomBounds)
+    {
+        Vec2 pos = this->getPosition();
+        pos.x = std::max(_roomBounds.getMinX(), std::min(pos.x, _roomBounds.getMaxX()));
+        pos.y = std::max(_roomBounds.getMinY(), std::min(pos.y, _roomBounds.getMaxY()));
+        this->setPosition(pos);
+    }
 }
 
 void Ayao::setupAyaoAttributes()
@@ -113,8 +129,50 @@ void Ayao::loadAnimations()
     // 设置初始精灵（使用移动动画第一帧）
     if (!moveFrames.empty())
     {
-        this->setSpriteFrame(moveFrames.at(0));
+        auto sprite = Sprite::createWithSpriteFrame(moveFrames.at(0));
+        this->bindSprite(sprite);
     }
     
     GAME_LOG("Ayao animations loaded");
+}
+
+void Ayao::attack()
+{
+    if (!canAttack())
+    {
+        return;
+    }
+    
+    setState(EntityState::ATTACK);
+    resetAttackCooldown();
+    
+    // 播放攻击动画
+    if (_attackAnimation && _sprite)
+    {
+        auto animate = Animate::create(_attackAnimation);
+        auto callback = CallFunc::create([this]() {
+            if (_currentState == EntityState::ATTACK)
+            {
+                setState(EntityState::IDLE);
+            }
+        });
+        auto sequence = Sequence::create(animate, callback, nullptr);
+        _sprite->stopAllActions();
+        _sprite->runAction(sequence);
+    }
+    else
+    {
+        // 没有动画时的回退逻辑
+        auto delay = DelayTime::create(0.5f);
+        auto callback = CallFunc::create([this]() {
+            if (_currentState == EntityState::ATTACK)
+            {
+                setState(EntityState::IDLE);
+            }
+        });
+        auto sequence = Sequence::create(delay, callback, nullptr);
+        this->runAction(sequence);
+    }
+    
+    GAME_LOG("Ayao attacks!");
 }

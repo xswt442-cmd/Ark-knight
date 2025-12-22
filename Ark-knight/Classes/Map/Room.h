@@ -52,6 +52,10 @@ public:
     void setVisited(bool visited) { _visited = visited; }
     bool isVisited() const { return _visited; }
     
+    // 敌人生成标记
+    void setEnemiesSpawned(bool spawned) { _enemiesSpawned = spawned; }
+    bool isEnemiesSpawned() const { return _enemiesSpawned; }
+    
 protected:
     void generateFloor(float x, float y);
     void generateWall(float x, float y, int zOrder);
@@ -71,6 +75,7 @@ private:
     bool _doorDirections[4];
     bool _doorsOpen;
     bool _visited;
+    bool _enemiesSpawned;  // 是否已生成敌人
     int _floorTextureIndex;  // 随机选择的地板纹理索引(1-5)
     
     cocos2d::Vector<cocos2d::Sprite*> _floors;

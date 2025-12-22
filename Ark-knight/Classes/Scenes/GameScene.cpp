@@ -232,12 +232,26 @@ void GameScene::spawnEnemiesInRoom(Room* room)
     }
     
     // 如果房间已经生成过敌人，则不再生成
-    // TODO: 后续需要在Room类中添加标记，这里简单判断
+    if (room->isEnemiesSpawned())
+    {
+        return;
+    }
+    
+    // 标记已生成敌人
+    room->setEnemiesSpawned(true);
     
     // 获取房间中心和尺寸
     Vec2 roomCenter = room->getCenter();
     float roomWidth = Constants::ROOM_TILES_W * Constants::FLOOR_TILE_SIZE;
     float roomHeight = Constants::ROOM_TILES_H * Constants::FLOOR_TILE_SIZE;
+    
+    // 计算房间边界（用于限制敌人移动）
+    Rect roomBounds = Rect(
+        roomCenter.x - roomWidth * 0.4f,
+        roomCenter.y - roomHeight * 0.4f,
+        roomWidth * 0.8f,
+        roomHeight * 0.8f
+    );
     
     // 随机生成2-4个阿咬
     int enemyCount = RANDOM_INT(2, 4);
@@ -252,6 +266,7 @@ void GameScene::spawnEnemiesInRoom(Room* room)
         Vec2 spawnPos = roomCenter + Vec2(offsetX, offsetY);
         
         ayao->setPosition(spawnPos);
+        ayao->setRoomBounds(roomBounds);  // 设置房间边界限制移动
         
         // 添加到场景
         _gameLayer->addChild(ayao);
@@ -594,6 +609,12 @@ void GameScene::updateEnemies(float dt)
 {
     // 游戏结束后不再更新敌人
     if (_isGameOver)
+    {
+        return;
+    }
+    
+    // 玩家死亡后不再更新敌人AI
+    if (_player == nullptr || _player->isDead())
     {
         return;
     }

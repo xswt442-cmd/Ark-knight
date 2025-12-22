@@ -36,6 +36,7 @@ bool Room::init() {
     _roomType = Constants::RoomType::NORMAL;
     _doorsOpen = true;
     _visited = false;
+    _enemiesSpawned = false;  // 初始化敌人生成标记
     _floorTextureIndex = (rand() % 5) + 1;  // 随机选择1-5号地板
     
     for (int i = 0; i < Constants::DIR_COUNT; i++) {
