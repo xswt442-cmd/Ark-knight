@@ -109,7 +109,7 @@ void Ayao::loadAnimations()
     
     // ==================== 死亡动画 ====================
     Vector<SpriteFrame*> dieFrames;
-    for (int i = 1; i <= 3; i++)
+    for (int i = 1; i <= 5; i++)  // 加载全部5帧
     {
         char filename[128];
         sprintf(filename, "Enemy/AYao/AYao_Die/AYao_Die_%04d.png", i);
@@ -122,7 +122,7 @@ void Ayao::loadAnimations()
     
     if (!dieFrames.empty())
     {
-        _dieAnimation = Animation::createWithSpriteFrames(dieFrames, 0.15f);
+        _dieAnimation = Animation::createWithSpriteFrames(dieFrames, 0.12f);  // 每帧0.12秒
         _dieAnimation->retain();
     }
     
@@ -184,6 +184,12 @@ void Ayao::attack()
 
 void Ayao::die()
 {
+    // 防止重复调用
+    if (_currentState == EntityState::DIE)
+    {
+        return;
+    }
+    
     setState(EntityState::DIE);
     
     // 停止所有动作
@@ -193,26 +199,34 @@ void Ayao::die()
         _sprite->stopAllActions();
     }
     
+    GAME_LOG("Ayao died - playing death animation");
+    
     // 播放死亡动画
     if (_dieAnimation && _sprite)
     {
-        _dieAnimation->setRestoreOriginalFrame(false);  // 保持最后一帧
-        auto animate = Animate::create(_dieAnimation);
-        auto fadeOut = FadeOut::create(0.3f);
-        auto remove = RemoveSelf::create();
-        auto sequence = Sequence::create(animate, fadeOut, remove, nullptr);
-        _sprite->runAction(sequence);
+        float animDuration = _dieAnimation->getDuration();
         
-        // 死亡后移除节点
-        auto delay = DelayTime::create(_dieAnimation->getDuration() + 0.3f);
-        auto removeThis = RemoveSelf::create();
-        this->runAction(Sequence::create(delay, removeThis, nullptr));
+        // 播放死亡动画
+        auto animate = Animate::create(_dieAnimation);
+        _sprite->runAction(animate);
+        
+        // 动画播放完毕后淡出并移除节点
+        auto delay = DelayTime::create(animDuration);
+        auto fadeOut = FadeOut::create(0.5f);
+        auto removeCallback = CallFunc::create([this]() {
+            this->removeFromParent();
+        });
+        auto sequence = Sequence::create(delay, fadeOut, removeCallback, nullptr);
+        this->runAction(sequence);
     }
     else
     {
-        // 没有动画时使用默认死亡效果
-        showDeathEffect();
+        // 没有动画时直接淡出移除
+        auto fadeOut = FadeOut::create(0.5f);
+        auto removeCallback = CallFunc::create([this]() {
+            this->removeFromParent();
+        });
+        auto sequence = Sequence::create(fadeOut, removeCallback, nullptr);
+        this->runAction(sequence);
     }
-    
-    GAME_LOG("Ayao died");
 }

@@ -30,6 +30,33 @@ bool Mage::init()
     return true;
 }
 
+void Mage::attack()
+{
+    if (!canAttack())
+    {
+        return;
+    }
+    
+    setState(EntityState::ATTACK);
+    resetAttackCooldown();
+    
+    // 释放冰锥
+    castIceShard();
+    
+    GAME_LOG("Mage casts Ice Shard!");
+    
+    // 攻击动画结束后返回IDLE
+    auto delay = DelayTime::create(0.3f);
+    auto callback = CallFunc::create([this]() {
+        if (_currentState == EntityState::ATTACK)
+        {
+            setState(EntityState::IDLE);
+        }
+    });
+    auto sequence = Sequence::create(delay, callback, nullptr);
+    this->runAction(sequence);
+}
+
 void Mage::useSkill()
 {
     // 检查MP是否足够
@@ -152,5 +179,103 @@ void Mage::castFireball()
         });
         auto sequence = Sequence::create(moveTo, remove, nullptr);
         fireball->runAction(sequence);
+    }
+}
+
+void Mage::castIceShard()
+{
+    GAME_LOG("Ice Shard cast in direction (%.2f, %.2f)", 
+             _facingDirection.x, _facingDirection.y);
+    
+    // 创建冰锥精灵（使用动画）
+    auto iceShard = Sprite::create("UIs/Attacks/Mage/Ice_001.png");
+    iceShard->setPosition(this->getPosition() + _facingDirection * 40);
+    iceShard->setTag(Constants::Tag::PROJECTILE);
+    
+    // 计算缩放比例：使冰锥大小接近地板分块(32px)
+    float targetSize = Constants::FLOOR_TILE_SIZE * 1.0f;
+    float scale = targetSize / iceShard->getContentSize().width;
+    iceShard->setScale(scale);
+    
+    // 设置globalZOrder确保在正确层级显示
+    iceShard->setGlobalZOrder(Constants::ZOrder::PROJECTILE);
+    
+    // 根据朝向旋转冰锥
+    float angle = CC_RADIANS_TO_DEGREES(atan2(_facingDirection.y, _facingDirection.x));
+    iceShard->setRotation(-angle);  // cocos2d旋转方向与数学方向相反
+    
+    // 创建冰锥形成动画（5帧，不循环）
+    Vector<SpriteFrame*> iceFrames;
+    for (int i = 1; i <= 5; i++)
+    {
+        char filename[128];
+        sprintf(filename, "UIs/Attacks/Mage/Ice_%03d.png", i);
+        auto frame = Sprite::create(filename);
+        if (frame)
+        {
+            iceFrames.pushBack(frame->getSpriteFrame());
+        }
+    }
+    
+    if (!iceFrames.empty())
+    {
+        auto animation = Animation::createWithSpriteFrames(iceFrames, 0.06f);
+        animation->setRestoreOriginalFrame(false);  // 保持最后一帧（完整冰锥）
+        auto animate = Animate::create(animation);
+        iceShard->runAction(animate);
+    }
+    
+    // 保存伤害值和方向
+    int iceDamage = getAttack();  // 冰锥伤害等于普攻
+    Vec2 direction = _facingDirection;
+    
+    // 添加到父节点
+    if (this->getParent() != nullptr)
+    {
+        auto parent = this->getParent();
+        parent->addChild(iceShard, Constants::ZOrder::PROJECTILE);
+        
+        // 冰锥飞行 + 碰撞检测
+        float flyTime = 1.0f;
+        float flyDistance = 400.0f;
+        Vec2 startPos = iceShard->getPosition();
+        Vec2 endPos = startPos + direction * flyDistance;
+        
+        // 使用schedule来更新冰锥位置并检测碰撞
+        iceShard->schedule([iceShard, parent, iceDamage](float dt) {
+            // 检测与敌人的碰撞
+            for (auto child : parent->getChildren())
+            {
+                if (child->getTag() == Constants::Tag::ENEMY)
+                {
+                    float dist = iceShard->getPosition().distance(child->getPosition());
+                    if (dist < 35.0f)  // 碰撞半径
+                    {
+                        // 造成伤害
+                        auto enemy = dynamic_cast<Enemy*>(child);
+                        if (enemy != nullptr && !enemy->isDead())
+                        {
+                            enemy->takeDamage(iceDamage);
+                            GAME_LOG("Ice Shard hits enemy for %d damage!", iceDamage);
+                            
+                            // 冰锥命中后消失
+                            iceShard->stopAllActions();
+                            iceShard->unschedule("iceShardUpdate");
+                            iceShard->removeFromParent();
+                            return;
+                        }
+                    }
+                }
+            }
+        }, "iceShardUpdate");
+        
+        // 冰锥飞行动作
+        auto moveTo = MoveTo::create(flyTime, endPos);
+        auto remove = CallFunc::create([iceShard]() {
+            iceShard->unschedule("iceShardUpdate");
+            iceShard->removeFromParent();
+        });
+        auto sequence = Sequence::create(moveTo, remove, nullptr);
+        iceShard->runAction(sequence);
     }
 }

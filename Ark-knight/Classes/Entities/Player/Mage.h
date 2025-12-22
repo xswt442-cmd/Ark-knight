@@ -18,6 +18,11 @@ public:
     
     // ==================== 实现抽象接口 ====================
     /**
+     * 普通攻击：冰锥
+     */
+    void attack() override;
+    
+    /**
      * 使用技能：火球术
      */
     void useSkill() override;
@@ -32,6 +37,11 @@ private:
      * 释放火球
      */
     void castFireball();
+    
+    /**
+     * 释放冰锥（普攻）
+     */
+    void castIceShard();
 };
 
 #endif // __MAGE_H__
