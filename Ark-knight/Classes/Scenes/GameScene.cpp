@@ -301,8 +301,8 @@ void GameScene::createHUD()
     
     // ==================== 技能图标CD系统 ====================
     float skillIconSize = 64.0f;
-    float skillIconX = origin.x + visibleSize.width - skillIconSize / 2 - 20;
-    float skillIconY = origin.y + skillIconSize / 2 + 20;
+    float skillIconX = origin.x + visibleSize.width - skillIconSize / 2 - 40;
+    float skillIconY = origin.y + skillIconSize / 2 + 40;
     
     // 技能图标背景（底层）
     _skillIcon = Sprite::create("UIs/Skills/Mage_fireball.png");
@@ -316,7 +316,7 @@ void GameScene::createHUD()
     _skillCDMask->setPosition(Vec2(skillIconX, skillIconY));
     _skillCDMask->setScale(skillIconSize / _skillCDMask->getContentSize().width);
     _skillCDMask->setColor(Color3B::BLACK);
-    _skillCDMask->setOpacity(180);
+    _skillCDMask->setOpacity(100);
     _skillCDMask->setVisible(false);
     _skillCDMask->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL + 1);
     _uiLayer->addChild(_skillCDMask);
@@ -331,19 +331,19 @@ void GameScene::createHUD()
     _skillCDProgress->setPosition(Vec2(skillIconX, skillIconY));
     _skillCDProgress->setScale(skillIconSize / progressSprite->getContentSize().width);
     _skillCDProgress->setPercentage(0.0f);
-    _skillCDProgress->setColor(Color3B(80, 80, 80));
-    _skillCDProgress->setOpacity(200);
+    _skillCDProgress->setColor(Color3B(100, 100, 100));
+    _skillCDProgress->setOpacity(150);
     _skillCDProgress->setVisible(false);
     _skillCDProgress->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL + 2);
     _uiLayer->addChild(_skillCDProgress);
     
-    // 技能文字提示（移到左边）
-    _skillLabel = Label::createWithSystemFont("Skill: Ready", "Arial", 18);
-    _skillLabel->setPosition(Vec2(barStartX + 25, mpBarY - 25));
-    _skillLabel->setAnchorPoint(Vec2(0, 0.5f));
-    _skillLabel->setTextColor(Color4B(200, 255, 200, 255));
-    _skillLabel->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL);
-    _uiLayer->addChild(_skillLabel);
+    // 技能文字提示（暂时注释，可能后续需要）
+    // _skillLabel = Label::createWithSystemFont("Skill: Ready", "Arial", 18);
+    // _skillLabel->setPosition(Vec2(barStartX + 25, mpBarY - 25));
+    // _skillLabel->setAnchorPoint(Vec2(0, 0.5f));
+    // _skillLabel->setTextColor(Color4B(200, 255, 200, 255));
+    // _skillLabel->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL);
+    // _uiLayer->addChild(_skillLabel);
     
     // Debug信息
     _debugLabel = Label::createWithSystemFont("", "Arial", 18);
@@ -609,12 +609,12 @@ void GameScene::updateHUD(float dt)
             _skillIcon->setOpacity(255);
             _skillCDMask->setVisible(false);
             _skillCDProgress->setVisible(false);
-            _skillLabel->setString("Skill: Ready");
+            // _skillLabel->setString("Skill: Ready");
         }
         else
         {
-            // 技能CD中：图标变暗，显示转圈进度
-            _skillIcon->setOpacity(120);
+            // 技能CD中：图标轻微变暗，显示转圈进度
+            _skillIcon->setOpacity(200);
             _skillCDMask->setVisible(true);
             _skillCDProgress->setVisible(true);
             
@@ -622,9 +622,9 @@ void GameScene::updateHUD(float dt)
             float cdPercent = (totalCD > 0) ? ((totalCD - remain) / totalCD * 100.0f) : 0.0f;
             _skillCDProgress->setPercentage(100.0f - cdPercent);
             
-            char skillText[64];
-            sprintf(skillText, "Skill: %.1fs", remain);
-            _skillLabel->setString(skillText);
+            // char skillText[64];
+            // sprintf(skillText, "Skill: %.1fs", remain);
+            // _skillLabel->setString(skillText);
         }
         
         // 更新Debug信息
