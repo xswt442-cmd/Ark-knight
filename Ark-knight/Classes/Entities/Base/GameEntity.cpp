@@ -68,6 +68,13 @@ void GameEntity::takeDamage(int damage)
     
     GAME_LOG("Entity takes %d damage, HP: %d/%d", damage, _hp, _maxHP);
     
+    // 检查是否死亡
+    if (_hp <= 0)
+    {
+        die();
+        return;  // 死亡后不播放受击效果
+    }
+    
     // 受击效果 - 闪烁
     if (_sprite != nullptr)
     {

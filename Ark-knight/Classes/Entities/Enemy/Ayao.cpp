@@ -39,6 +39,12 @@ bool Ayao::init()
 
 void Ayao::update(float dt)
 {
+    // 死亡后不更新
+    if (_currentState == EntityState::DIE)
+    {
+        return;
+    }
+    
     Enemy::update(dt);
     
     // 限制位置在房间边界内
@@ -187,46 +193,58 @@ void Ayao::die()
     // 防止重复调用
     if (_currentState == EntityState::DIE)
     {
+        GAME_LOG("Ayao::die() - already dead, skipping");
         return;
     }
     
     setState(EntityState::DIE);
+    _isAlive = false;  // 标记为不存活
     
     // 停止所有动作
     this->stopAllActions();
     if (_sprite)
     {
         _sprite->stopAllActions();
+        _sprite->setVisible(true);  // 确保精灵可见
+        _sprite->setOpacity(255);   // 确保不透明
     }
     
-    GAME_LOG("Ayao died - playing death animation");
+    GAME_LOG("Ayao died - _dieAnimation: %p, _sprite: %p", _dieAnimation, _sprite);
     
     // 播放死亡动画
     if (_dieAnimation && _sprite)
     {
-        float animDuration = _dieAnimation->getDuration();
+        GAME_LOG("Playing Ayao death animation, frames: %zd, duration: %.2f", 
+                 _dieAnimation->getFrames().size(), _dieAnimation->getDuration());
         
         // 播放死亡动画
         auto animate = Animate::create(_dieAnimation);
-        _sprite->runAction(animate);
         
         // 动画播放完毕后淡出并移除节点
-        auto delay = DelayTime::create(animDuration);
         auto fadeOut = FadeOut::create(0.5f);
         auto removeCallback = CallFunc::create([this]() {
+            GAME_LOG("Ayao death animation finished, removing from parent");
             this->removeFromParent();
         });
-        auto sequence = Sequence::create(delay, fadeOut, removeCallback, nullptr);
-        this->runAction(sequence);
+        auto sequence = Sequence::create(animate, fadeOut, removeCallback, nullptr);
+        _sprite->runAction(sequence);
     }
     else
     {
+        GAME_LOG("Ayao death - no animation or sprite, direct remove");
         // 没有动画时直接淡出移除
-        auto fadeOut = FadeOut::create(0.5f);
-        auto removeCallback = CallFunc::create([this]() {
+        if (_sprite)
+        {
+            auto fadeOut = FadeOut::create(0.5f);
+            auto removeCallback = CallFunc::create([this]() {
+                this->removeFromParent();
+            });
+            auto sequence = Sequence::create(fadeOut, removeCallback, nullptr);
+            _sprite->runAction(sequence);
+        }
+        else
+        {
             this->removeFromParent();
-        });
-        auto sequence = Sequence::create(fadeOut, removeCallback, nullptr);
-        this->runAction(sequence);
+        }
     }
 }

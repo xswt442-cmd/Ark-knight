@@ -189,6 +189,7 @@ void Room::generateWall(float x, float y, int zOrder) {
     
     wall->setPosition(Vec2(x, y));
     wall->setGlobalZOrder(zOrder);
+    wall->setTag(Constants::Tag::WALL);
     this->addChild(wall, zOrder);
     _walls.pushBack(wall);
 }
