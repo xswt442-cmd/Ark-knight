@@ -2,6 +2,7 @@
 #define __GAME_SCENE_H__
 
 #include "cocos2d.h"
+#include "ui/CocosGUI.h"
 #include "Core/Constants.h"
 #include "Core/GameMacros.h"
 #include "Entities/Player/Player.h"
@@ -130,8 +131,12 @@ private:
     Camera* _camera;
     
     // HUD元素
-    Label* _hpLabel;
-    Label* _mpLabel;
+    cocos2d::ui::LoadingBar* _hpBar;     // 血条
+    cocos2d::ui::LoadingBar* _mpBar;     // 蓝条
+    Sprite* _hpIcon;                      // 爱心图标
+    Sprite* _mpIcon;                      // 闪电图标
+    Label* _hpLabel;                      // 血量数值
+    Label* _mpLabel;                      // 蓝量数值
     Label* _debugLabel;
     Label* _skillLabel;
     

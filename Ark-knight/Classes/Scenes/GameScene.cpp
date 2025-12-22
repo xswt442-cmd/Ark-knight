@@ -223,24 +223,87 @@ void GameScene::createHUD()
     auto visibleSize = Director::getInstance()->getVisibleSize();
     Vec2 origin = Director::getInstance()->getVisibleOrigin();
     
-    // HP标签
-    _hpLabel = Label::createWithSystemFont("HP: 100/100", "Arial", 24);
-    _hpLabel->setPosition(Vec2(origin.x + 100, origin.y + visibleSize.height - 30));
-    _hpLabel->setTextColor(Color4B::GREEN);
-    _hpLabel->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL);
+    float barStartX = origin.x + 60;
+    float barStartY = origin.y + visibleSize.height - 35;
+    
+    // ==================== 血条 ====================
+    float barWidth = 120.0f;  // 血条宽度
+    float barHeight = 12.0f;  // 血条高度
+    
+    // 爱心图标
+    _hpIcon = Sprite::create("UIs/StatusBars/Bars/Heart.png");
+    _hpIcon->setPosition(Vec2(barStartX, barStartY));
+    _hpIcon->setScale(0.12f);
+    _hpIcon->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL);
+    _uiLayer->addChild(_hpIcon);
+    
+    // 血条背景
+    auto hpBarBg = Sprite::create("UIs/StatusBars/Bars/EmplyBar.png");
+    hpBarBg->setPosition(Vec2(barStartX + 25, barStartY));
+    hpBarBg->setAnchorPoint(Vec2(0, 0.5f));
+    hpBarBg->setScaleX(barWidth / hpBarBg->getContentSize().width);
+    hpBarBg->setScaleY(barHeight / hpBarBg->getContentSize().height);
+    hpBarBg->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL);
+    _uiLayer->addChild(hpBarBg);
+    
+    // 血条填充
+    _hpBar = cocos2d::ui::LoadingBar::create("UIs/StatusBars/Bars/HealthFill.png");
+    _hpBar->setPercent(100.0f);
+    _hpBar->setPosition(Vec2(barStartX + 25, barStartY));
+    _hpBar->setAnchorPoint(Vec2(0, 0.5f));
+    _hpBar->setScaleX(barWidth / _hpBar->getContentSize().width);
+    _hpBar->setScaleY(barHeight / _hpBar->getContentSize().height);
+    _hpBar->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL + 5);
+    _uiLayer->addChild(_hpBar);
+    
+    // 血量数值
+    _hpLabel = Label::createWithSystemFont("100/100", "Arial", 16);
+    _hpLabel->setPosition(Vec2(barStartX + 75, barStartY));
+    _hpLabel->setTextColor(Color4B::WHITE);
+    _hpLabel->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL + 10);
     _uiLayer->addChild(_hpLabel);
     
-    // MP标签
-    _mpLabel = Label::createWithSystemFont("MP: 100/100", "Arial", 24);
-    _mpLabel->setPosition(Vec2(origin.x + 100, origin.y + visibleSize.height - 60));
-    _mpLabel->setTextColor(Color4B::BLUE);
-    _mpLabel->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL);
+    // ==================== 蓝条 ====================
+    float mpBarY = barStartY - 35;
+    
+    // 闪电图标
+    _mpIcon = Sprite::create("UIs/StatusBars/Bars/Lighting bolt.png");
+    _mpIcon->setPosition(Vec2(barStartX, mpBarY));
+    _mpIcon->setScale(0.12f);
+    _mpIcon->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL);
+    _uiLayer->addChild(_mpIcon);
+    
+    // 蓝条背景
+    auto mpBarBg = Sprite::create("UIs/StatusBars/Bars/EmplyBar.png");
+    mpBarBg->setPosition(Vec2(barStartX + 25, mpBarY));
+    mpBarBg->setAnchorPoint(Vec2(0, 0.5f));
+    mpBarBg->setScaleX(barWidth / mpBarBg->getContentSize().width);
+    mpBarBg->setScaleY(barHeight / mpBarBg->getContentSize().height);
+    mpBarBg->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL);
+    _uiLayer->addChild(mpBarBg);
+    
+    // 蓝条填充
+    _mpBar = cocos2d::ui::LoadingBar::create("UIs/StatusBars/Bars/EnrgyFill.png");
+    _mpBar->setPercent(100.0f);
+    _mpBar->setPosition(Vec2(barStartX + 25, mpBarY));
+    _mpBar->setAnchorPoint(Vec2(0, 0.5f));
+    _mpBar->setScaleX(barWidth / _mpBar->getContentSize().width);
+    _mpBar->setScaleY(barHeight / _mpBar->getContentSize().height);
+    _mpBar->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL + 5);
+    _uiLayer->addChild(_mpBar);
+    
+    // 蓝量数值
+    _mpLabel = Label::createWithSystemFont("100/100", "Arial", 16);
+    _mpLabel->setPosition(Vec2(barStartX + 75, mpBarY));
+    _mpLabel->setTextColor(Color4B::WHITE);
+    _mpLabel->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL + 10);
     _uiLayer->addChild(_mpLabel);
     
-    // 技能冷却标签
-    _skillLabel = Label::createWithSystemFont("Skill: Ready", "Arial", 20);
-    _skillLabel->setPosition(Vec2(origin.x + 100, origin.y + visibleSize.height - 90));
-    _skillLabel->setTextColor(Color4B::WHITE);
+    // ==================== 技能CD显示 ====================
+    _skillLabel = Label::createWithSystemFont("Skill: Ready", "Arial", 18);
+    _skillLabel->setPosition(Vec2(barStartX + 25, mpBarY - 25));
+    _skillLabel->setAnchorPoint(Vec2(0, 0.5f));
+    _skillLabel->setTextColor(Color4B(200, 255, 200, 255));
     _skillLabel->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL);
     _uiLayer->addChild(_skillLabel);
     
@@ -478,14 +541,24 @@ void GameScene::updateHUD(float dt)
 {
     if (_player != nullptr)
     {
-        // 更新HP
-        char hpText[64];
-        sprintf(hpText, "HP: %d/%d", _player->getHP(), _player->getMaxHP());
+        // 更新HP血条
+        int currentHP = _player->getHP();
+        int maxHP = _player->getMaxHP();
+        float hpPercent = (maxHP > 0) ? (currentHP * 100.0f / maxHP) : 0.0f;
+        _hpBar->setPercent(hpPercent);
+        
+        char hpText[32];
+        sprintf(hpText, "%d/%d", currentHP, maxHP);
         _hpLabel->setString(hpText);
         
-        // 更新MP
-        char mpText[64];
-        sprintf(mpText, "MP: %d/%d", _player->getMP(), _player->getMaxMP());
+        // 更新MP蓝条
+        int currentMP = _player->getMP();
+        int maxMP = _player->getMaxMP();
+        float mpPercent = (maxMP > 0) ? (currentMP * 100.0f / maxMP) : 0.0f;
+        _mpBar->setPercent(mpPercent);
+        
+        char mpText[32];
+        sprintf(mpText, "%d/%d", currentMP, maxMP);
         _mpLabel->setString(mpText);
         
         // 更新技能冷却
