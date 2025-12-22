@@ -218,6 +218,49 @@ void GameScene::createTestEnemies()
     }
 }
 
+void GameScene::spawnEnemiesInRoom(Room* room)
+{
+    if (room == nullptr)
+    {
+        return;
+    }
+    
+    // 只在普通战斗房间生成敌人
+    if (room->getRoomType() != Constants::RoomType::NORMAL)
+    {
+        return;
+    }
+    
+    // 如果房间已经生成过敌人，则不再生成
+    // TODO: 后续需要在Room类中添加标记，这里简单判断
+    
+    // 获取房间中心和尺寸
+    Vec2 roomCenter = room->getCenter();
+    float roomWidth = Constants::ROOM_TILES_W * Constants::FLOOR_TILE_SIZE;
+    float roomHeight = Constants::ROOM_TILES_H * Constants::FLOOR_TILE_SIZE;
+    
+    // 随机生成2-4个阿咬
+    int enemyCount = RANDOM_INT(2, 4);
+    
+    for (int i = 0; i < enemyCount; i++)
+    {
+        auto ayao = Ayao::create();
+        
+        // 在房间内随机位置（避开房间边界）
+        float offsetX = RANDOM_FLOAT(-roomWidth * 0.3f, roomWidth * 0.3f);
+        float offsetY = RANDOM_FLOAT(-roomHeight * 0.3f, roomHeight * 0.3f);
+        Vec2 spawnPos = roomCenter + Vec2(offsetX, offsetY);
+        
+        ayao->setPosition(spawnPos);
+        
+        // 添加到场景
+        _gameLayer->addChild(ayao);
+        _enemies.pushBack(ayao);
+        
+        GAME_LOG("Ayao spawned at (%.1f, %.1f) in room", spawnPos.x, spawnPos.y);
+    }
+}
+
 void GameScene::createHUD()
 {
     auto visibleSize = Director::getInstance()->getVisibleSize();
@@ -393,6 +436,9 @@ void GameScene::updateMapSystem(float dt)
     {
         // 玩家进入了新房间
         _currentRoom = detectedRoom;
+        
+        // 在新房间生成敌人
+        spawnEnemiesInRoom(_currentRoom);
         
         // 更新小地图
         if (_miniMap)

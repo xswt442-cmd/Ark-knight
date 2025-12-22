@@ -7,6 +7,7 @@
 #include "Core/GameMacros.h"
 #include "Entities/Player/Player.h"
 #include "Entities/Enemy/Enemy.h"
+#include "Entities/Enemy/Ayao.h"
 #include "Map/MapGenerator.h"
 #include "Map/Room.h"
 #include "UI/MiniMap.h"
@@ -49,6 +50,12 @@ private:
      * 创建测试敌人
      */
     void createTestEnemies();
+    
+    /**
+     * 在指定房间生成敌人
+     * @param room 目标房间
+     */
+    void spawnEnemiesInRoom(Room* room);
     
     /**
      * 初始化地图系统
