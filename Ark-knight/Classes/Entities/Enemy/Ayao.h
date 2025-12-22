@@ -51,6 +51,11 @@ public:
      */
     virtual void move(const cocos2d::Vec2& direction, float dt) override;
     
+    /**
+     * 当真正造成伤害时播放一次命中/攻击动画（不改变攻击冷却）
+     */
+    virtual void playAttackAnimation() override;
+    
 protected:
     // 动画资源
     Animation* _moveAnimation;

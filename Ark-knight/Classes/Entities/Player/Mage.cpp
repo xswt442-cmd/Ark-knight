@@ -19,11 +19,11 @@ bool Mage::init()
     }
     
     // 设置法师特有属性
-    setMaxHP(80);           // 法师血量较低
-    setHP(80);
+    setMaxHP(1000);           // 法师血量较低
+    setHP(1000);
     setMaxMP(150);          // 法师法力值高
     setMP(150);
-    setAttack(15);          // 基础攻击力中等
+    setAttack(10);          // 基础攻击力中等
     setMoveSpeed(180.0f);   // 移动速度中等
     
     GAME_LOG("Mage initialized - HP: %d/%d, MP: %d/%d", 

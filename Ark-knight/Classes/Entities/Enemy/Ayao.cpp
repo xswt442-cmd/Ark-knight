@@ -1,6 +1,8 @@
 ﻿#include "Ayao.h"
 
-static const int AYAO_MOVE_ACTION_TAG = 0xA001; // 用于识别移动循环动作的 tag
+static const int AYAO_MOVE_ACTION_TAG = 0xA001; // 移动循环动作 tag
+static const int AYAO_HIT_ACTION_TAG  = 0xA002; // 命中/伤害播放动作 tag
+static const int AYAO_WINDUP_ACTION_TAG = 0xA003; // 攻击前摇动作 tag
 
 Ayao::Ayao()
     : _moveAnimation(nullptr)
@@ -62,8 +64,8 @@ void Ayao::update(float dt)
 void Ayao::setupAyaoAttributes()
 {
     // 阿咬基础属性
-    setMaxHP(50);
-    setHP(50);
+    setMaxHP(100);
+    setHP(100);
     setAttack(10);
     setMoveSpeed(100.0f);
     
@@ -73,6 +75,9 @@ void Ayao::setupAyaoAttributes()
     
     // 攻击冷却
     setAttackCooldown(1.5f);    // 1.5秒攻击一次
+
+    // 可按怪物个体设置不同前摇时长
+    setAttackWindup(0.5f);
 }
 
 void Ayao::loadAnimations()
@@ -158,29 +163,46 @@ void Ayao::attack()
     setState(EntityState::ATTACK);
     resetAttackCooldown();
     
-    // 播放攻击动画（张嘴-闭嘴完整过程）
+    // 播放攻击前摇动画（只停止移动循环，不停止其它潜在动作）
     if (_attackAnimation && _sprite)
     {
-        // 停止之前的动作（包括移动循环）
-        _sprite->stopAllActions();
-        
-        // 设置动画完成后恢复到第一帧（闭嘴状态）
+        // 仅停止移动循环动作（避免 stopAllActions 导致其它视觉动作被中断）
+        auto moveAct = _sprite->getActionByTag(AYAO_MOVE_ACTION_TAG);
+        if (moveAct)
+        {
+            _sprite->stopAction(moveAct);
+        }
+
+        // 停止之前的前摇动作（如果有）
+        auto prevWind = _sprite->getActionByTag(AYAO_WINDUP_ACTION_TAG);
+        if (prevWind)
+        {
+            _sprite->stopAction(prevWind);
+        }
+
+        // 作为前摇播放攻击动画（当风箱结束时，AI 的回调会决定是否命中）
         _attackAnimation->setRestoreOriginalFrame(true);
-        
         auto animate = Animate::create(_attackAnimation);
+        animate->setTag(AYAO_WINDUP_ACTION_TAG);
+        _sprite->runAction(animate);
+
+        // 使用 Enemy 中的 windup 时长保证状态同步（结束后回到 IDLE）
+        float windup = this->getAttackWindup();
+        auto delay = DelayTime::create(windup);
         auto callback = CallFunc::create([this]() {
             if (_currentState == EntityState::ATTACK)
             {
                 setState(EntityState::IDLE);
             }
         });
-        auto sequence = Sequence::create(animate, callback, nullptr);
-        _sprite->runAction(sequence);
+        auto seq = Sequence::create(delay, callback, nullptr);
+        this->runAction(seq); // 放在节点上，避免和 sprite 上动画冲突
     }
     else
     {
-        // 没有动画时的回退逻辑
-        auto delay = DelayTime::create(0.5f);
+        // 没有动画时使用 windup 时长回退（避免硬编码）
+        float windup = this->getAttackWindup();
+        auto delay = DelayTime::create(windup);
         auto callback = CallFunc::create([this]() {
             if (_currentState == EntityState::ATTACK)
             {
@@ -257,10 +279,18 @@ void Ayao::die()
 
 /**
  * 重写移动：控制移动动画开始/停止，以及根据水平分量设置左右朝向（flipX）。
- * 注意：此处假设基类 Character::move 会实际更改位置（根据速度与 dt）。
+ * 注意：保留你已设置的朝向判断，不做修改。
  */
 void Ayao::move(const Vec2& direction, float dt)
 {
+    // 在攻击阶段禁止移动（确保攻击前摇/命中动画不会被移动覆盖）
+    if (_currentState == EntityState::ATTACK || _currentState == EntityState::DIE)
+    {
+        // 明确告诉基类停止逻辑（避免位置变化），直接返回
+        Character::move(Vec2::ZERO, dt);
+        return;
+    }
+
     // 小阈值判断为“不移动”
     const float STOP_THRESHOLD_SQ = 1.0f;
     if (direction.lengthSquared() <= STOP_THRESHOLD_SQ)
@@ -301,7 +331,7 @@ void Ayao::move(const Vec2& direction, float dt)
     // 设置朝向（左右），并确保移动动画在循环播放
     if (_sprite && _moveAnimation)
     {
-        // 左右翻转：修改为正确方向
+        // 保持你现有的朝向逻辑（不要改）
         _sprite->setFlippedX(dirNorm.x > 0.0f);
         
         // 如果移动动画未在播放，则启动循环播放并打上 tag
@@ -312,5 +342,76 @@ void Ayao::move(const Vec2& direction, float dt)
             repeat->setTag(AYAO_MOVE_ACTION_TAG);
             _sprite->runAction(repeat);
         }
+    }
+}
+
+/**
+ * 每次真正造成伤害时播放一次命中/攻击动画（不改变冷却/状态）
+ */
+void Ayao::playAttackAnimation()
+{
+    if (!_sprite)
+    {
+        return;
+    }
+
+    // 如果已经死亡则忽略
+    if (_currentState == EntityState::DIE)
+    {
+        return;
+    }
+    
+    // 在播放命中动画期间确保处于 ATTACK 状态，阻止移动
+    if (_currentState != EntityState::ATTACK)
+    {
+        setState(EntityState::ATTACK);
+    }
+    
+    // 停止当前的移动循环动作（保持其他动作不被影响）
+    auto moveAct = _sprite->getActionByTag(AYAO_MOVE_ACTION_TAG);
+    if (moveAct)
+    {
+        _sprite->stopAction(moveAct);
+    }
+    
+    // 如果前摇动画还在播放，停止它（命中动画优先）
+    auto wind = _sprite->getActionByTag(AYAO_WINDUP_ACTION_TAG);
+    if (wind)
+    {
+        _sprite->stopAction(wind);
+    }
+    
+    if (_attackAnimation)
+    {
+        // 如果之前有命中动作在播，先停止它
+        auto prevHit = _sprite->getActionByTag(AYAO_HIT_ACTION_TAG);
+        if (prevHit)
+        {
+            _sprite->stopAction(prevHit);
+        }
+        
+        _attackAnimation->setRestoreOriginalFrame(true);
+        auto animate = Animate::create(_attackAnimation);
+        animate->setTag(AYAO_HIT_ACTION_TAG);
+        
+        // 播放后恢复到移动动画的第一帧（或保持当前帧），并在结束后恢复状态为 IDLE（如果未死亡）
+        auto callback = CallFunc::create([this]() {
+            if (_moveAnimation && _sprite)
+            {
+                auto frames = _moveAnimation->getFrames();
+                if (!frames.empty())
+                {
+                    _sprite->setSpriteFrame(frames.front()->getSpriteFrame());
+                }
+            }
+            // 命中动画播放完毕后恢复状态（前提不是死亡）
+            if (_currentState != EntityState::DIE)
+            {
+                setState(EntityState::IDLE);
+            }
+        });
+        auto seq = Sequence::create(animate, callback, nullptr);
+        seq->setTag(AYAO_HIT_ACTION_TAG);
+        _sprite->runAction(seq);
     }
 }
