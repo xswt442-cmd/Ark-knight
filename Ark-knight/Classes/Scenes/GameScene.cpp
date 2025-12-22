@@ -272,9 +272,12 @@ void GameScene::spawnEnemiesInRoom(Room* room)
         ayao->setPosition(spawnPos);
         ayao->setRoomBounds(roomBounds);  // 设置房间边界限制移动
         
-        // 添加到场景
+        // 添加到场景和全局敌人列表
         _gameLayer->addChild(ayao);
         _enemies.pushBack(ayao);
+        
+        // 同时添加到房间的敌人列表（用于房间门控制）
+        room->getEnemies().pushBack(ayao);
         
         GAME_LOG("Ayao spawned at (%.1f, %.1f) in room", spawnPos.x, spawnPos.y);
     }
