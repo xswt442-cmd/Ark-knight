@@ -37,6 +37,11 @@ public:
     void attack() override;
     
     /**
+     * 重写死亡方法，播放死亡动画
+     */
+    void die() override;
+    
+    /**
      * 设置房间边界（限制移动范围）
      */
     void setRoomBounds(const cocos2d::Rect& bounds) { _roomBounds = bounds; _hasRoomBounds = true; }

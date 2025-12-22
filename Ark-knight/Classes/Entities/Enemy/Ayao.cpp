@@ -146,9 +146,15 @@ void Ayao::attack()
     setState(EntityState::ATTACK);
     resetAttackCooldown();
     
-    // 播放攻击动画
+    // 播放攻击动画（张嘴-闭嘴完整过程）
     if (_attackAnimation && _sprite)
     {
+        // 停止之前的动作
+        _sprite->stopAllActions();
+        
+        // 设置动画完成后恢复到第一帧（闭嘴状态）
+        _attackAnimation->setRestoreOriginalFrame(true);
+        
         auto animate = Animate::create(_attackAnimation);
         auto callback = CallFunc::create([this]() {
             if (_currentState == EntityState::ATTACK)
@@ -157,7 +163,6 @@ void Ayao::attack()
             }
         });
         auto sequence = Sequence::create(animate, callback, nullptr);
-        _sprite->stopAllActions();
         _sprite->runAction(sequence);
     }
     else
@@ -175,4 +180,39 @@ void Ayao::attack()
     }
     
     GAME_LOG("Ayao attacks!");
+}
+
+void Ayao::die()
+{
+    setState(EntityState::DIE);
+    
+    // 停止所有动作
+    this->stopAllActions();
+    if (_sprite)
+    {
+        _sprite->stopAllActions();
+    }
+    
+    // 播放死亡动画
+    if (_dieAnimation && _sprite)
+    {
+        _dieAnimation->setRestoreOriginalFrame(false);  // 保持最后一帧
+        auto animate = Animate::create(_dieAnimation);
+        auto fadeOut = FadeOut::create(0.3f);
+        auto remove = RemoveSelf::create();
+        auto sequence = Sequence::create(animate, fadeOut, remove, nullptr);
+        _sprite->runAction(sequence);
+        
+        // 死亡后移除节点
+        auto delay = DelayTime::create(_dieAnimation->getDuration() + 0.3f);
+        auto removeThis = RemoveSelf::create();
+        this->runAction(Sequence::create(delay, removeThis, nullptr));
+    }
+    else
+    {
+        // 没有动画时使用默认死亡效果
+        showDeathEffect();
+    }
+    
+    GAME_LOG("Ayao died");
 }
