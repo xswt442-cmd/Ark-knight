@@ -348,14 +348,14 @@ void GameScene::createHUD()
     float skillIconY = origin.y + skillIconSize / 2 + 40;
     
     // 技能图标背景（底层）
-    _skillIcon = Sprite::create("UIs/Skills/Mage_fireball.png");
+    _skillIcon = Sprite::create("UIs/Skills/Mage/Skill_icon.png");
     _skillIcon->setPosition(Vec2(skillIconX, skillIconY));
     _skillIcon->setScale(skillIconSize / _skillIcon->getContentSize().width);
     _skillIcon->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL);
     _uiLayer->addChild(_skillIcon);
     
     // CD变暗遮罩（中层，初始不可见）
-    _skillCDMask = Sprite::create("UIs/Skills/Mage_fireball.png");
+    _skillCDMask = Sprite::create("UIs/Skills/Mage/Skill_icon.png");
     _skillCDMask->setPosition(Vec2(skillIconX, skillIconY));
     _skillCDMask->setScale(skillIconSize / _skillCDMask->getContentSize().width);
     _skillCDMask->setColor(Color3B::BLACK);
@@ -365,7 +365,7 @@ void GameScene::createHUD()
     _uiLayer->addChild(_skillCDMask);
     
     // CD进度条（顶层，径向从12点顺时针）
-    auto progressSprite = Sprite::create("UIs/Skills/Mage_fireball.png");
+    auto progressSprite = Sprite::create("UIs/Skills/Mage/Skill_icon.png");
     _skillCDProgress = ProgressTimer::create(progressSprite);
     _skillCDProgress->setType(ProgressTimer::Type::RADIAL);
     _skillCDProgress->setReverseDirection(false);

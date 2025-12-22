@@ -66,11 +66,32 @@ void Mage::castFireball()
     GAME_LOG("Fireball cast in direction (%.2f, %.2f)", 
              _facingDirection.x, _facingDirection.y);
     
-    // 创建火球节点
-    auto fireball = DrawNode::create();
-    fireball->drawSolidCircle(Vec2::ZERO, 15.0f, 0, 32, Color4F::ORANGE);
+    // 创建火球精灵（使用动画）
+    auto fireball = Sprite::create("UIs/Skills/Mage/FB500-1.png");
     fireball->setPosition(this->getPosition() + _facingDirection * 50);
     fireball->setTag(Constants::Tag::PROJECTILE);
+    fireball->setScale(0.5f);  // 调整火球大小
+    
+    // 创建火球动画（5帧循环）
+    Vector<SpriteFrame*> fireballFrames;
+    for (int i = 1; i <= 5; i++)
+    {
+        char filename[128];
+        sprintf(filename, "UIs/Skills/Mage/FB500-%d.png", i);
+        auto frame = Sprite::create(filename);
+        if (frame)
+        {
+            fireballFrames.pushBack(frame->getSpriteFrame());
+        }
+    }
+    
+    if (!fireballFrames.empty())
+    {
+        auto animation = Animation::createWithSpriteFrames(fireballFrames, 0.08f);
+        auto animate = Animate::create(animation);
+        auto repeat = RepeatForever::create(animate);
+        fireball->runAction(repeat);
+    }
     
     // 保存伤害值和方向
     int fireballDamage = getAttack() * 2;  // 火球伤害是普攻的2倍
