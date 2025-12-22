@@ -59,6 +59,8 @@ void Enemy::executeAI(Player* player, float dt)
         if (isPlayerInAttackRange(player))
         {
             // 停止移动，面向玩家，攻击
+            // 明确停止移动以确保移动动画被停掉（某些分支可能不再调用 move）
+            move(Vec2::ZERO, dt);
             faceToPosition(player->getPosition());
             
             if (canAttack())
@@ -128,6 +130,11 @@ void Enemy::patrol(float dt)
     if (direction.lengthSquared() > 1.0f)
     {
         move(direction, dt);
+    }
+    else
+    {
+        // 明确告诉 move 停止（以便停止移动动画）
+        move(Vec2::ZERO, dt);
     }
 }
 

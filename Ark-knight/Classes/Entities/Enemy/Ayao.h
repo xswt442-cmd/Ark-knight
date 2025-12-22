@@ -46,6 +46,11 @@ public:
      */
     void setRoomBounds(const cocos2d::Rect& bounds) { _roomBounds = bounds; _hasRoomBounds = true; }
     
+    /**
+     * 重写移动以控制移动动画与朝向
+     */
+    virtual void move(const cocos2d::Vec2& direction, float dt) override;
+    
 protected:
     // 动画资源
     Animation* _moveAnimation;
