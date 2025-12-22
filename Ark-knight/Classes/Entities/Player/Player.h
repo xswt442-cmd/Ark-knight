@@ -105,6 +105,9 @@ protected:
     float _skillCooldown;
     float _skillCooldownTimer;
     
+    // MP恢复累积器（避免浮点转int精度丢失）
+    float _mpRegenAccumulator;
+    
     // 冲刺相关
     float _dashCooldown;
     float _dashCooldownTimer;

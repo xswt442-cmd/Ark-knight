@@ -8,6 +8,7 @@ Player::Player()
     , _keySpace(false)
     , _skillCooldown(Constants::Combat::SKILL_COOLDOWN)
     , _skillCooldownTimer(0.0f)
+    , _mpRegenAccumulator(0.0f)
     , _dashCooldown(2.0f)
     , _dashCooldownTimer(0.0f)
     , _isDashing(false)
@@ -51,20 +52,29 @@ void Player::update(float dt)
 {
     Character::update(dt);
     
-    // MP自动恢复：每秒回5点（使用浮点数累加避免精度丢失）
+    // MP自动恢复：每秒回1点（使用累积器避免精度丢失）
     if (_mp < _maxMP)
     {
-        float mpRegenPerSecond = 5.0f;
-        float mpGain = mpRegenPerSecond * dt;
+        float mpRegenPerSecond = 1.0f;
+        _mpRegenAccumulator += mpRegenPerSecond * dt;
         
-        // 使用浮点运算，然后安全转换
-        float newMP = static_cast<float>(_mp) + mpGain;
-        _mp = static_cast<int>(newMP);
-        
-        if (_mp > _maxMP)
+        // 当累积到至少1点时，增加MP
+        if (_mpRegenAccumulator >= 1.0f)
         {
-            _mp = _maxMP;
+            int mpToAdd = static_cast<int>(_mpRegenAccumulator);
+            _mp += mpToAdd;
+            _mpRegenAccumulator -= static_cast<float>(mpToAdd);
+            
+            if (_mp > _maxMP)
+            {
+                _mp = _maxMP;
+                _mpRegenAccumulator = 0.0f;
+            }
         }
+    }
+    else
+    {
+        _mpRegenAccumulator = 0.0f;  // MP已满，清空累积器
     }
     
     // 更新技能冷却
