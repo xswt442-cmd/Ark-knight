@@ -158,31 +158,44 @@ void Mage::castFireball()
             // 检测与墙方块的碰撞
             for (auto child : parent->getChildren())
             {
+                // 遍历子节点（可能是Room/Hallway，也可能是其他）
                 for (auto subChild : child->getChildren())
                 {
+                    // 情况1：subChild直接是墙（如果层级结构较浅）
                     if (subChild->getTag() == Constants::Tag::WALL)
                     {
-                        // 使用Cocos2d API精确转换坐标（考虑锚点、旋转、缩放等）
                         Vec2 wallWorldPos = child->convertToWorldSpace(subChild->getPosition());
                         Vec2 wallPos = parent->convertToNodeSpace(wallWorldPos);
                         
                         float dist = fireballPos.distance(wallPos);
-                        
-                        // 添加调试日志（只在距离较近时输出，避免刷屏）
-                        if (dist < Constants::FLOOR_TILE_SIZE * 2.0f)
-                        {
-                            GAME_LOG("Fireball check: Fire:(%.1f,%.1f) Wall:(%.1f,%.1f) Dist:%.1f Radius:%.1f",
-                                     fireballPos.x, fireballPos.y, wallPos.x, wallPos.y, dist, wallCollisionRadius);
-                        }
-                        
                         if (dist < wallCollisionRadius)
                         {
-                            GAME_LOG(">>> Fireball HIT wall!");
                             fireball->setUserData((void*)1);
                             fireball->stopAllActions();
                             fireball->unschedule("fireballUpdate");
                             fireball->removeFromParent();
                             return;
+                        }
+                    }
+                    
+                    // 情况2：subChild是Room/Hallway，墙在下一层（MapGenerator -> Room -> Wall）
+                    for (auto deepChild : subChild->getChildren())
+                    {
+                        if (deepChild->getTag() == Constants::Tag::WALL)
+                        {
+                            Vec2 wallWorldPos = subChild->convertToWorldSpace(deepChild->getPosition());
+                            Vec2 wallPos = parent->convertToNodeSpace(wallWorldPos);
+                            
+                            float dist = fireballPos.distance(wallPos);
+                            
+                            if (dist < wallCollisionRadius)
+                            {
+                                fireball->setUserData((void*)1);
+                                fireball->stopAllActions();
+                                fireball->unschedule("fireballUpdate");
+                                fireball->removeFromParent();
+                                return;
+                            }
                         }
                     }
                 }
@@ -298,31 +311,44 @@ void Mage::castIceShard()
             // 检测与墙方块的碰撞
             for (auto child : parent->getChildren())
             {
+                // 遍历子节点（可能是Room/Hallway，也可能是其他）
                 for (auto subChild : child->getChildren())
                 {
+                    // 情况1：subChild直接是墙
                     if (subChild->getTag() == Constants::Tag::WALL)
                     {
-                        // 使用Cocos2d API精确转换坐标
                         Vec2 wallWorldPos = child->convertToWorldSpace(subChild->getPosition());
                         Vec2 wallPos = parent->convertToNodeSpace(wallWorldPos);
                         
                         float dist = icePos.distance(wallPos);
-                        
-                        // 添加调试日志（只在距离较近时输出）
-                        if (dist < Constants::FLOOR_TILE_SIZE * 2.0f)
-                        {
-                            GAME_LOG("IceShard check: Ice:(%.1f,%.1f) Wall:(%.1f,%.1f) Dist:%.1f Radius:%.1f",
-                                     icePos.x, icePos.y, wallPos.x, wallPos.y, dist, wallCollisionRadius);
-                        }
-                        
                         if (dist < wallCollisionRadius)
                         {
-                            GAME_LOG(">>> IceShard HIT wall!");
                             iceShard->setUserData((void*)1);
                             iceShard->stopAllActions();
                             iceShard->unschedule("iceShardUpdate");
                             iceShard->removeFromParent();
                             return;
+                        }
+                    }
+                    
+                    // 情况2：subChild是Room/Hallway，墙在下一层
+                    for (auto deepChild : subChild->getChildren())
+                    {
+                        if (deepChild->getTag() == Constants::Tag::WALL)
+                        {
+                            Vec2 wallWorldPos = subChild->convertToWorldSpace(deepChild->getPosition());
+                            Vec2 wallPos = parent->convertToNodeSpace(wallWorldPos);
+                            
+                            float dist = icePos.distance(wallPos);
+                            
+                            if (dist < wallCollisionRadius)
+                            {
+                                iceShard->setUserData((void*)1);
+                                iceShard->stopAllActions();
+                                iceShard->unschedule("iceShardUpdate");
+                                iceShard->removeFromParent();
+                                return;
+                            }
                         }
                     }
                 }
