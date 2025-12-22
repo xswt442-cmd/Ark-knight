@@ -1,5 +1,7 @@
 ﻿#include "Ayao.h"
 
+static const int AYAO_MOVE_ACTION_TAG = 0xA001; // 用于识别移动循环动作的 tag
+
 Ayao::Ayao()
     : _moveAnimation(nullptr)
     , _attackAnimation(nullptr)
@@ -133,10 +135,14 @@ void Ayao::loadAnimations()
     }
     
     // 设置初始精灵（使用移动动画第一帧）
-    if (!moveFrames.empty())
+    if (_moveAnimation)
     {
-        auto sprite = Sprite::createWithSpriteFrame(moveFrames.at(0));
-        this->bindSprite(sprite);
+        auto frames = _moveAnimation->getFrames();
+        if (!frames.empty())
+        {
+            auto sprite = Sprite::createWithSpriteFrame(frames.front()->getSpriteFrame());
+            this->bindSprite(sprite);
+        }
     }
     
     GAME_LOG("Ayao animations loaded");
@@ -155,7 +161,7 @@ void Ayao::attack()
     // 播放攻击动画（张嘴-闭嘴完整过程）
     if (_attackAnimation && _sprite)
     {
-        // 停止之前的动作
+        // 停止之前的动作（包括移动循环）
         _sprite->stopAllActions();
         
         // 设置动画完成后恢复到第一帧（闭嘴状态）
@@ -245,6 +251,66 @@ void Ayao::die()
         else
         {
             this->removeFromParent();
+        }
+    }
+}
+
+/**
+ * 重写移动：控制移动动画开始/停止，以及根据水平分量设置左右朝向（flipX）。
+ * 注意：此处假设基类 Character::move 会实际更改位置（根据速度与 dt）。
+ */
+void Ayao::move(const Vec2& direction, float dt)
+{
+    // 小阈值判断为“不移动”
+    const float STOP_THRESHOLD_SQ = 1.0f;
+    if (direction.lengthSquared() <= STOP_THRESHOLD_SQ)
+    {
+        // 停止移动动作（如果存在）
+        if (_sprite)
+        {
+            auto act = _sprite->getActionByTag(AYAO_MOVE_ACTION_TAG);
+            if (act)
+            {
+                _sprite->stopAction(act);
+            }
+            
+            // 恢复到移动动画的第一帧（通常为站立/闭嘴状态）
+            if (_moveAnimation)
+            {
+                auto frames = _moveAnimation->getFrames();
+                if (!frames.empty())
+                {
+                    auto firstFrame = frames.front()->getSpriteFrame();
+                    if (firstFrame)
+                    {
+                        _sprite->setSpriteFrame(firstFrame);
+                    }
+                }
+            }
+        }
+        
+        // 调用基类移动以保持状态一致（基类可能处理速度、状态机等）
+        Character::move(Vec2::ZERO, dt);
+        return;
+    }
+    
+    // 有移动向量：先调用基类以实际移动实体
+    Vec2 dirNorm = direction.getNormalized();
+    Character::move(dirNorm, dt);
+    
+    // 设置朝向（左右），并确保移动动画在循环播放
+    if (_sprite && _moveAnimation)
+    {
+        // 左右翻转：修改为正确方向
+        _sprite->setFlippedX(dirNorm.x > 0.0f);
+        
+        // 如果移动动画未在播放，则启动循环播放并打上 tag
+        if (!_sprite->getActionByTag(AYAO_MOVE_ACTION_TAG))
+        {
+            auto animate = Animate::create(_moveAnimation);
+            auto repeat = RepeatForever::create(animate);
+            repeat->setTag(AYAO_MOVE_ACTION_TAG);
+            _sprite->runAction(repeat);
         }
     }
 }

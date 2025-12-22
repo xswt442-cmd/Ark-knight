@@ -178,13 +178,14 @@ void Character::faceToPosition(const Vec2& targetPos)
         // 翻转精灵
         if (_sprite != nullptr)
         {
+            //修改点：角色的朝向与反转逻辑有区别，应该这样保证视觉上是转向。
             if (_facingDirection.x < 0)
             {
-                _sprite->setFlippedX(true);
+                _sprite->setFlippedX(false);
             }
             else if (_facingDirection.x > 0)
             {
-                _sprite->setFlippedX(false);
+                _sprite->setFlippedX(true);
             }
         }
     }
