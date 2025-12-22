@@ -237,6 +237,13 @@ void GameScene::createHUD()
     _mpLabel->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL);
     _uiLayer->addChild(_mpLabel);
     
+    // 技能冷却标签
+    _skillLabel = Label::createWithSystemFont("Skill: Ready", "Arial", 20);
+    _skillLabel->setPosition(Vec2(origin.x + 100, origin.y + visibleSize.height - 90));
+    _skillLabel->setTextColor(Color4B::WHITE);
+    _skillLabel->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL);
+    _uiLayer->addChild(_skillLabel);
+    
     // Debug信息
     _debugLabel = Label::createWithSystemFont("", "Arial", 18);
     _debugLabel->setPosition(Vec2(origin.x + visibleSize.width - 150, origin.y + visibleSize.height - 30));
@@ -480,6 +487,19 @@ void GameScene::updateHUD(float dt)
         char mpText[64];
         sprintf(mpText, "MP: %d/%d", _player->getMP(), _player->getMaxMP());
         _mpLabel->setString(mpText);
+        
+        // 更新技能冷却
+        char skillText[64];
+        float remain = _player->getSkillCooldownRemaining();
+        if (remain <= 0.0f)
+        {
+            sprintf(skillText, "Skill: Ready");
+        }
+        else
+        {
+            sprintf(skillText, "Skill: %.1fs", remain);
+        }
+        _skillLabel->setString(skillText);
         
         // 更新Debug信息
         char debugText[128];

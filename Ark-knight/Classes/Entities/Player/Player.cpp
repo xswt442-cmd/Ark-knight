@@ -220,6 +220,11 @@ void Player::resetSkillCooldown()
     _skillCooldownTimer = _skillCooldown;
 }
 
+float Player::getSkillCooldownRemaining() const
+{
+    return _skillCooldownTimer > 0.0f ? _skillCooldownTimer : 0.0f;
+}
+
 void Player::dash()
 {
     if (!canDash())

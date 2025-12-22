@@ -47,6 +47,16 @@ public:
      * 重置技能冷却
      */
     void resetSkillCooldown();
+
+    /**
+     * 获取技能剩余冷却时间（秒），未冷却返回0
+     */
+    float getSkillCooldownRemaining() const;
+    
+    /**
+     * 获取技能总冷却时长（秒）
+     */
+    float getSkillCooldown() const { return _skillCooldown; }
     
     /**
      * 获取技能MP消耗

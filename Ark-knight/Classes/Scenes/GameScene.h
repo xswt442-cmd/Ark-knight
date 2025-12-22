@@ -133,6 +133,7 @@ private:
     Label* _hpLabel;
     Label* _mpLabel;
     Label* _debugLabel;
+    Label* _skillLabel;
     
     // 状态
     bool _isPaused;
