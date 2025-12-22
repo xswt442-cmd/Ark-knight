@@ -260,22 +260,30 @@ void MapGenerator::generateHallways() {
                 
                 if (toX < Constants::MAP_GRID_SIZE && _roomMatrix[toX][toY] != nullptr) {
                     Room* rightRoom = _roomMatrix[toX][toY];
-                    Vec2 rightCenter = rightRoom->getCenter();
-                    float rightRoomWidth = rightRoom->getTilesWidth() * tileSize;
                     
-                    // 水平走廊：在两个房间的右/左边缘之间
-                    float leftRoomRightEdge = roomCenter.x + roomWidth / 2.0f;
-                    float rightRoomLeftEdge = rightCenter.x - rightRoomWidth / 2.0f;
-                    float hallwayCenterX = (leftRoomRightEdge + rightRoomLeftEdge) / 2.0f;
-                    float hallwayCenterY = roomCenter.y;
-                    float gapSize = rightRoomLeftEdge - leftRoomRightEdge;  // 实际空隙
+                    // 如果是BEGIN和END房间相邻，不生成走廊
+                    bool isBeginEndConnection = 
+                        (room == _beginRoom && rightRoom == _endRoom) ||
+                        (room == _endRoom && rightRoom == _beginRoom);
                     
-                    Hallway* hallway = Hallway::create(Constants::DIR_RIGHT);
-                    hallway->setGapSize(gapSize);
-                    hallway->setCenter(hallwayCenterX, hallwayCenterY);
-                    _hallways.push_back(hallway);
-                    log("Generated RIGHT hallway at (%.1f, %.1f) gap=%.1f connecting (%d,%d) -> (%d,%d)",
-                        hallwayCenterX, hallwayCenterY, gapSize, x, y, toX, toY);
+                    if (!isBeginEndConnection) {
+                        Vec2 rightCenter = rightRoom->getCenter();
+                        float rightRoomWidth = rightRoom->getTilesWidth() * tileSize;
+                        
+                        // 水平走廊：在两个房间的右/左边缘之间
+                        float leftRoomRightEdge = roomCenter.x + roomWidth / 2.0f;
+                        float rightRoomLeftEdge = rightCenter.x - rightRoomWidth / 2.0f;
+                        float hallwayCenterX = (leftRoomRightEdge + rightRoomLeftEdge) / 2.0f;
+                        float hallwayCenterY = roomCenter.y;
+                        float gapSize = rightRoomLeftEdge - leftRoomRightEdge;  // 实际空隙
+                        
+                        Hallway* hallway = Hallway::create(Constants::DIR_RIGHT);
+                        hallway->setGapSize(gapSize);
+                        hallway->setCenter(hallwayCenterX, hallwayCenterY);
+                        _hallways.push_back(hallway);
+                        log("Generated RIGHT hallway at (%.1f, %.1f) gap=%.1f connecting (%d,%d) -> (%d,%d)",
+                            hallwayCenterX, hallwayCenterY, gapSize, x, y, toX, toY);
+                    }
                 }
             }
             
@@ -286,22 +294,30 @@ void MapGenerator::generateHallways() {
                 
                 if (toY >= 0 && toY < Constants::MAP_GRID_SIZE && _roomMatrix[toX][toY] != nullptr) {
                     Room* downRoom = _roomMatrix[toX][toY];
-                    Vec2 downCenter = downRoom->getCenter();
-                    float downRoomHeight = downRoom->getTilesHeight() * tileSize;
                     
-                    // 垂直走廊：在两个房间的上/下边缘之间
-                    float topRoomBottomEdge = roomCenter.y - roomHeight / 2.0f;
-                    float bottomRoomTopEdge = downCenter.y + downRoomHeight / 2.0f;
-                    float hallwayCenterY = (topRoomBottomEdge + bottomRoomTopEdge) / 2.0f;
-                    float hallwayCenterX = roomCenter.x;
-                    float gapSize = topRoomBottomEdge - bottomRoomTopEdge;  // 实际空隙
+                    // 如果是BEGIN和END房间相邻，不生成走廊
+                    bool isBeginEndConnection = 
+                        (room == _beginRoom && downRoom == _endRoom) ||
+                        (room == _endRoom && downRoom == _beginRoom);
                     
-                    Hallway* hallway = Hallway::create(Constants::DIR_DOWN);
-                    hallway->setGapSize(gapSize);
-                    hallway->setCenter(hallwayCenterX, hallwayCenterY);
-                    _hallways.push_back(hallway);
-                    log("Generated DOWN hallway at (%.1f, %.1f) gap=%.1f connecting (%d,%d) -> (%d,%d)",
-                        hallwayCenterX, hallwayCenterY, gapSize, x, y, toX, toY);
+                    if (!isBeginEndConnection) {
+                        Vec2 downCenter = downRoom->getCenter();
+                        float downRoomHeight = downRoom->getTilesHeight() * tileSize;
+                        
+                        // 垂直走廊：在两个房间的上/下边缘之间
+                        float topRoomBottomEdge = roomCenter.y - roomHeight / 2.0f;
+                        float bottomRoomTopEdge = downCenter.y + downRoomHeight / 2.0f;
+                        float hallwayCenterY = (topRoomBottomEdge + bottomRoomTopEdge) / 2.0f;
+                        float hallwayCenterX = roomCenter.x;
+                        float gapSize = topRoomBottomEdge - bottomRoomTopEdge;  // 实际空隙
+                        
+                        Hallway* hallway = Hallway::create(Constants::DIR_DOWN);
+                        hallway->setGapSize(gapSize);
+                        hallway->setCenter(hallwayCenterX, hallwayCenterY);
+                        _hallways.push_back(hallway);
+                        log("Generated DOWN hallway at (%.1f, %.1f) gap=%.1f connecting (%d,%d) -> (%d,%d)",
+                            hallwayCenterX, hallwayCenterY, gapSize, x, y, toX, toY);
+                    }
                 }
             }
         }
