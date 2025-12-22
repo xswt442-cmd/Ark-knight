@@ -231,7 +231,14 @@ void MapGenerator::connectAdjacentRooms() {
                 
                 Room* adjacentRoom = _roomMatrix[toX][toY];
                 if (adjacentRoom != nullptr) {
-                    room->setDoorOpen(dir, true);
+                    // 如果是BEGIN和END房间相邻，不设置门为开启
+                    bool isBeginEndConnection = 
+                        (room == _beginRoom && adjacentRoom == _endRoom) ||
+                        (room == _endRoom && adjacentRoom == _beginRoom);
+                    
+                    if (!isBeginEndConnection) {
+                        room->setDoorOpen(dir, true);
+                    }
                 }
             }
         }
