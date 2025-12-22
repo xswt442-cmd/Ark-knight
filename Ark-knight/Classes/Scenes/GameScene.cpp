@@ -299,7 +299,45 @@ void GameScene::createHUD()
     _mpLabel->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL + 10);
     _uiLayer->addChild(_mpLabel);
     
-    // ==================== 技能CD显示 ====================
+    // ==================== 技能图标CD系统 ====================
+    float skillIconSize = 64.0f;
+    float skillIconX = origin.x + visibleSize.width - skillIconSize / 2 - 20;
+    float skillIconY = origin.y + skillIconSize / 2 + 20;
+    
+    // 技能图标背景（底层）
+    _skillIcon = Sprite::create("UIs/Skills/Mage_fireball.png");
+    _skillIcon->setPosition(Vec2(skillIconX, skillIconY));
+    _skillIcon->setScale(skillIconSize / _skillIcon->getContentSize().width);
+    _skillIcon->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL);
+    _uiLayer->addChild(_skillIcon);
+    
+    // CD变暗遮罩（中层，初始不可见）
+    _skillCDMask = Sprite::create("UIs/Skills/Mage_fireball.png");
+    _skillCDMask->setPosition(Vec2(skillIconX, skillIconY));
+    _skillCDMask->setScale(skillIconSize / _skillCDMask->getContentSize().width);
+    _skillCDMask->setColor(Color3B::BLACK);
+    _skillCDMask->setOpacity(180);
+    _skillCDMask->setVisible(false);
+    _skillCDMask->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL + 1);
+    _uiLayer->addChild(_skillCDMask);
+    
+    // CD进度条（顶层，径向从12点顺时针）
+    auto progressSprite = Sprite::create("UIs/Skills/Mage_fireball.png");
+    _skillCDProgress = ProgressTimer::create(progressSprite);
+    _skillCDProgress->setType(ProgressTimer::Type::RADIAL);
+    _skillCDProgress->setReverseDirection(false);
+    _skillCDProgress->setMidpoint(Vec2(0.5f, 0.5f));
+    _skillCDProgress->setBarChangeRate(Vec2(1, 1));
+    _skillCDProgress->setPosition(Vec2(skillIconX, skillIconY));
+    _skillCDProgress->setScale(skillIconSize / progressSprite->getContentSize().width);
+    _skillCDProgress->setPercentage(0.0f);
+    _skillCDProgress->setColor(Color3B(80, 80, 80));
+    _skillCDProgress->setOpacity(200);
+    _skillCDProgress->setVisible(false);
+    _skillCDProgress->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL + 2);
+    _uiLayer->addChild(_skillCDProgress);
+    
+    // 技能文字提示（移到左边）
     _skillLabel = Label::createWithSystemFont("Skill: Ready", "Arial", 18);
     _skillLabel->setPosition(Vec2(barStartX + 25, mpBarY - 25));
     _skillLabel->setAnchorPoint(Vec2(0, 0.5f));
@@ -562,17 +600,32 @@ void GameScene::updateHUD(float dt)
         _mpLabel->setString(mpText);
         
         // 更新技能冷却
-        char skillText[64];
         float remain = _player->getSkillCooldownRemaining();
+        float totalCD = _player->getSkillCooldown();
+        
         if (remain <= 0.0f)
         {
-            sprintf(skillText, "Skill: Ready");
+            // 技能可用：正常显示，隐藏遮罩和进度
+            _skillIcon->setOpacity(255);
+            _skillCDMask->setVisible(false);
+            _skillCDProgress->setVisible(false);
+            _skillLabel->setString("Skill: Ready");
         }
         else
         {
+            // 技能CD中：图标变暗，显示转圈进度
+            _skillIcon->setOpacity(120);
+            _skillCDMask->setVisible(true);
+            _skillCDProgress->setVisible(true);
+            
+            // 计算CD进度（从100%到0%，顺时针消失）
+            float cdPercent = (totalCD > 0) ? ((totalCD - remain) / totalCD * 100.0f) : 0.0f;
+            _skillCDProgress->setPercentage(100.0f - cdPercent);
+            
+            char skillText[64];
             sprintf(skillText, "Skill: %.1fs", remain);
+            _skillLabel->setString(skillText);
         }
-        _skillLabel->setString(skillText);
         
         // 更新Debug信息
         char debugText[128];

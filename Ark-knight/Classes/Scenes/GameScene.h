@@ -140,6 +140,11 @@ private:
     Label* _debugLabel;
     Label* _skillLabel;
     
+    // 技能图标系统
+    Sprite* _skillIcon;                   // 技能图标
+    ProgressTimer* _skillCDProgress;      // CD进度（顺时针转圈）
+    Sprite* _skillCDMask;                 // CD变暗遮罩
+    
     // 状态
     bool _isPaused;
     bool _isGameOver;
