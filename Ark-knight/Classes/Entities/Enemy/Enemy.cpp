@@ -44,7 +44,8 @@ void Enemy::update(float dt)
 
 void Enemy::executeAI(Player* player, float dt)
 {
-    if (player == nullptr || _currentState == EntityState::DIE)
+    // 玩家为空、玩家死亡、或自己死亡时不执行AI
+    if (player == nullptr || player->isDead() || _currentState == EntityState::DIE)
     {
         return;
     }
@@ -83,7 +84,7 @@ void Enemy::executeAI(Player* player, float dt)
 
 bool Enemy::isPlayerInSight(Player* player) const
 {
-    if (player == nullptr)
+    if (player == nullptr || player->isDead())
     {
         return false;
     }
@@ -94,7 +95,7 @@ bool Enemy::isPlayerInSight(Player* player) const
 
 void Enemy::chasePlayer(Player* player, float dt)
 {
-    if (player == nullptr)
+    if (player == nullptr || player->isDead())
     {
         return;
     }
@@ -156,7 +157,7 @@ void Enemy::attack()
 
 bool Enemy::isPlayerInAttackRange(Player* player) const
 {
-    if (player == nullptr)
+    if (player == nullptr || player->isDead())
     {
         return false;
     }

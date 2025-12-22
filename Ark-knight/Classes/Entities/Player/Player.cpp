@@ -341,15 +341,16 @@ void Player::takeDamage(int damage)
         Character::takeDamage(damage);
     }
     
-    // 进入受击状态
-    if (_currentState != EntityState::DIE)
+    // 进入受击状态（只有存活时才进入）
+    if (_currentState != EntityState::DIE && !isDead())
     {
         setState(EntityState::HIT);
         
         // 短暂硬直后恢复
         auto delay = DelayTime::create(0.2f);
         auto callback = CallFunc::create([this]() {
-            if (_currentState == EntityState::HIT)
+            // 确保恢复状态时还活着
+            if (_currentState == EntityState::HIT && !isDead())
             {
                 setState(EntityState::IDLE);
             }

@@ -86,7 +86,8 @@ void GameScene::initCamera()
 
 void GameScene::updateCamera(float dt)
 {
-    if (!_player || !_mapGenerator) return;
+    // 玩家死亡或不存在时不更新相机
+    if (!_player || _player->isDead() || !_mapGenerator) return;
     
     auto visibleSize = Director::getInstance()->getVisibleSize();
     Vec2 playerPos = _player->getPosition();
@@ -439,7 +440,8 @@ void GameScene::update(float dt)
 
 void GameScene::updateMapSystem(float dt)
 {
-    if (_mapGenerator == nullptr || _player == nullptr) return;
+    // 玩家死亡或不存在时不更新地图系统
+    if (_mapGenerator == nullptr || _player == nullptr || _player->isDead()) return;
     
     // 使用玩家的本地坐标（相对于_gameLayer）
     Vec2 playerPos = _player->getPosition();
@@ -644,17 +646,20 @@ void GameScene::updateEnemies(float dt)
 
 void GameScene::updateHUD(float dt)
 {
-    if (_player != nullptr)
+    if (_player == nullptr)
     {
-        // 更新HP血条
-        int currentHP = _player->getHP();
-        int maxHP = _player->getMaxHP();
-        float hpPercent = (maxHP > 0) ? (currentHP * 100.0f / maxHP) : 0.0f;
-        _hpBar->setPercent(hpPercent);
-        
-        char hpText[32];
-        sprintf(hpText, "%d/%d", currentHP, maxHP);
-        _hpLabel->setString(hpText);
+        return;
+    }
+    
+    // 玩家死亡时显示HP为0
+    int currentHP = _player->isDead() ? 0 : _player->getHP();
+    int maxHP = _player->getMaxHP();
+    float hpPercent = (maxHP > 0) ? (currentHP * 100.0f / maxHP) : 0.0f;
+    _hpBar->setPercent(hpPercent);
+    
+    char hpText[32];
+    sprintf(hpText, "%d/%d", currentHP, maxHP);
+    _hpLabel->setString(hpText);
         
         // 更新MP蓝条
         int currentMP = _player->getMP();
@@ -714,7 +719,6 @@ void GameScene::updateHUD(float dt)
                 _player->getPositionX(),
                 _player->getPositionY());
         _debugLabel->setString(debugText);
-    }
 }
 
 void GameScene::checkCollisions()
