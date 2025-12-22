@@ -241,6 +241,9 @@ void GameScene::spawnEnemiesInRoom(Room* room)
     // 标记已生成敌人
     room->setEnemiesSpawned(true);
     
+    // 关闭房间的门
+    room->closeDoors();
+    
     // 获取房间中心和尺寸
     Vec2 roomCenter = room->getCenter();
     float roomWidth = Constants::ROOM_TILES_W * Constants::FLOOR_TILE_SIZE;
