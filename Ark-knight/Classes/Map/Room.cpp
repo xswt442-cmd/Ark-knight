@@ -268,7 +268,11 @@ void Room::openDoors() {
     }
     for (auto& sprite : _doorsClosedSprites) {
         sprite->setVisible(false);
+        // 移除墙的Tag，允许通行
+        sprite->setTag(0);
     }
+    
+    GAME_LOG("Room doors opened");
 }
 
 void Room::closeDoors() {
@@ -278,7 +282,11 @@ void Room::closeDoors() {
     }
     for (auto& sprite : _doorsClosedSprites) {
         sprite->setVisible(true);
+        // 设置为墙的Tag，阻止通行（包括玩家和弹幕）
+        sprite->setTag(Constants::Tag::WALL);
     }
+    
+    GAME_LOG("Room doors closed");
 }
 
 bool Room::isPlayerInRoom(Player* player) const {
