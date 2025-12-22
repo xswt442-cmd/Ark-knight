@@ -1,6 +1,7 @@
 ﻿#include "Mage.h"
 #include "Entities/Enemy/Enemy.h"
 #include "Map/Room.h"
+#include "Map/Hallway.h"
 
 Mage::Mage()
 {
@@ -144,32 +145,39 @@ void Mage::castFireball()
         Vec2 startPos = fireball->getPosition();
         Vec2 endPos = startPos + direction * flyDistance;
         
-        // 标记火球未命中
+        // 使用UserData存储状态：0=正常, 1=已命中
         fireball->setUserData(nullptr);
         
         // 使用schedule来更新火球位置并检测碰撞
         fireball->schedule([fireball, parent, fireballDamage](float dt) {
-            if (!fireball->getParent() || fireball->getUserData() != nullptr) return;  // 已被移除或已命中
+            if (!fireball->getParent() || fireball->getUserData() != nullptr) return;
             
             Vec2 fireballPos = fireball->getPosition();
-            float collisionRadius = Constants::FLOOR_TILE_SIZE * 0.5f;  // 碰撞半径
+            float wallCollisionRadius = Constants::FLOOR_TILE_SIZE * 1.0f;  // 进一步增大碰撞半径到完整tile大小
             
-            // 检测是否碰到墙方块（遍历所有子节点，包括Room和Hallway）
+            // 检测与墙方块的碰撞
             for (auto child : parent->getChildren())
             {
-                // 检查节点内的墙
                 for (auto subChild : child->getChildren())
                 {
                     if (subChild->getTag() == Constants::Tag::WALL)
                     {
-                        // 将墙的本地坐标转换为世界坐标
+                        // 使用Cocos2d API精确转换坐标（考虑锚点、旋转、缩放等）
                         Vec2 wallWorldPos = child->convertToWorldSpace(subChild->getPosition());
-                        // 再转换为parent的本地坐标系（与fireballPos同一坐标系）
                         Vec2 wallPos = parent->convertToNodeSpace(wallWorldPos);
+                        
                         float dist = fireballPos.distance(wallPos);
-                        if (dist < collisionRadius)
+                        
+                        // 添加调试日志（只在距离较近时输出，避免刷屏）
+                        if (dist < Constants::FLOOR_TILE_SIZE * 2.0f)
                         {
-                            GAME_LOG("Fireball hit wall!");
+                            GAME_LOG("Fireball check: Fire:(%.1f,%.1f) Wall:(%.1f,%.1f) Dist:%.1f Radius:%.1f",
+                                     fireballPos.x, fireballPos.y, wallPos.x, wallPos.y, dist, wallCollisionRadius);
+                        }
+                        
+                        if (dist < wallCollisionRadius)
+                        {
+                            GAME_LOG(">>> Fireball HIT wall!");
                             fireball->setUserData((void*)1);
                             fireball->stopAllActions();
                             fireball->unschedule("fireballUpdate");
@@ -196,7 +204,7 @@ void Mage::castFireball()
                             GAME_LOG("Fireball hits enemy for %d damage!", fireballDamage);
                             
                             // 火球命中后消失
-                            fireball->setUserData((void*)1);  // 标记已命中
+                            fireball->setUserData((void*)1);
                             fireball->stopAllActions();
                             fireball->unschedule("fireballUpdate");
                             fireball->removeFromParent();
@@ -277,32 +285,39 @@ void Mage::castIceShard()
         Vec2 startPos = iceShard->getPosition();
         Vec2 endPos = startPos + direction * flyDistance;
         
-        // 标记冰锥未命中
+        // 使用UserData存储状态：0=正常, 1=已命中
         iceShard->setUserData(nullptr);
         
         // 使用schedule来更新冰锥位置并检测碰撞
         iceShard->schedule([iceShard, parent, iceDamage](float dt) {
-            if (!iceShard->getParent() || iceShard->getUserData() != nullptr) return;  // 已被移除或已命中
+            if (!iceShard->getParent() || iceShard->getUserData() != nullptr) return;
             
             Vec2 icePos = iceShard->getPosition();
-            float collisionRadius = Constants::FLOOR_TILE_SIZE * 0.5f;  // 碰撞半径
+            float wallCollisionRadius = Constants::FLOOR_TILE_SIZE * 1.0f;  // 进一步增大碰撞半径
             
-            // 检测是否碰到墙方块（遍历所有子节点，包括Room和Hallway）
+            // 检测与墙方块的碰撞
             for (auto child : parent->getChildren())
             {
-                // 检查节点内的墙
                 for (auto subChild : child->getChildren())
                 {
                     if (subChild->getTag() == Constants::Tag::WALL)
                     {
-                        // 将墙的本地坐标转换为世界坐标
+                        // 使用Cocos2d API精确转换坐标
                         Vec2 wallWorldPos = child->convertToWorldSpace(subChild->getPosition());
-                        // 再转换为parent的本地坐标系（与icePos同一坐标系）
                         Vec2 wallPos = parent->convertToNodeSpace(wallWorldPos);
+                        
                         float dist = icePos.distance(wallPos);
-                        if (dist < collisionRadius)
+                        
+                        // 添加调试日志（只在距离较近时输出）
+                        if (dist < Constants::FLOOR_TILE_SIZE * 2.0f)
                         {
-                            GAME_LOG("Ice Shard hit wall!");
+                            GAME_LOG("IceShard check: Ice:(%.1f,%.1f) Wall:(%.1f,%.1f) Dist:%.1f Radius:%.1f",
+                                     icePos.x, icePos.y, wallPos.x, wallPos.y, dist, wallCollisionRadius);
+                        }
+                        
+                        if (dist < wallCollisionRadius)
+                        {
+                            GAME_LOG(">>> IceShard HIT wall!");
                             iceShard->setUserData((void*)1);
                             iceShard->stopAllActions();
                             iceShard->unschedule("iceShardUpdate");
@@ -329,7 +344,7 @@ void Mage::castIceShard()
                             GAME_LOG("Ice Shard hits enemy for %d damage!", iceDamage);
                             
                             // 冰锥命中后消失
-                            iceShard->setUserData((void*)1);  // 标记已命中
+                            iceShard->setUserData((void*)1);
                             iceShard->stopAllActions();
                             iceShard->unschedule("iceShardUpdate");
                             iceShard->removeFromParent();
