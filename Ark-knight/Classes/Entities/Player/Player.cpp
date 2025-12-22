@@ -51,11 +51,16 @@ void Player::update(float dt)
 {
     Character::update(dt);
     
-    // MP自动恢复：每秒回5点
+    // MP自动恢复：每秒回5点（使用浮点数累加避免精度丢失）
     if (_mp < _maxMP)
     {
-        int mpRegenPerSecond = 5;
-        _mp += static_cast<int>(mpRegenPerSecond * dt);
+        float mpRegenPerSecond = 5.0f;
+        float mpGain = mpRegenPerSecond * dt;
+        
+        // 使用浮点运算，然后安全转换
+        float newMP = static_cast<float>(_mp) + mpGain;
+        _mp = static_cast<int>(newMP);
+        
         if (_mp > _maxMP)
         {
             _mp = _maxMP;

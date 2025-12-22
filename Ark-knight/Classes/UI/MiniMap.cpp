@@ -42,23 +42,21 @@ void MiniRoom::setRoomColor(Constants::RoomType type) {
     
     switch (type) {
         case Constants::RoomType::BEGIN:
-            color = Color4F(0.0f, 0.9f, 0.0f, 0.6f);
+            color = Color4F(0.0f, 0.8f, 0.0f, 0.8f);  // 绿色：起始房间
             break;
         case Constants::RoomType::END:
-            color = Color4F(0.0f, 0.0f, 1.0f, 0.7f);
+            color = Color4F(0.4f, 0.7f, 1.0f, 0.8f);  // 浅蓝色：传送门房间
             break;
         case Constants::RoomType::BOSS:
-            color = Color4F(0.9f, 0.0f, 0.0f, 0.6f);
+            color = Color4F(0.9f, 0.0f, 0.0f, 0.8f);  // 红色：BOSS房间
             break;
         case Constants::RoomType::WEAPON:
-            color = Color4F(0.8f, 0.5f, 0.0f, 0.6f);
-            break;
         case Constants::RoomType::PROP:
-            color = Color4F(1.0f, 0.8f, 0.0f, 0.6f);
+            color = Color4F(0.9f, 0.6f, 0.1f, 0.8f);  // 橙色：奖励房间
             break;
         case Constants::RoomType::NORMAL:
         default:
-            color = Color4F(0.3f, 0.3f, 0.3f, 0.6f);
+            color = Color4F(0.3f, 0.3f, 0.3f, 0.8f);  // 灰色：普通战斗房间
             break;
     }
     
@@ -75,10 +73,19 @@ void MiniRoom::setCurrent(bool isCurrent) {
 }
 
 void MiniRoom::setVisited(bool visited) {
+    // 已访问的房间透明度降低，显示为变暗效果
     if (visited) {
-        this->setOpacity(128);
+        this->setOpacity(180);  // 透明度降低到70%
+        _background->setOpacity(180);
+        for (int i = 0; i < 4; i++) {
+            _doors[i]->setOpacity(180);
+        }
     } else {
-        this->setOpacity(255);
+        this->setOpacity(255);  // 未访问房间完全不透明
+        _background->setOpacity(255);
+        for (int i = 0; i < 4; i++) {
+            _doors[i]->setOpacity(255);
+        }
     }
 }
 
