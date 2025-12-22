@@ -51,6 +51,17 @@ void Player::update(float dt)
 {
     Character::update(dt);
     
+    // MP自动恢复：每秒回5点
+    if (_mp < _maxMP)
+    {
+        int mpRegenPerSecond = 5;
+        _mp += static_cast<int>(mpRegenPerSecond * dt);
+        if (_mp > _maxMP)
+        {
+            _mp = _maxMP;
+        }
+    }
+    
     // 更新技能冷却
     if (_skillCooldownTimer > 0)
     {
