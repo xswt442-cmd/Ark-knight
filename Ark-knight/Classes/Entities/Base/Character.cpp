@@ -28,6 +28,12 @@ bool Character::init()
 
 void Character::update(float dt)
 {
+    // 死亡后不再更新
+    if (isDead() || _currentState == EntityState::DIE)
+    {
+        return;
+    }
+    
     GameEntity::update(dt);
     
     // 更新状态机

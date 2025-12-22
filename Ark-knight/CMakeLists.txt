@@ -69,6 +69,7 @@ list(APPEND GAME_SOURCE
      Classes/Entities/Player/Mage.cpp
      # Entities/Enemy
      Classes/Entities/Enemy/Enemy.cpp
+     Classes/Entities/Enemy/Ayao.cpp
      # Scenes
      Classes/Scenes/MainMenuScene.cpp
      Classes/Scenes/GameScene.cpp

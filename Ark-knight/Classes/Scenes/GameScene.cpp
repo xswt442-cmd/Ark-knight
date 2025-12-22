@@ -218,24 +218,190 @@ void GameScene::createTestEnemies()
     }
 }
 
+void GameScene::spawnEnemiesInRoom(Room* room)
+{
+    if (room == nullptr)
+    {
+        return;
+    }
+    
+    // 只在普通战斗房间生成敌人
+    if (room->getRoomType() != Constants::RoomType::NORMAL)
+    {
+        return;
+    }
+    
+    // 如果房间已经生成过敌人，则不再生成
+    if (room->isEnemiesSpawned())
+    {
+        return;
+    }
+    
+    // 标记已生成敌人
+    room->setEnemiesSpawned(true);
+    
+    // 获取房间中心和尺寸
+    Vec2 roomCenter = room->getCenter();
+    float roomWidth = Constants::ROOM_TILES_W * Constants::FLOOR_TILE_SIZE;
+    float roomHeight = Constants::ROOM_TILES_H * Constants::FLOOR_TILE_SIZE;
+    
+    // 计算房间边界（用于限制敌人移动）
+    Rect roomBounds = Rect(
+        roomCenter.x - roomWidth * 0.4f,
+        roomCenter.y - roomHeight * 0.4f,
+        roomWidth * 0.8f,
+        roomHeight * 0.8f
+    );
+    
+    // 随机生成2-4个阿咬
+    int enemyCount = RANDOM_INT(2, 4);
+    
+    for (int i = 0; i < enemyCount; i++)
+    {
+        auto ayao = Ayao::create();
+        
+        // 在房间内随机位置（避开房间边界）
+        float offsetX = RANDOM_FLOAT(-roomWidth * 0.3f, roomWidth * 0.3f);
+        float offsetY = RANDOM_FLOAT(-roomHeight * 0.3f, roomHeight * 0.3f);
+        Vec2 spawnPos = roomCenter + Vec2(offsetX, offsetY);
+        
+        ayao->setPosition(spawnPos);
+        ayao->setRoomBounds(roomBounds);  // 设置房间边界限制移动
+        
+        // 添加到场景
+        _gameLayer->addChild(ayao);
+        _enemies.pushBack(ayao);
+        
+        GAME_LOG("Ayao spawned at (%.1f, %.1f) in room", spawnPos.x, spawnPos.y);
+    }
+}
+
 void GameScene::createHUD()
 {
     auto visibleSize = Director::getInstance()->getVisibleSize();
     Vec2 origin = Director::getInstance()->getVisibleOrigin();
     
-    // HP标签
-    _hpLabel = Label::createWithSystemFont("HP: 100/100", "Arial", 24);
-    _hpLabel->setPosition(Vec2(origin.x + 100, origin.y + visibleSize.height - 30));
-    _hpLabel->setTextColor(Color4B::GREEN);
-    _hpLabel->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL);
+    float barStartX = origin.x + 60;
+    float barStartY = origin.y + visibleSize.height - 35;
+    
+    // ==================== 血条 ====================
+    float barWidth = 120.0f;  // 血条宽度
+    float barHeight = 12.0f;  // 血条高度
+    
+    // 爱心图标
+    _hpIcon = Sprite::create("UIs/StatusBars/Bars/Heart.png");
+    _hpIcon->setPosition(Vec2(barStartX, barStartY));
+    _hpIcon->setScale(0.12f);
+    _hpIcon->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL);
+    _uiLayer->addChild(_hpIcon);
+    
+    // 血条背景
+    auto hpBarBg = Sprite::create("UIs/StatusBars/Bars/EmplyBar.png");
+    hpBarBg->setPosition(Vec2(barStartX + 25, barStartY));
+    hpBarBg->setAnchorPoint(Vec2(0, 0.5f));
+    hpBarBg->setScaleX(barWidth / hpBarBg->getContentSize().width);
+    hpBarBg->setScaleY(barHeight / hpBarBg->getContentSize().height);
+    hpBarBg->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL);
+    _uiLayer->addChild(hpBarBg);
+    
+    // 血条填充
+    _hpBar = cocos2d::ui::LoadingBar::create("UIs/StatusBars/Bars/HealthFill.png");
+    _hpBar->setPercent(100.0f);
+    _hpBar->setPosition(Vec2(barStartX + 25, barStartY));
+    _hpBar->setAnchorPoint(Vec2(0, 0.5f));
+    _hpBar->setScaleX(barWidth / _hpBar->getContentSize().width);
+    _hpBar->setScaleY(barHeight / _hpBar->getContentSize().height);
+    _hpBar->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL + 5);
+    _uiLayer->addChild(_hpBar);
+    
+    // 血量数值
+    _hpLabel = Label::createWithSystemFont("100/100", "Arial", 16);
+    _hpLabel->setPosition(Vec2(barStartX + 75, barStartY));
+    _hpLabel->setTextColor(Color4B::WHITE);
+    _hpLabel->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL + 10);
     _uiLayer->addChild(_hpLabel);
     
-    // MP标签
-    _mpLabel = Label::createWithSystemFont("MP: 100/100", "Arial", 24);
-    _mpLabel->setPosition(Vec2(origin.x + 100, origin.y + visibleSize.height - 60));
-    _mpLabel->setTextColor(Color4B::BLUE);
-    _mpLabel->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL);
+    // ==================== 蓝条 ====================
+    float mpBarY = barStartY - 35;
+    
+    // 闪电图标
+    _mpIcon = Sprite::create("UIs/StatusBars/Bars/Lighting bolt.png");
+    _mpIcon->setPosition(Vec2(barStartX, mpBarY));
+    _mpIcon->setScale(0.12f);
+    _mpIcon->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL);
+    _uiLayer->addChild(_mpIcon);
+    
+    // 蓝条背景
+    auto mpBarBg = Sprite::create("UIs/StatusBars/Bars/EmplyBar.png");
+    mpBarBg->setPosition(Vec2(barStartX + 25, mpBarY));
+    mpBarBg->setAnchorPoint(Vec2(0, 0.5f));
+    mpBarBg->setScaleX(barWidth / mpBarBg->getContentSize().width);
+    mpBarBg->setScaleY(barHeight / mpBarBg->getContentSize().height);
+    mpBarBg->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL);
+    _uiLayer->addChild(mpBarBg);
+    
+    // 蓝条填充
+    _mpBar = cocos2d::ui::LoadingBar::create("UIs/StatusBars/Bars/EnrgyFill.png");
+    _mpBar->setPercent(100.0f);
+    _mpBar->setPosition(Vec2(barStartX + 25, mpBarY));
+    _mpBar->setAnchorPoint(Vec2(0, 0.5f));
+    _mpBar->setScaleX(barWidth / _mpBar->getContentSize().width);
+    _mpBar->setScaleY(barHeight / _mpBar->getContentSize().height);
+    _mpBar->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL + 5);
+    _uiLayer->addChild(_mpBar);
+    
+    // 蓝量数值
+    _mpLabel = Label::createWithSystemFont("100/100", "Arial", 16);
+    _mpLabel->setPosition(Vec2(barStartX + 75, mpBarY));
+    _mpLabel->setTextColor(Color4B::WHITE);
+    _mpLabel->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL + 10);
     _uiLayer->addChild(_mpLabel);
+    
+    // ==================== 技能图标CD系统 ====================
+    float skillIconSize = 64.0f;
+    float skillIconX = origin.x + visibleSize.width - skillIconSize / 2 - 40;
+    float skillIconY = origin.y + skillIconSize / 2 + 40;
+    
+    // 技能图标背景（底层）
+    _skillIcon = Sprite::create("UIs/Skills/Mage/Skill_icon.png");
+    _skillIcon->setPosition(Vec2(skillIconX, skillIconY));
+    _skillIcon->setScale(skillIconSize / _skillIcon->getContentSize().width);
+    _skillIcon->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL);
+    _uiLayer->addChild(_skillIcon);
+    
+    // CD变暗遮罩（中层，初始不可见）
+    _skillCDMask = Sprite::create("UIs/Skills/Mage/Skill_icon.png");
+    _skillCDMask->setPosition(Vec2(skillIconX, skillIconY));
+    _skillCDMask->setScale(skillIconSize / _skillCDMask->getContentSize().width);
+    _skillCDMask->setColor(Color3B::BLACK);
+    _skillCDMask->setOpacity(100);
+    _skillCDMask->setVisible(false);
+    _skillCDMask->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL + 1);
+    _uiLayer->addChild(_skillCDMask);
+    
+    // CD进度条（顶层，径向从12点顺时针）
+    auto progressSprite = Sprite::create("UIs/Skills/Mage/Skill_icon.png");
+    _skillCDProgress = ProgressTimer::create(progressSprite);
+    _skillCDProgress->setType(ProgressTimer::Type::RADIAL);
+    _skillCDProgress->setReverseDirection(false);
+    _skillCDProgress->setMidpoint(Vec2(0.5f, 0.5f));
+    _skillCDProgress->setBarChangeRate(Vec2(1, 1));
+    _skillCDProgress->setPosition(Vec2(skillIconX, skillIconY));
+    _skillCDProgress->setScale(skillIconSize / progressSprite->getContentSize().width);
+    _skillCDProgress->setPercentage(0.0f);
+    _skillCDProgress->setColor(Color3B(100, 100, 100));
+    _skillCDProgress->setOpacity(150);
+    _skillCDProgress->setVisible(false);
+    _skillCDProgress->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL + 2);
+    _uiLayer->addChild(_skillCDProgress);
+    
+    // 技能文字提示（暂时注释，可能后续需要）
+    // _skillLabel = Label::createWithSystemFont("Skill: Ready", "Arial", 18);
+    // _skillLabel->setPosition(Vec2(barStartX + 25, mpBarY - 25));
+    // _skillLabel->setAnchorPoint(Vec2(0, 0.5f));
+    // _skillLabel->setTextColor(Color4B(200, 255, 200, 255));
+    // _skillLabel->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL);
+    // _uiLayer->addChild(_skillLabel);
     
     // Debug信息
     _debugLabel = Label::createWithSystemFont("", "Arial", 18);
@@ -285,6 +451,9 @@ void GameScene::updateMapSystem(float dt)
     {
         // 玩家进入了新房间
         _currentRoom = detectedRoom;
+        
+        // 在新房间生成敌人
+        spawnEnemiesInRoom(_currentRoom);
         
         // 更新小地图
         if (_miniMap)
@@ -444,6 +613,12 @@ void GameScene::updateEnemies(float dt)
         return;
     }
     
+    // 玩家死亡后不再更新敌人AI
+    if (_player == nullptr || _player->isDead())
+    {
+        return;
+    }
+    
     // 更新敌人AI
     for (auto enemy : _enemies)
     {
@@ -471,15 +646,53 @@ void GameScene::updateHUD(float dt)
 {
     if (_player != nullptr)
     {
-        // 更新HP
-        char hpText[64];
-        sprintf(hpText, "HP: %d/%d", _player->getHP(), _player->getMaxHP());
+        // 更新HP血条
+        int currentHP = _player->getHP();
+        int maxHP = _player->getMaxHP();
+        float hpPercent = (maxHP > 0) ? (currentHP * 100.0f / maxHP) : 0.0f;
+        _hpBar->setPercent(hpPercent);
+        
+        char hpText[32];
+        sprintf(hpText, "%d/%d", currentHP, maxHP);
         _hpLabel->setString(hpText);
         
-        // 更新MP
-        char mpText[64];
-        sprintf(mpText, "MP: %d/%d", _player->getMP(), _player->getMaxMP());
+        // 更新MP蓝条
+        int currentMP = _player->getMP();
+        int maxMP = _player->getMaxMP();
+        float mpPercent = (maxMP > 0) ? (currentMP * 100.0f / maxMP) : 0.0f;
+        _mpBar->setPercent(mpPercent);
+        
+        char mpText[32];
+        sprintf(mpText, "%d/%d", currentMP, maxMP);
         _mpLabel->setString(mpText);
+        
+        // 更新技能冷却
+        float remain = _player->getSkillCooldownRemaining();
+        float totalCD = _player->getSkillCooldown();
+        
+        if (remain <= 0.0f)
+        {
+            // 技能可用：正常显示，隐藏遮罩和进度
+            _skillIcon->setOpacity(255);
+            _skillCDMask->setVisible(false);
+            _skillCDProgress->setVisible(false);
+            // _skillLabel->setString("Skill: Ready");
+        }
+        else
+        {
+            // 技能CD中：图标轻微变暗，显示转圈进度
+            _skillIcon->setOpacity(200);
+            _skillCDMask->setVisible(true);
+            _skillCDProgress->setVisible(true);
+            
+            // 计算CD进度（从100%到0%，顺时针消失）
+            float cdPercent = (totalCD > 0) ? ((totalCD - remain) / totalCD * 100.0f) : 0.0f;
+            _skillCDProgress->setPercentage(100.0f - cdPercent);
+            
+            // char skillText[64];
+            // sprintf(skillText, "Skill: %.1fs", remain);
+            // _skillLabel->setString(skillText);
+        }
         
         // 更新Debug信息
         char debugText[128];

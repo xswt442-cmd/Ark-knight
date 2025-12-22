@@ -80,6 +80,11 @@ public:
      */
     void resetAttackCooldown();
     
+    /**
+     * 设置攻击冷却时间
+     */
+    void setAttackCooldown(float cooldown) { _attackCooldown = cooldown; }
+    
     // ==================== 法力值管理(可选) ====================
     /**
      * 获取法力值

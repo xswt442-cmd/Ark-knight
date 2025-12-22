@@ -2,10 +2,12 @@
 #define __GAME_SCENE_H__
 
 #include "cocos2d.h"
+#include "ui/CocosGUI.h"
 #include "Core/Constants.h"
 #include "Core/GameMacros.h"
 #include "Entities/Player/Player.h"
 #include "Entities/Enemy/Enemy.h"
+#include "Entities/Enemy/Ayao.h"
 #include "Map/MapGenerator.h"
 #include "Map/Room.h"
 #include "UI/MiniMap.h"
@@ -48,6 +50,12 @@ private:
      * 创建测试敌人
      */
     void createTestEnemies();
+    
+    /**
+     * 在指定房间生成敌人
+     * @param room 目标房间
+     */
+    void spawnEnemiesInRoom(Room* room);
     
     /**
      * 初始化地图系统
@@ -130,9 +138,19 @@ private:
     Camera* _camera;
     
     // HUD元素
-    Label* _hpLabel;
-    Label* _mpLabel;
+    cocos2d::ui::LoadingBar* _hpBar;     // 血条
+    cocos2d::ui::LoadingBar* _mpBar;     // 蓝条
+    Sprite* _hpIcon;                      // 爱心图标
+    Sprite* _mpIcon;                      // 闪电图标
+    Label* _hpLabel;                      // 血量数值
+    Label* _mpLabel;                      // 蓝量数值
     Label* _debugLabel;
+    Label* _skillLabel;
+    
+    // 技能图标系统
+    Sprite* _skillIcon;                   // 技能图标
+    ProgressTimer* _skillCDProgress;      // CD进度（顺时针转圈）
+    Sprite* _skillCDMask;                 // CD变暗遮罩
     
     // 状态
     bool _isPaused;

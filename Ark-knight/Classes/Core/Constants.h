@@ -94,6 +94,7 @@ namespace Constants {
         constexpr int PROJECTILE = 300;
         constexpr int PROP = 400;
         constexpr int OBSTACLE = 500;
+        constexpr int WALL = 600;
     }
     
     // ==================== Z-Order ====================

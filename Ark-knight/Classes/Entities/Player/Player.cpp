@@ -8,6 +8,7 @@ Player::Player()
     , _keySpace(false)
     , _skillCooldown(Constants::Combat::SKILL_COOLDOWN)
     , _skillCooldownTimer(0.0f)
+    , _mpRegenAccumulator(0.0f)
     , _dashCooldown(2.0f)
     , _dashCooldownTimer(0.0f)
     , _isDashing(false)
@@ -50,6 +51,31 @@ bool Player::init()
 void Player::update(float dt)
 {
     Character::update(dt);
+    
+    // MP自动恢复：每秒回1点（使用累积器避免精度丢失）
+    if (_mp < _maxMP)
+    {
+        float mpRegenPerSecond = 1.0f;
+        _mpRegenAccumulator += mpRegenPerSecond * dt;
+        
+        // 当累积到至少1点时，增加MP
+        if (_mpRegenAccumulator >= 1.0f)
+        {
+            int mpToAdd = static_cast<int>(_mpRegenAccumulator);
+            _mp += mpToAdd;
+            _mpRegenAccumulator -= static_cast<float>(mpToAdd);
+            
+            if (_mp > _maxMP)
+            {
+                _mp = _maxMP;
+                _mpRegenAccumulator = 0.0f;
+            }
+        }
+    }
+    else
+    {
+        _mpRegenAccumulator = 0.0f;  // MP已满，清空累积器
+    }
     
     // 更新技能冷却
     if (_skillCooldownTimer > 0)
@@ -207,6 +233,11 @@ bool Player::canUseSkill() const
 void Player::resetSkillCooldown()
 {
     _skillCooldownTimer = _skillCooldown;
+}
+
+float Player::getSkillCooldownRemaining() const
+{
+    return _skillCooldownTimer > 0.0f ? _skillCooldownTimer : 0.0f;
 }
 
 void Player::dash()
