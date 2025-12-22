@@ -138,7 +138,7 @@ void Mage::castFireball()
         parent->addChild(fireball, Constants::ZOrder::PROJECTILE);
         
         // 火球飞行 + 碰撞检测
-        float flyTime = 1.5f;
+        float flyTime = 1.2f;
         float flyDistance = 600.0f;
         Vec2 startPos = fireball->getPosition();
         Vec2 endPos = startPos + direction * flyDistance;
@@ -192,8 +192,8 @@ void Mage::castIceShard()
     iceShard->setPosition(this->getPosition() + _facingDirection * 40);
     iceShard->setTag(Constants::Tag::PROJECTILE);
     
-    // 计算缩放比例：使冰锥大小接近地板分块(32px)
-    float targetSize = Constants::FLOOR_TILE_SIZE * 1.0f;
+    // 计算缩放比例：使冰锥大小接近地板分块(32px)，增大25%
+    float targetSize = Constants::FLOOR_TILE_SIZE * 1.25f;
     float scale = targetSize / iceShard->getContentSize().width;
     iceShard->setScale(scale);
     
@@ -204,9 +204,9 @@ void Mage::castIceShard()
     float angle = CC_RADIANS_TO_DEGREES(atan2(_facingDirection.y, _facingDirection.x));
     iceShard->setRotation(-angle);  // cocos2d旋转方向与数学方向相反
     
-    // 创建冰锥形成动画（5帧，不循环）
+    // 创建冰锥形成动画（7帧，不循环）
     Vector<SpriteFrame*> iceFrames;
-    for (int i = 1; i <= 5; i++)
+    for (int i = 1; i <= 7; i++)
     {
         char filename[128];
         sprintf(filename, "UIs/Attacks/Mage/Ice_%03d.png", i);
