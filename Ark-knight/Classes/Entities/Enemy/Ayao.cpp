@@ -64,8 +64,8 @@ void Ayao::update(float dt)
 void Ayao::setupAyaoAttributes()
 {
     // 阿咬基础属性
-    setMaxHP(1000);
-    setHP(1000);
+    setMaxHP(200);
+    setHP(200);
     setAttack(10);
     setMoveSpeed(100.0f);
     
@@ -216,18 +216,28 @@ void Ayao::attack()
     GAME_LOG("Ayao attacks!");
 }
 
+/**
+ * 重写 die() 以自定义死亡逻辑，主要是播放死亡动画并在结束后移除节点。
+ */
 void Ayao::die()
 {
-    // 防止重复调用
-    if (_currentState == EntityState::DIE)
+    // 先调用基类（Enemy）die 以触发可能的红色爆炸和 KongKaZi 生成功能
+    Enemy::die();
+
+    // 不再因 _currentState 已经为 DIE 就直接返回，
+    // 保持后续 Ayao 特有的死亡动画流程正常执行（避免视觉被跳过）
+
+    // 防止重复调用（如果子类或基类已经多次调用）
+    if (_currentState == EntityState::DIE && !_isAlive)
     {
-        GAME_LOG("Ayao::die() - already dead, skipping");
+        GAME_LOG("Ayao::die() - already dead, skipping duplicate processing");
         return;
     }
-    
+
+    // 标记死亡状态并停止行为（保留以防某些地方依赖于 _isAlive）
     setState(EntityState::DIE);
-    _isAlive = false;  // 标记为不存活
-    
+    _isAlive = false;
+
     // 停止所有动作
     this->stopAllActions();
     if (_sprite)
@@ -236,9 +246,9 @@ void Ayao::die()
         _sprite->setVisible(true);  // 确保精灵可见
         _sprite->setOpacity(255);   // 确保不透明
     }
-    
+
     GAME_LOG("Ayao died - _dieAnimation: %p, _sprite: %p", _dieAnimation, _sprite);
-    
+
     // 播放死亡动画
     if (_dieAnimation && _sprite)
     {

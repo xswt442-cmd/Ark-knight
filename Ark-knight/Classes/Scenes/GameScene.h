@@ -35,6 +35,11 @@ public:
      */
     Player* getPlayer() const { return _player; }
     
+    /**
+     * 新增：由外部注册新生成的敌人（例如 Enemy::die 生成的 KongKaZi）
+     */
+    void addEnemy(Enemy* enemy);
+    
 private:
     /**
      * 初始化层级

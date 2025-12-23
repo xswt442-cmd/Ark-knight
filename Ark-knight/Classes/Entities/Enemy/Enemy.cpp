@@ -1,7 +1,12 @@
 ﻿#include "Enemy.h"
 #include "Entities/Player/Player.h"
 #include "UI/FloatingText.h"
+#include "Entities/Enemy/KongKaZi.h"
+#include "Scenes/GameScene.h"
+#include "cocos2d.h"
 #include <cmath>
+
+USING_NS_CC;
 
 Enemy::Enemy()
     : _enemyType(EnemyType::MELEE)
@@ -17,6 +22,7 @@ Enemy::Enemy()
     , _poisonTickAcc(0.0f)
     , _poisonSourceAttack(0)
     , _poisonColorSaved(false)
+    , _isRedMarked(false)
 {
 }
 
@@ -67,11 +73,14 @@ void Enemy::update(float dt)
                 if (dmg > 0)
                 {
                     this->takeDamage(dmg);
-                    // 显示紫色的持续伤害数字（使用父节点作为 parent）
-                    Node* parent = this->getParent();
-                    if (parent)
+                    // 显示紫色的持续伤害数字（使用运行场景作为 parent）
+                    Scene* running = Director::getInstance()->getRunningScene();
+                    if (running)
                     {
-                        FloatingText::show(parent, this->getPosition(), std::to_string(dmg), Color3B(180,100,200));
+                        // 将世界坐标转换为 running scene 的坐标（worldPos）
+                        Vec2 worldPos = this->convertToWorldSpace(Vec2::ZERO);
+                        // 在 running scene 上显示浮动文字（需要使用 running scene 作为 parent）
+                        FloatingText::show(running, worldPos, std::to_string(dmg), Color3B(180,100,200));
                     }
                     GAME_LOG("Poison tick: %d damage applied to enemy (stacks=%d, srcAtk=%d)", dmg, _poisonStacks, _poisonSourceAttack);
                 }
@@ -295,4 +304,102 @@ void Enemy::applyNymphPoison(int sourceAttack)
     }
     
     GAME_LOG("applyNymphPoison: stacks=%d, srcAtk=%d", _poisonStacks, _poisonSourceAttack);
+}
+
+// ==================== 红色标记与 KongKaZi 生成功能（不改变实体状态） ============
+void Enemy::tryApplyRedMark(float chance)
+{
+    if (chance <= 0.0f) return;
+    if (!canSpawnKongKaZiOnDeath()) return;
+    if (_isRedMarked) return;
+
+    float r = CCRANDOM_0_1();
+    if (r <= chance)
+    {
+        _isRedMarked = true;
+        if (_sprite)
+        {
+            _sprite->setColor(Color3B(255, 80, 80));
+        }
+        GAME_LOG("Enemy marked RED for KongKaZi spawn (chance succeeded)");
+    }
+}
+
+void Enemy::die()
+{
+    // 仅处理“红色标记导致的紫圈 + 延迟生成 KongKaZi”视觉/生成逻辑
+    // 不改变实体状态、不调用基类的 Character::die()，以免干扰子类自定义的死亡动画流程
+    if (_isRedMarked && canSpawnKongKaZiOnDeath())
+    {
+        // 计算世界坐标（确保视觉圈显示在屏幕正确位置）
+        Vec2 worldPos = this->convertToWorldSpace(Vec2::ZERO);
+
+        // 把紫色圆圈添加到运行场景根节点（保证可见）
+        Scene* running = Director::getInstance()->getRunningScene();
+        if (running)
+        {
+            auto circle = DrawNode::create();
+            float radius = 50.0f;
+            circle->drawSolidCircle(Vec2::ZERO, radius, 0, 32, Color4F(0.6f, 0.0f, 0.6f, 0.6f));
+            circle->setPosition(worldPos);
+            // 使用全局 ZOrder 保证效果在最上层的一组效果层
+            running->addChild(circle, Constants::ZOrder::EFFECT);
+
+            auto fade = FadeOut::create(0.5f);
+            auto removeCircle = CallFunc::create([circle]() {
+                if (circle->getParent()) circle->removeFromParent();
+            });
+            circle->runAction(Sequence::create(DelayTime::create(0.25f), fade, removeCircle, nullptr));
+        }
+
+        // 延迟生成 KongKaZi（生成时使用本节点的本地坐标，相对通常为 gameLayer）
+        Vec2 localSpawnPos = this->getPosition();
+        auto spawnFunc = [localSpawnPos]() {
+            auto kk = KongKaZi::create();
+            if (!kk) return;
+
+            kk->setPosition(localSpawnPos);
+            kk->setTag(Constants::Tag::ENEMY);
+
+            // 尝试通过当前运行场景注册到 GameScene，以便被 updateEnemies 管理
+            auto runningInner = Director::getInstance()->getRunningScene();
+            GameScene* gs = nullptr;
+            if (runningInner)
+            {
+                gs = dynamic_cast<GameScene*>(runningInner);
+                if (!gs)
+                {
+                    for (auto child : runningInner->getChildren())
+                    {
+                        gs = dynamic_cast<GameScene*>(child);
+                        if (gs) break;
+                    }
+                }
+            }
+
+            if (gs)
+            {
+                gs->addEnemy(kk);
+            }
+            else
+            {
+                if (runningInner)
+                {
+                    runningInner->addChild(kk);
+                }
+            }
+        };
+
+        // 使用运行场景来调度延迟（若不存在则用 Director）
+        if (running)
+        {
+            running->runAction(Sequence::create(DelayTime::create(0.28f), CallFunc::create(spawnFunc), nullptr));
+        }
+        else
+        {
+            Director::getInstance()->getRunningScene()->runAction(Sequence::create(DelayTime::create(0.28f), CallFunc::create(spawnFunc), nullptr));
+        }
+    }
+
+    // 注意：不在这里调用 Character::die()，子类（例如 Ayao）会在自己的 die() 中执行完整的死亡动画与移除流程
 }
