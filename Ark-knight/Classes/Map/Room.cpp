@@ -164,15 +164,47 @@ void Room::createMap() {
 }
 
 void Room::generateFloor(float x, float y) {
-    // 使用房间随机选定的地板纹理(Floor_0001 ~ Floor_0005)
-    std::string floorPath = "Map/Floor/Floor_000" + std::to_string(_floorTextureIndex) + ".png";
+    // 决定本房间使用哪个组：如果初始化的_floorTextureIndex是1~3，则视为组A(1-3)，否则为组B(4-5)
+    int chosenIndex = _floorTextureIndex; // 作为回退值
+    if (_floorTextureIndex >= 1 && _floorTextureIndex <= 3) {
+        // 组 A: Floor1, Floor2, Floor3 -> 权重 75%,15%,10% (总和100)
+        const int indices[3] = {1, 2, 3};
+        const int weights[3] = {75, 15, 10};
+        const int total = weights[0] + weights[1] + weights[2]; // 100
+        int r = rand() % total;
+        int acc = 0;
+        for (int i = 0; i < 3; ++i) {
+            acc += weights[i];
+            if (r < acc) {
+                chosenIndex = indices[i];
+                break;
+            }
+        }
+    } else {
+        // 组 B: Floor4, Floor5 -> 权重 50%,50% (总和100)
+        const int indices[2] = {4, 5};
+        const int weights[2] = {50, 50};
+        const int total = weights[0] + weights[1]; // 100
+        int r = rand() % total;
+        int acc = 0;
+        for (int i = 0; i < 2; ++i) {
+            acc += weights[i];
+            if (r < acc) {
+                chosenIndex = indices[i];
+                break;
+            }
+        }
+    }
+
+    // 使用选定的纹理创建地板（与原逻辑一致，保留回退处理）
+    std::string floorPath = "Map/Floor/Floor_000" + std::to_string(chosenIndex) + ".png";
     auto floor = Sprite::create(floorPath);
     if (!floor) {
         floor = Sprite::create();
         floor->setTextureRect(Rect(0, 0, Constants::FLOOR_TILE_SIZE, Constants::FLOOR_TILE_SIZE));
         floor->setColor(Color3B(60, 60, 80));
     }
-    
+
     floor->setPosition(Vec2(x, y));
     floor->setGlobalZOrder(Constants::ZOrder::FLOOR);
     this->addChild(floor, Constants::ZOrder::FLOOR);
