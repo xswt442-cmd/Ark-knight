@@ -63,6 +63,28 @@ public:
      */
     virtual int getSkillMPCost() const = 0;
     
+    // ==================== 治疗技能 ====================
+    /**
+     * 使用治疗术（所有角色通用）
+     * 消耗30蓝，回复5血，10秒CD
+     */
+    void useHeal();
+    
+    /**
+     * 检查是否可以使用治疗
+     */
+    bool canUseHeal() const;
+    
+    /**
+     * 获取治疗剩余冷却时间
+     */
+    float getHealCooldownRemaining() const;
+    
+    /**
+     * 获取治疗总冷却时长
+     */
+    float getHealCooldown() const { return _healCooldown; }
+    
     // ==================== 冲刺系统 ====================
     /**
      * 执行冲刺
@@ -104,6 +126,12 @@ protected:
     // 技能相关
     float _skillCooldown;
     float _skillCooldownTimer;
+    
+    // 治疗相关
+    float _healCooldown;
+    float _healCooldownTimer;
+    int _healMPCost;
+    int _healAmount;
     
     // MP恢复累积器（避免浮点转int精度丢失）
     float _mpRegenAccumulator;

@@ -80,8 +80,15 @@ void GameEntity::takeDamage(int damage)
     // 受击效果 - 闪烁
     if (_sprite != nullptr)
     {
+        // 先停止之前的闪烁动作，避免叠加导致精灵消失
+        _sprite->stopActionByTag(100);
+        _sprite->setVisible(true);  // 确保可见
+        
         auto blink = Blink::create(0.2f, 2);
-        _sprite->runAction(blink);
+        auto show = Show::create();  // 闪烁结束后确保显示
+        auto sequence = Sequence::create(blink, show, nullptr);
+        sequence->setTag(100);  // 设置标签用于停止
+        _sprite->runAction(sequence);
     }
 }
 
