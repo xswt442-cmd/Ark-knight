@@ -1,5 +1,6 @@
 ﻿#include "Enemy.h"
 #include "Entities/Player/Player.h"
+#include <cmath>
 
 Enemy::Enemy()
     : _enemyType(EnemyType::MELEE)
@@ -10,6 +11,11 @@ Enemy::Enemy()
     , _patrolInterval(2.0f)
     , _hasTarget(false)
     , _attackWindup(0.5f) // 默认前摇 0.5 秒
+    , _poisonStacks(0)
+    , _poisonTimer(0.0f)
+    , _poisonTickAcc(0.0f)
+    , _poisonSourceAttack(0)
+    , _poisonColorSaved(false)
 {
 }
 
@@ -40,7 +46,47 @@ void Enemy::update(float dt)
 {
     Character::update(dt);
     
-    // AI逻辑在GameScene中调用，这里不自动执行
+    // 处理毒伤逻辑
+    if (_poisonStacks > 0)
+    {
+        // 倒计时
+        _poisonTimer -= dt;
+        _poisonTickAcc += dt;
+        
+        // 每 POISON_TICK_INTERVAL 秒造成一次毒伤
+        while (_poisonTickAcc >= POISON_TICK_INTERVAL)
+        {
+            _poisonTickAcc -= POISON_TICK_INTERVAL;
+            
+            // 计算毒伤：每层每次造成源攻击的 10%
+            if (_poisonSourceAttack > 0 && _poisonStacks > 0)
+            {
+                float dmgF = static_cast<float>(_poisonSourceAttack) * POISON_TICK_RATIO * static_cast<float>(_poisonStacks);
+                int dmg = static_cast<int>(std::round(dmgF));
+                if (dmg > 0)
+                {
+                    this->takeDamage(dmg);
+                    GAME_LOG("Poison tick: %d damage applied to enemy (stacks=%d, srcAtk=%d)", dmg, _poisonStacks, _poisonSourceAttack);
+                }
+            }
+        }
+        
+        // 如果倒计时结束，清除毒状态（清空层数并恢复颜色）
+        if (_poisonTimer <= 0.0f)
+        {
+            _poisonStacks = 0;
+            _poisonTimer = 0.0f;
+            _poisonTickAcc = 0.0f;
+            _poisonSourceAttack = 0;
+            // 恢复颜色
+            if (_poisonColorSaved && _sprite)
+            {
+                _sprite->setColor(_poisonOriginalColor);
+            }
+            _poisonColorSaved = false;
+            GAME_LOG("Poison expired on enemy, stacks cleared");
+        }
+    }
 }
 
 void Enemy::executeAI(Player* player, float dt)
@@ -211,4 +257,35 @@ void Enemy::attackPlayer(Player* player)
 void Enemy::playAttackAnimation()
 {
     // 默认空实现，子类可覆盖以播放具体动画（不改变冷却/状态）
+}
+
+// ==================== Nymph 中毒逻辑实现 ====================
+void Enemy::applyNymphPoison(int sourceAttack)
+{
+    // 保存原始颜色（首次中毒时）
+    if (!_poisonColorSaved && _sprite)
+    {
+        _poisonOriginalColor = _sprite->getColor();
+        _poisonColorSaved = true;
+    }
+    
+    // 重置毒计时为 10s
+    _poisonTimer = POISON_DURATION;
+    _poisonTickAcc = 0.0f;
+    
+    // 更新毒源攻击力为当前来源攻击力（使用最近一次来源的攻击力）
+    _poisonSourceAttack = sourceAttack;
+    
+    // 叠加一层，最多 POISON_MAX_STACKS
+    _poisonStacks = std::min(POISON_MAX_STACKS, _poisonStacks + 1);
+    
+    // 变色为偏紫
+    if (_sprite)
+    {
+        // 选一个偏紫颜色
+        Color3B purple(180, 100, 200);
+        _sprite->setColor(purple);
+    }
+    
+    GAME_LOG("applyNymphPoison: stacks=%d, srcAtk=%d", _poisonStacks, _poisonSourceAttack);
 }
