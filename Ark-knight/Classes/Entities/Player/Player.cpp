@@ -8,6 +8,10 @@ Player::Player()
     , _keySpace(false)
     , _skillCooldown(Constants::Combat::SKILL_COOLDOWN)
     , _skillCooldownTimer(0.0f)
+    , _healCooldown(10.0f)
+    , _healCooldownTimer(0.0f)
+    , _healMPCost(30)
+    , _healAmount(5)
     , _mpRegenAccumulator(0.0f)
     , _dashCooldown(2.0f)
     , _dashCooldownTimer(0.0f)
@@ -81,6 +85,12 @@ void Player::update(float dt)
     if (_skillCooldownTimer > 0)
     {
         _skillCooldownTimer -= dt;
+    }
+    
+    // 更新治疗冷却
+    if (_healCooldownTimer > 0)
+    {
+        _healCooldownTimer -= dt;
     }
     
     // 更新冲刺冷却
