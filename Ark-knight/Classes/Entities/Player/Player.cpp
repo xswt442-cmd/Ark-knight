@@ -147,6 +147,13 @@ void Player::registerInputEvents()
                     useSkill();
                 }
                 break;
+            case EventKeyboard::KeyCode::KEY_L:
+                // 治疗技能
+                if (canUseHeal())
+                {
+                    useHeal();
+                }
+                break;
             default:
                 break;
         }
@@ -248,6 +255,46 @@ void Player::resetSkillCooldown()
 float Player::getSkillCooldownRemaining() const
 {
     return _skillCooldownTimer > 0.0f ? _skillCooldownTimer : 0.0f;
+}
+
+// ==================== 治疗技能 ====================
+bool Player::canUseHeal() const
+{
+    return _healCooldownTimer <= 0 
+        && _currentState != EntityState::DIE
+        && _mp >= _healMPCost
+        && _hp < _maxHP;  // 血量未满才能治疗
+}
+
+void Player::useHeal()
+{
+    if (!canUseHeal())
+    {
+        return;
+    }
+    
+    // 消耗MP
+    _mp -= _healMPCost;
+    
+    // 回复血量
+    int oldHP = _hp;
+    _hp += _healAmount;
+    if (_hp > _maxHP)
+    {
+        _hp = _maxHP;
+    }
+    
+    // 重置冷却
+    _healCooldownTimer = _healCooldown;
+    
+    GAME_LOG("Player healed! HP: %d -> %d, MP: %d/%d", oldHP, _hp, _mp, _maxMP);
+    
+    // TODO: 播放治疗特效
+}
+
+float Player::getHealCooldownRemaining() const
+{
+    return _healCooldownTimer > 0.0f ? _healCooldownTimer : 0.0f;
 }
 
 void Player::dash()

@@ -367,18 +367,19 @@ void GameScene::createHUD()
     // ==================== 技能图标CD系统 ====================
     float skillIconSize = 64.0f;
     float skillIconX = origin.x + visibleSize.width - skillIconSize / 2 - 40;
-    float skillIconY = origin.y + skillIconSize / 2 + 40;
+    float skillIconY = origin.y + skillIconSize / 2 + 40;  // 下方治疗技能位置
+    float skillIconY2 = skillIconY + skillIconSize + 10;    // 上方角色技能位置
     
-    // 技能图标背景（底层）
-    _skillIcon = Sprite::create("UIs/Skills/Mage/Skill_icon.png");
-    _skillIcon->setPosition(Vec2(skillIconX, skillIconY));
+    // ====== 上方：角色特殊技能（K键） ======
+    _skillIcon = Sprite::create("UIs/Skills/Mage/Nymph_skillicon.png");
+    _skillIcon->setPosition(Vec2(skillIconX, skillIconY2));
     _skillIcon->setScale(skillIconSize / _skillIcon->getContentSize().width);
     _skillIcon->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL);
     _uiLayer->addChild(_skillIcon);
     
-    // CD变暗遮罩（中层，初始不可见）
-    _skillCDMask = Sprite::create("UIs/Skills/Mage/Skill_icon.png");
-    _skillCDMask->setPosition(Vec2(skillIconX, skillIconY));
+    // CD变暗遮罩
+    _skillCDMask = Sprite::create("UIs/Skills/Mage/Nymph_skillicon.png");
+    _skillCDMask->setPosition(Vec2(skillIconX, skillIconY2));
     _skillCDMask->setScale(skillIconSize / _skillCDMask->getContentSize().width);
     _skillCDMask->setColor(Color3B::BLACK);
     _skillCDMask->setOpacity(100);
@@ -386,14 +387,14 @@ void GameScene::createHUD()
     _skillCDMask->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL + 1);
     _uiLayer->addChild(_skillCDMask);
     
-    // CD进度条（顶层，径向从12点顺时针）
-    auto progressSprite = Sprite::create("UIs/Skills/Mage/Skill_icon.png");
+    // CD进度条
+    auto progressSprite = Sprite::create("UIs/Skills/Mage/Nymph_skillicon.png");
     _skillCDProgress = ProgressTimer::create(progressSprite);
     _skillCDProgress->setType(ProgressTimer::Type::RADIAL);
     _skillCDProgress->setReverseDirection(false);
     _skillCDProgress->setMidpoint(Vec2(0.5f, 0.5f));
     _skillCDProgress->setBarChangeRate(Vec2(1, 1));
-    _skillCDProgress->setPosition(Vec2(skillIconX, skillIconY));
+    _skillCDProgress->setPosition(Vec2(skillIconX, skillIconY2));
     _skillCDProgress->setScale(skillIconSize / progressSprite->getContentSize().width);
     _skillCDProgress->setPercentage(0.0f);
     _skillCDProgress->setColor(Color3B(100, 100, 100));
@@ -402,13 +403,38 @@ void GameScene::createHUD()
     _skillCDProgress->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL + 2);
     _uiLayer->addChild(_skillCDProgress);
     
-    // 技能文字提示（暂时注释，可能后续需要）
-    // _skillLabel = Label::createWithSystemFont("Skill: Ready", "Arial", 18);
-    // _skillLabel->setPosition(Vec2(barStartX + 25, mpBarY - 25));
-    // _skillLabel->setAnchorPoint(Vec2(0, 0.5f));
-    // _skillLabel->setTextColor(Color4B(200, 255, 200, 255));
-    // _skillLabel->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL);
-    // _uiLayer->addChild(_skillLabel);
+    // ====== 下方：治疗技能（L键） ======
+    _healIcon = Sprite::create("UIs/Skills/Healing.png");
+    _healIcon->setPosition(Vec2(skillIconX, skillIconY));
+    _healIcon->setScale(skillIconSize / _healIcon->getContentSize().width);
+    _healIcon->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL);
+    _uiLayer->addChild(_healIcon);
+    
+    // 治疗CD变暗遮罩
+    _healCDMask = Sprite::create("UIs/Skills/Healing.png");
+    _healCDMask->setPosition(Vec2(skillIconX, skillIconY));
+    _healCDMask->setScale(skillIconSize / _healCDMask->getContentSize().width);
+    _healCDMask->setColor(Color3B::BLACK);
+    _healCDMask->setOpacity(100);
+    _healCDMask->setVisible(false);
+    _healCDMask->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL + 1);
+    _uiLayer->addChild(_healCDMask);
+    
+    // 治疗CD进度条
+    auto healProgressSprite = Sprite::create("UIs/Skills/Healing.png");
+    _healCDProgress = ProgressTimer::create(healProgressSprite);
+    _healCDProgress->setType(ProgressTimer::Type::RADIAL);
+    _healCDProgress->setReverseDirection(false);
+    _healCDProgress->setMidpoint(Vec2(0.5f, 0.5f));
+    _healCDProgress->setBarChangeRate(Vec2(1, 1));
+    _healCDProgress->setPosition(Vec2(skillIconX, skillIconY));
+    _healCDProgress->setScale(skillIconSize / healProgressSprite->getContentSize().width);
+    _healCDProgress->setPercentage(0.0f);
+    _healCDProgress->setColor(Color3B(100, 100, 100));
+    _healCDProgress->setOpacity(150);
+    _healCDProgress->setVisible(false);
+    _healCDProgress->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL + 2);
+    _uiLayer->addChild(_healCDProgress);
     
     // Debug信息
     _debugLabel = Label::createWithSystemFont("", "Arial", 18);
@@ -419,9 +445,9 @@ void GameScene::createHUD()
     
     // 操作提示
     auto hintLabel = Label::createWithTTF(
-        u8"操作说明：\nWASD - 移动\nJ - 攻击\nK - 技能\n空格 - 冲刺\nESC - 暂停",
+        u8"操作说明：\nWASD - 移动\nJ - 攻击\nK - 技能\nL - 治疗\n空格 - 冲刺\nESC - 暂停",
         "fonts/msyh.ttf", 18);
-    hintLabel->setPosition(Vec2(origin.x + 120, origin.y + 100));
+    hintLabel->setPosition(Vec2(origin.x + 120, origin.y + 120));
     hintLabel->setTextColor(Color4B::WHITE);
     hintLabel->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL);
     _uiLayer->addChild(hintLabel);
@@ -687,7 +713,6 @@ void GameScene::updateHUD(float dt)
             _skillIcon->setOpacity(255);
             _skillCDMask->setVisible(false);
             _skillCDProgress->setVisible(false);
-            // _skillLabel->setString("Skill: Ready");
         }
         else
         {
@@ -699,10 +724,29 @@ void GameScene::updateHUD(float dt)
             // 计算CD进度（从100%到0%，顺时针消失）
             float cdPercent = (totalCD > 0) ? ((totalCD - remain) / totalCD * 100.0f) : 0.0f;
             _skillCDProgress->setPercentage(100.0f - cdPercent);
+        }
+        
+        // 更新治疗技能冷却
+        float healRemain = _player->getHealCooldownRemaining();
+        float healTotalCD = _player->getHealCooldown();
+        
+        if (healRemain <= 0.0f)
+        {
+            // 治疗可用：正常显示，隐藏遮罩和进度
+            _healIcon->setOpacity(255);
+            _healCDMask->setVisible(false);
+            _healCDProgress->setVisible(false);
+        }
+        else
+        {
+            // 治疗CD中：图标轻微变暗，显示转圈进度
+            _healIcon->setOpacity(200);
+            _healCDMask->setVisible(true);
+            _healCDProgress->setVisible(true);
             
-            // char skillText[64];
-            // sprintf(skillText, "Skill: %.1fs", remain);
-            // _skillLabel->setString(skillText);
+            // 计算CD进度
+            float healCdPercent = (healTotalCD > 0) ? ((healTotalCD - healRemain) / healTotalCD * 100.0f) : 0.0f;
+            _healCDProgress->setPercentage(100.0f - healCdPercent);
         }
         
         // 更新Debug信息

@@ -148,9 +148,14 @@ private:
     Label* _skillLabel;
     
     // 技能图标系统
-    Sprite* _skillIcon;                   // 技能图标
-    ProgressTimer* _skillCDProgress;      // CD进度（顺时针转圈）
-    Sprite* _skillCDMask;                 // CD变暗遮罩
+    Sprite* _skillIcon;                   // 角色技能图标
+    ProgressTimer* _skillCDProgress;      // 角色技能CD进度
+    Sprite* _skillCDMask;                 // 角色技能CD变暗遮罩
+    
+    // 治疗技能图标系统
+    Sprite* _healIcon;                    // 治疗技能图标
+    ProgressTimer* _healCDProgress;       // 治疗技能CD进度
+    Sprite* _healCDMask;                  // 治疗技能CD变暗遮罩
     
     // 状态
     bool _isPaused;
