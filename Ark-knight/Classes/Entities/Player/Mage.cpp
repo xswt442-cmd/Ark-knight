@@ -54,8 +54,8 @@ bool Mage::init()
     auto sprite = Sprite::create("Player/Nymph/Nymph_Idle/Nymph_Idle_0001.png");
     if (sprite)
     {
-        // 设置缩放，使角色大小合适
-        float targetSize = Constants::FLOOR_TILE_SIZE * 1.5f;
+        // 设置缩放，使角色大小合适（仅视觉，不影响碰撞）
+        float targetSize = Constants::FLOOR_TILE_SIZE * 4.0f;
         float scale = targetSize / sprite->getContentSize().height;
         sprite->setScale(scale);
         
@@ -462,8 +462,8 @@ void Mage::shootBullet()
     bullet->setPosition(this->getPosition() + _facingDirection * 40);
     bullet->setTag(Constants::Tag::PROJECTILE);
     
-    // 计算缩放比例
-    float targetSize = Constants::FLOOR_TILE_SIZE * 1.0f;
+    // 计算缩放比例（仅视觉，不影响碰撞）
+    float targetSize = Constants::FLOOR_TILE_SIZE * 3.0f;
     float scale = targetSize / bullet->getContentSize().width;
     bullet->setScale(scale);
     
