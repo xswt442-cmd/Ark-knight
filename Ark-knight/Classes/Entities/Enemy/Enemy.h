@@ -106,7 +106,19 @@ public:
      * 获取攻击前摇时长（秒）
      */
     float getAttackWindup() const { return _attackWindup; }
-    
+
+    // ==================== Nymph 毒伤系统接口 ====================
+    /**
+     * 被 Nymph 攻击时调用：重置毒倒计时（10s），并叠加一层（最多100层）。
+     * @param sourceAttack Nymph 当时的攻击力（用于毒伤与技能加成计算）
+     */
+    void applyNymphPoison(int sourceAttack);
+
+    /**
+     * 获取当前毒层数
+     */
+    int getPoisonStacks() const { return _poisonStacks; }
+
 protected:
     EnemyType _enemyType;           // 敌人类型
     
@@ -123,6 +135,19 @@ protected:
 
     // 攻击前摇（windup）时长（秒），默认 0.5f
     float _attackWindup;
+
+
+    // ========== Nymph 中毒状态 ==========
+    int _poisonStacks;              // 当前毒层数
+    float _poisonTimer;             // 剩余毒持续时间（秒），重置为 10.0f
+    float _poisonTickAcc;           // 用于 0.5s 一次的计时
+    int _poisonSourceAttack;        // 记录造成毒的 Nymph 当时的攻击力（用于计算每次毒伤 10%）
+    Color3B _poisonOriginalColor;   // 记录被毒前的精灵颜色（解除毒时恢复）
+    bool _poisonColorSaved;         // 是否已保存原始颜色
+    static const int POISON_MAX_STACKS = 100;
+    static constexpr float POISON_DURATION = 10.0f;
+    static constexpr float POISON_TICK_INTERVAL = 0.5f;
+    static constexpr float POISON_TICK_RATIO = 0.1f; // 每层每次 tick 造成源攻击 10%
 };
 
 #endif // __ENEMY_H__

@@ -34,8 +34,8 @@ bool Mage::init()
     }
     
     // 设置妮芙属性
-    setMaxHP(100);
-    setHP(100);
+    setMaxHP(1000);
+    setHP(1000);
     setMaxMP(150);
     setMP(150);
     setAttack(10);
@@ -531,7 +531,7 @@ void Mage::shootBullet()
         bullet->setUserData(nullptr);
         
         // 碰撞检测
-        bullet->schedule([bullet, parent, bulletDamage](float dt) {
+        bullet->schedule([bullet, parent, bulletDamage, this](float dt) {
             if (!bullet->getParent() || bullet->getUserData() != nullptr) return;
             
             Vec2 bulletPos = bullet->getPosition();
@@ -590,8 +590,28 @@ void Mage::shootBullet()
                         auto enemy = dynamic_cast<Enemy*>(child);
                         if (enemy != nullptr && !enemy->isDead())
                         {
+                            // 命中基础伤害
                             enemy->takeDamage(bulletDamage);
                             GAME_LOG("Bullet hits enemy for %d damage!", bulletDamage);
+                            
+                            // 如果处于强化（开大），额外造成 当前毒层数 * 自身攻击 * 10% 的伤害
+                            if (this->_isEnhanced)
+                            {
+                                int stacksBefore = enemy->getPoisonStacks();
+                                if (stacksBefore > 0)
+                                {
+                                    float extraF = static_cast<float>(stacksBefore) * static_cast<float>(this->getAttack()) * 0.1f;
+                                    int extraDmg = static_cast<int>(std::round(extraF));
+                                    if (extraDmg > 0)
+                                    {
+                                        enemy->takeDamage(extraDmg);
+                                        GAME_LOG("Enhanced extra damage: %d (stacks=%d)", extraDmg, stacksBefore);
+                                    }
+                                }
+                            }
+                            
+                            // 应用/重置 Nymph 毒（叠加一层，重置为10s）
+                            enemy->applyNymphPoison(this->getAttack());
                             
                             bullet->setUserData((void*)1);
                             bullet->stopAllActions();

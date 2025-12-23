@@ -161,6 +161,23 @@ void Character::move(const Vec2& direction, float dt)
     // 更新面朝方向
     _facingDirection = normalizedDir;
     
+    // --- 新增：根据水平分量翻转精灵，使移动时角色能左右转向 ---
+    if (_sprite != nullptr)
+    {
+        // 使用一个小阈值避免垂直移动时频繁切换 flip
+        const float HORIZ_THRESHOLD = 0.1f;
+        if (_facingDirection.x > HORIZ_THRESHOLD)
+        {
+            _sprite->setFlippedX(false);
+        }
+        else if (_facingDirection.x < -HORIZ_THRESHOLD)
+        {
+            _sprite->setFlippedX(true);
+        }
+        // 当水平分量在 [-threshold, threshold] 区间时，不改变当前 flip（保持原样）
+    }
+    // ----------------------------------------------------------------
+    
     // 更新状态
     if (_currentState == EntityState::IDLE)
     {
@@ -178,12 +195,12 @@ void Character::faceToPosition(const Vec2& targetPos)
         // 翻转精灵
         if (_sprite != nullptr)
         {
-            //修改点：角色的朝向与反转逻辑有区别，应该这样保证视觉上是转向。
-            if (_facingDirection.x < 0)
+            //修改点：视角已经正确修正
+            if (_facingDirection.x > 0)
             {
                 _sprite->setFlippedX(false);
             }
-            else if (_facingDirection.x > 0)
+            else if (_facingDirection.x < 0)
             {
                 _sprite->setFlippedX(true);
             }

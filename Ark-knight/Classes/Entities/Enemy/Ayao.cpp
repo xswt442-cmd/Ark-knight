@@ -64,8 +64,8 @@ void Ayao::update(float dt)
 void Ayao::setupAyaoAttributes()
 {
     // 阿咬基础属性
-    setMaxHP(100);
-    setHP(100);
+    setMaxHP(1000);
+    setHP(1000);
     setAttack(10);
     setMoveSpeed(100.0f);
     
@@ -332,7 +332,7 @@ void Ayao::move(const Vec2& direction, float dt)
     if (_sprite && _moveAnimation)
     {
         // 保持你现有的朝向逻辑（不要改）
-        _sprite->setFlippedX(dirNorm.x > 0.0f);
+        _sprite->setFlippedX(dirNorm.x < 0.0f);
         
         // 如果移动动画未在播放，则启动循环播放并打上 tag
         if (!_sprite->getActionByTag(AYAO_MOVE_ACTION_TAG))
