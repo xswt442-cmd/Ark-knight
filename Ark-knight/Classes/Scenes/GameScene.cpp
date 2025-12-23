@@ -1,8 +1,10 @@
 ﻿#include "GameScene.h"
 #include "MainMenuScene.h"
 #include "Entities/Player/Mage.h"
+#include "Entities/Enemy/KongKaZi.h"
 #include "ui/CocosGUI.h"
 #include <algorithm>
+#include"Map/Room.h"
 
 Scene* GameScene::createScene()
 {
@@ -209,6 +211,9 @@ void GameScene::createTestEnemies()
         _gameLayer->addChild(enemy);
         _enemies.pushBack(enemy);
         
+        // 测试红色标记
+        enemy->tryApplyRedMark(0.3f);
+        
         GAME_LOG("Enemy %d created at position (%.1f, %.1f)", i, randomX, randomY);
     }
 }
@@ -272,6 +277,9 @@ void GameScene::spawnEnemiesInRoom(Room* room)
         
         // 同时添加到房间的敌人列表（用于房间门控制）
         room->getEnemies().pushBack(ayao);
+        
+        // 添加 ayao 到场景并 pushback 后：
+        ayao->tryApplyRedMark(0.3f);
         
         GAME_LOG("Ayao spawned at (%.1f, %.1f) in room", spawnPos.x, spawnPos.y);
     }
@@ -986,4 +994,79 @@ void GameScene::showGameOver()
         }
     };
     _eventDispatcher->addEventListenerWithSceneGraphPriority(listener, this);
+}
+
+void GameScene::addEnemy(Enemy* enemy)
+{
+    if (enemy == nullptr) return;
+
+    // 添加到游戏层（显示）并注册到 _enemies（用于 AI 更新）
+    if (_gameLayer)
+    {
+        enemy->setGlobalZOrder(Constants::ZOrder::ENTITY);
+        _gameLayer->addChild(enemy);
+    }
+    else
+    {
+        this->addChild(enemy);
+    }
+
+    enemy->setTag(Constants::Tag::ENEMY);
+
+    bool already = false;
+    for (auto e : _enemies)
+    {
+        if (e == enemy) { already = true; break; }
+    }
+    if (!already)
+    {
+        _enemies.pushBack(enemy);
+    }
+
+    // --- 新增：尝试将该敌人归入所在房间的房间敌人列表，并设置房间边界 ---
+    if (_mapGenerator)
+    {
+        auto rooms = _mapGenerator->getAllRooms();
+        for (auto room : rooms)
+        {
+            if (!room) continue;
+
+            // 使用房间可行走区判断敌人位置是否属于该房间
+            Rect walk = room->getWalkableArea();
+            if (walk.containsPoint(enemy->getPosition()))
+            {
+                // 将敌人加入房间管理列表（避免重复）
+                bool inRoom = false;
+                for (auto re : room->getEnemies())
+                {
+                    if (re == enemy) { inRoom = true; break; }
+                }
+                if (!inRoom)
+                {
+                    room->getEnemies().pushBack(enemy);
+                }
+
+                // 计算与 spawnEnemiesInRoom 相同的活动范围（0.8 * 房间尺寸，中心为 room->getCenter）
+                Vec2 center = room->getCenter();
+                float roomWidth = Constants::ROOM_TILES_W * Constants::FLOOR_TILE_SIZE;
+                float roomHeight = Constants::ROOM_TILES_H * Constants::FLOOR_TILE_SIZE;
+                Rect roomBounds = Rect(
+                    center.x - roomWidth * 0.4f,
+                    center.y - roomHeight * 0.4f,
+                    roomWidth * 0.8f,
+                    roomHeight * 0.8f
+                );
+
+                // 将边界传给敌人（如果子类实现，会应用）
+                enemy->setRoomBounds(roomBounds);
+
+                GAME_LOG("GameScene::addEnemy - enemy assigned to room (%d,%d) and bounds set",
+                         room->getGridX(), room->getGridY());
+                break;
+            }
+        }
+    }
+    // --- end 新增 ---
+
+    GAME_LOG("GameScene::addEnemy - enemy added and registered (total=%zu)", _enemies.size());
 }
