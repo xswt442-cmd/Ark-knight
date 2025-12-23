@@ -67,6 +67,19 @@ git pull --rebase
    git add .
    git commit -m "[fix]修复场景加载时的黑屏bug"
    ```
+   
+   **⚠️ 警告：如何同步代码？**
+   
+   如果在开发过程中需要同步最新的代码：
+   
+   1. **严禁** 执行 git merge backup1！不要把备份分支合到你的功能分支里。
+   2. **严禁** 执行 git merge main！这会产生多余的合并气泡。
+   3. **正确做法**：使用 Rebase 同步主干。
+   
+   ```
+   git fetch origin
+   git rebase origin/main
+   ```
 
 ------
 
