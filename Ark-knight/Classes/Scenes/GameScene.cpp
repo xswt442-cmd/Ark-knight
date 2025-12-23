@@ -181,12 +181,6 @@ void GameScene::createPlayer()
                  SCREEN_CENTER.x, SCREEN_CENTER.y);
     }
     
-    // 创建玩家精灵（临时使用纯色方块）
-    auto drawNode = DrawNode::create();
-    drawNode->drawSolidRect(Vec2(-15, -15), Vec2(15, 15), Color4F::BLUE);
-    drawNode->setGlobalZOrder(Constants::ZOrder::ENTITY);
-    _player->addChild(drawNode);
-    
     // 设置玩家的全局Z顺序
     _player->setGlobalZOrder(Constants::ZOrder::ENTITY);
     

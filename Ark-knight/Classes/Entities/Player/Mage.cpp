@@ -9,11 +9,21 @@ Mage::Mage()
     , _enhancedDuration(8.0f)
     , _baseAttackInterval(1.0f)
     , _attackTimer(0.0f)
+    , _currentAnimName("")
 {
 }
 
 Mage::~Mage()
 {
+    // 释放动画缓存
+    for (auto& pair : _animations)
+    {
+        if (pair.second)
+        {
+            pair.second->release();
+        }
+    }
+    _animations.clear();
 }
 
 bool Mage::init()
@@ -37,10 +47,274 @@ bool Mage::init()
     // 设置攻击冷却为1秒（普通状态攻速）
     _attackCooldown = _baseAttackInterval;
     
+    // 初始化动画
+    initAnimations();
+    
+    // 创建精灵并绑定
+    auto sprite = Sprite::create("Player/Nymph/Nymph_Idle/Nymph_Idle_0001.png");
+    if (sprite)
+    {
+        // 设置缩放，使角色大小合适
+        float targetSize = Constants::FLOOR_TILE_SIZE * 1.5f;
+        float scale = targetSize / sprite->getContentSize().height;
+        sprite->setScale(scale);
+        
+        bindSprite(sprite, Constants::ZOrder::ENTITY);
+        
+        // 播放默认待机动画
+        playAnimation("idle", true);
+    }
+    
     GAME_LOG("Nymph(Mage) initialized - HP: %d/%d, MP: %d/%d", 
              getHP(), getMaxHP(), getMP(), getMaxMP());
     
     return true;
+}
+
+void Mage::initAnimations()
+{
+    // 动画帧率
+    float frameDelay = 0.1f;
+    
+    // 加载普通状态动画
+    // Idle动画 - 6帧
+    {
+        Vector<SpriteFrame*> frames;
+        for (int i = 1; i <= 6; i++)
+        {
+            char filename[128];
+            sprintf(filename, "Player/Nymph/Nymph_Idle/Nymph_Idle_%04d.png", i);
+            auto sprite = Sprite::create(filename);
+            if (sprite)
+            {
+                frames.pushBack(sprite->getSpriteFrame());
+            }
+        }
+        if (!frames.empty())
+        {
+            auto anim = Animation::createWithSpriteFrames(frames, frameDelay);
+            anim->retain();
+            _animations["idle"] = anim;
+        }
+    }
+    
+    // Move动画 - 5帧
+    {
+        Vector<SpriteFrame*> frames;
+        for (int i = 1; i <= 5; i++)
+        {
+            char filename[128];
+            sprintf(filename, "Player/Nymph/Nymph_Move/Nymph_Move_%04d.png", i);
+            auto sprite = Sprite::create(filename);
+            if (sprite)
+            {
+                frames.pushBack(sprite->getSpriteFrame());
+            }
+        }
+        if (!frames.empty())
+        {
+            auto anim = Animation::createWithSpriteFrames(frames, frameDelay);
+            anim->retain();
+            _animations["move"] = anim;
+        }
+    }
+    
+    // Attack动画 - 6帧
+    {
+        Vector<SpriteFrame*> frames;
+        for (int i = 1; i <= 6; i++)
+        {
+            char filename[128];
+            sprintf(filename, "Player/Nymph/Nymph_Attack/Nymph_Attack_%04d.png", i);
+            auto sprite = Sprite::create(filename);
+            if (sprite)
+            {
+                frames.pushBack(sprite->getSpriteFrame());
+            }
+        }
+        if (!frames.empty())
+        {
+            auto anim = Animation::createWithSpriteFrames(frames, frameDelay);
+            anim->retain();
+            _animations["attack"] = anim;
+        }
+    }
+    
+    // Die动画 - 4帧
+    {
+        Vector<SpriteFrame*> frames;
+        for (int i = 1; i <= 4; i++)
+        {
+            char filename[128];
+            sprintf(filename, "Player/Nymph/Nymph_Die/Nymph_Die_%04d.png", i);
+            auto sprite = Sprite::create(filename);
+            if (sprite)
+            {
+                frames.pushBack(sprite->getSpriteFrame());
+            }
+        }
+        if (!frames.empty())
+        {
+            auto anim = Animation::createWithSpriteFrames(frames, frameDelay * 1.5f);  // 死亡动画稍慢
+            anim->retain();
+            _animations["die"] = anim;
+        }
+    }
+    
+    // 加载强化状态动画
+    // Skill_Idle动画 - 6帧
+    {
+        Vector<SpriteFrame*> frames;
+        for (int i = 1; i <= 6; i++)
+        {
+            char filename[128];
+            sprintf(filename, "Player/Nymph/Nymph_Skill_Idle/Nymph_Skill_Idle_%04d.png", i);
+            auto sprite = Sprite::create(filename);
+            if (sprite)
+            {
+                frames.pushBack(sprite->getSpriteFrame());
+            }
+        }
+        if (!frames.empty())
+        {
+            auto anim = Animation::createWithSpriteFrames(frames, frameDelay);
+            anim->retain();
+            _animations["skill_idle"] = anim;
+        }
+    }
+    
+    // Skill_Move动画 - 5帧
+    {
+        Vector<SpriteFrame*> frames;
+        for (int i = 1; i <= 5; i++)
+        {
+            char filename[128];
+            sprintf(filename, "Player/Nymph/Nymph_Skill_Move/Nymph_Skill_Move_%04d.png", i);
+            auto sprite = Sprite::create(filename);
+            if (sprite)
+            {
+                frames.pushBack(sprite->getSpriteFrame());
+            }
+        }
+        if (!frames.empty())
+        {
+            auto anim = Animation::createWithSpriteFrames(frames, frameDelay);
+            anim->retain();
+            _animations["skill_move"] = anim;
+        }
+    }
+    
+    // Skill_Attack动画 - 6帧
+    {
+        Vector<SpriteFrame*> frames;
+        for (int i = 1; i <= 6; i++)
+        {
+            char filename[128];
+            sprintf(filename, "Player/Nymph/Nymph_Skill_Attack/Nymph_Skill_Attack_%04d.png", i);
+            auto sprite = Sprite::create(filename);
+            if (sprite)
+            {
+                frames.pushBack(sprite->getSpriteFrame());
+            }
+        }
+        if (!frames.empty())
+        {
+            auto anim = Animation::createWithSpriteFrames(frames, frameDelay);
+            anim->retain();
+            _animations["skill_attack"] = anim;
+        }
+    }
+    
+    GAME_LOG("Nymph animations loaded: %zu animations", _animations.size());
+}
+
+void Mage::playAnimation(const std::string& name, bool loop)
+{
+    if (_sprite == nullptr)
+    {
+        return;
+    }
+    
+    // 如果已经在播放同一个动画，不重复播放
+    if (_currentAnimName == name)
+    {
+        return;
+    }
+    
+    auto it = _animations.find(name);
+    if (it == _animations.end() || it->second == nullptr)
+    {
+        GAME_LOG("Animation not found: %s", name.c_str());
+        return;
+    }
+    
+    // 停止当前动画
+    _sprite->stopAllActions();
+    
+    _currentAnimName = name;
+    
+    auto animate = Animate::create(it->second);
+    if (loop)
+    {
+        auto repeat = RepeatForever::create(animate);
+        _sprite->runAction(repeat);
+    }
+    else
+    {
+        _sprite->runAction(animate);
+    }
+}
+
+void Mage::setState(EntityState state)
+{
+    EntityState oldState = _currentState;
+    
+    // 调用父类设置状态
+    Character::setState(state);
+    
+    // 根据状态播放对应动画
+    switch (state)
+    {
+        case EntityState::IDLE:
+            if (_isEnhanced)
+            {
+                playAnimation("skill_idle", true);
+            }
+            else
+            {
+                playAnimation("idle", true);
+            }
+            break;
+            
+        case EntityState::MOVE:
+            if (_isEnhanced)
+            {
+                playAnimation("skill_move", true);
+            }
+            else
+            {
+                playAnimation("move", true);
+            }
+            break;
+            
+        case EntityState::ATTACK:
+            if (_isEnhanced)
+            {
+                playAnimation("skill_attack", false);
+            }
+            else
+            {
+                playAnimation("attack", false);
+            }
+            break;
+            
+        case EntityState::DIE:
+            playAnimation("die", false);
+            break;
+            
+        default:
+            break;
+    }
 }
 
 void Mage::update(float dt)
@@ -125,6 +399,17 @@ void Mage::enterEnhancedState()
     // 强化状态：攻速提升100%（攻击间隔减半）
     _attackCooldown = _baseAttackInterval * 0.5f;
     
+    // 强制刷新当前动画（切换到强化版本）
+    _currentAnimName = "";  // 清空当前动画名，强制重新播放
+    if (_currentState == EntityState::IDLE)
+    {
+        playAnimation("skill_idle", true);
+    }
+    else if (_currentState == EntityState::MOVE)
+    {
+        playAnimation("skill_move", true);
+    }
+    
     GAME_LOG("Entered enhanced state - Attack interval: %.2fs", _attackCooldown);
 }
 
@@ -135,6 +420,17 @@ void Mage::exitEnhancedState()
     
     // 恢复正常攻速
     _attackCooldown = _baseAttackInterval;
+    
+    // 强制刷新当前动画（切换到普通版本）
+    _currentAnimName = "";  // 清空当前动画名，强制重新播放
+    if (_currentState == EntityState::IDLE)
+    {
+        playAnimation("idle", true);
+    }
+    else if (_currentState == EntityState::MOVE)
+    {
+        playAnimation("move", true);
+    }
     
     GAME_LOG("Exited enhanced state - Attack interval: %.2fs", _attackCooldown);
 }

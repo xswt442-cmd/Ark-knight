@@ -43,7 +43,23 @@ public:
      */
     bool isEnhanced() const { return _isEnhanced; }
     
+protected:
+    /**
+     * 重写状态切换，播放对应动画
+     */
+    void setState(EntityState state) override;
+    
 private:
+    /**
+     * 初始化动画
+     */
+    void initAnimations();
+    
+    /**
+     * 播放指定动画
+     */
+    void playAnimation(const std::string& name, bool loop = true);
+    
     /**
      * 发射子弹（普攻和强化状态通用）
      */
@@ -67,6 +83,10 @@ private:
     // 攻速相关
     float _baseAttackInterval;  // 基础攻击间隔（1秒）
     float _attackTimer;         // 攻击计时器
+    
+    // 动画相关
+    std::map<std::string, Animation*> _animations;  // 动画缓存
+    std::string _currentAnimName;                    // 当前播放的动画名
 };
 
 #endif // __MAGE_H__
