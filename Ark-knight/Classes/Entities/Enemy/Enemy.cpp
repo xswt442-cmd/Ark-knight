@@ -1,5 +1,6 @@
 ﻿#include "Enemy.h"
 #include "Entities/Player/Player.h"
+#include "UI/FloatingText.h"
 #include <cmath>
 
 Enemy::Enemy()
@@ -66,6 +67,12 @@ void Enemy::update(float dt)
                 if (dmg > 0)
                 {
                     this->takeDamage(dmg);
+                    // 显示紫色的持续伤害数字（使用父节点作为 parent）
+                    Node* parent = this->getParent();
+                    if (parent)
+                    {
+                        FloatingText::show(parent, this->getPosition(), std::to_string(dmg), Color3B(180,100,200));
+                    }
                     GAME_LOG("Poison tick: %d damage applied to enemy (stacks=%d, srcAtk=%d)", dmg, _poisonStacks, _poisonSourceAttack);
                 }
             }

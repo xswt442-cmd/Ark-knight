@@ -2,6 +2,7 @@
 #include "Entities/Enemy/Enemy.h"
 #include "Map/Room.h"
 #include "Map/Hallway.h"
+#include "UI/FloatingText.h"
 
 Mage::Mage()
     : _isEnhanced(false)
@@ -592,8 +593,12 @@ void Mage::shootBullet()
                         {
                             // 命中基础伤害
                             enemy->takeDamage(bulletDamage);
+
+                            // 显示基础伤害（红色）
+                            FloatingText::show(parent, enemy->getPosition(), std::to_string(bulletDamage), Color3B(220,20,20));
+
                             GAME_LOG("Bullet hits enemy for %d damage!", bulletDamage);
-                            
+
                             // 如果处于强化（开大），额外造成 当前毒层数 * 自身攻击 * 10% 的伤害
                             if (this->_isEnhanced)
                             {
@@ -605,14 +610,16 @@ void Mage::shootBullet()
                                     if (extraDmg > 0)
                                     {
                                         enemy->takeDamage(extraDmg);
+                                        // 显示额外伤害（红色）
+                                        FloatingText::show(parent, enemy->getPosition(), std::to_string(extraDmg), Color3B(220,20,20));
                                         GAME_LOG("Enhanced extra damage: %d (stacks=%d)", extraDmg, stacksBefore);
                                     }
                                 }
                             }
-                            
+
                             // 应用/重置 Nymph 毒（叠加一层，重置为10s）
                             enemy->applyNymphPoison(this->getAttack());
-                            
+
                             bullet->setUserData((void*)1);
                             bullet->stopAllActions();
                             bullet->unschedule("bulletUpdate");

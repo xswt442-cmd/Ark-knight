@@ -1,4 +1,5 @@
 ﻿#include "Player.h"
+#include "UI/FloatingText.h"
 
 Player::Player()
     : _keyW(false)
@@ -290,6 +291,16 @@ void Player::useHeal()
     GAME_LOG("Player healed! HP: %d -> %d, MP: %d/%d", oldHP, _hp, _mp, _maxMP);
     
     // TODO: 播放治疗特效
+
+    // 在 useHeal() 恢复血量后：
+    if (this->getParent())
+    {
+        int healed = _hp - oldHP;
+        if (healed > 0)
+        {
+            FloatingText::show(this->getParent(), this->getPosition(), std::to_string(healed), Color3B(50,200,50));
+        }
+    }
 }
 
 float Player::getHealCooldownRemaining() const
@@ -414,5 +425,11 @@ void Player::takeDamage(int damage)
         });
         auto sequence = Sequence::create(delay, callback, nullptr);
         this->runAction(sequence);
+    }
+
+    // 显示玩家受伤的红色数字
+    if (this->getParent())
+    {
+        FloatingText::show(this->getParent(), this->getPosition(), std::to_string(damage), Color3B(220,20,20));
     }
 }
