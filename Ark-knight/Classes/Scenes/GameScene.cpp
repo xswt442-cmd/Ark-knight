@@ -2,6 +2,7 @@
 #include "MainMenuScene.h"
 #include "Entities/Player/Mage.h"
 #include "Entities/Enemy/KongKaZi.h"
+#include "Entities/Enemy/DeYi.h"
 #include "ui/CocosGUI.h"
 #include <algorithm>
 #include"Map/Room.h"
@@ -243,45 +244,50 @@ void GameScene::spawnEnemiesInRoom(Room* room)
     // 关闭房间的门
     room->closeDoors();
     
-    // 获取房间中心和尺寸
+    // 获取房间中心和尺寸（roomCenter 仍可用于日志等）
     Vec2 roomCenter = room->getCenter();
-    float roomWidth = Constants::ROOM_TILES_W * Constants::FLOOR_TILE_SIZE;
-    float roomHeight = Constants::ROOM_TILES_H * Constants::FLOOR_TILE_SIZE;
     
-    // 计算房间边界（用于限制敌人移动）
-    Rect roomBounds = Rect(
-        roomCenter.x - roomWidth * 0.4f,
-        roomCenter.y - roomHeight * 0.4f,
-        roomWidth * 0.8f,
-        roomHeight * 0.8f
-    );
+    // 使用房间自身计算的可行走区域（基于墙与玩家半径），确保边界与墙对齐
+    Rect walk = room->getWalkableArea();
     
-    // 随机生成2-4个阿咬
-    int enemyCount = RANDOM_INT(2, 4);
-    
+    // 随机生成3-8个怪（Ayao 或 DeYi）
+    int enemyCount = RANDOM_INT(3, 8);
+
     for (int i = 0; i < enemyCount; i++)
     {
-        auto ayao = Ayao::create();
-        
-        // 在房间内随机位置（避开房间边界）
-        float offsetX = RANDOM_FLOAT(-roomWidth * 0.3f, roomWidth * 0.3f);
-        float offsetY = RANDOM_FLOAT(-roomHeight * 0.3f, roomHeight * 0.3f);
-        Vec2 spawnPos = roomCenter + Vec2(offsetX, offsetY);
-        
-        ayao->setPosition(spawnPos);
-        ayao->setRoomBounds(roomBounds);  // 设置房间边界限制移动
-        
+        Enemy* enemy = nullptr;
+        float r = CCRANDOM_0_1();
+        if (r < 0.5f)
+        {
+            enemy = Ayao::create();
+        }
+        else
+        {
+            enemy = DeYi::create();
+        }
+
+        if (!enemy) continue;
+
+        // 在 walk 可行走区域内随机位置（注意：walk 是绝对坐标，直接采样）
+        float spawnX = RANDOM_FLOAT(walk.getMinX() + 1.0f, walk.getMaxX() - 1.0f);
+        float spawnY = RANDOM_FLOAT(walk.getMinY() + 1.0f, walk.getMaxY() - 1.0f);
+        Vec2 spawnPos = Vec2(spawnX, spawnY);
+
+        enemy->setPosition(spawnPos);
+        enemy->setRoomBounds(walk);  // 设置房间边界限制移动（使用 Room 的真实可行走区）
+
         // 添加到场景和全局敌人列表
-        _gameLayer->addChild(ayao);
-        _enemies.pushBack(ayao);
-        
+        _gameLayer->addChild(enemy);
+        _enemies.pushBack(enemy);
+
         // 同时添加到房间的敌人列表（用于房间门控制）
-        room->getEnemies().pushBack(ayao);
-        
-        // 添加 ayao 到场景并 pushback 后：
-        ayao->tryApplyRedMark(0.3f);
-        
-        GAME_LOG("Ayao spawned at (%.1f, %.1f) in room", spawnPos.x, spawnPos.y);
+        room->getEnemies().pushBack(enemy);
+
+        // 尝试应用红色标记（30%）
+        enemy->tryApplyRedMark(0.3f);
+
+        GAME_LOG("Enemy spawned at (%.1f, %.1f) in room - type=%s", spawnPos.x, spawnPos.y,
+                 (dynamic_cast<Ayao*>(enemy) ? "Ayao" : "DeYi"));
     }
 }
 
@@ -1046,19 +1052,8 @@ void GameScene::addEnemy(Enemy* enemy)
                     room->getEnemies().pushBack(enemy);
                 }
 
-                // 计算与 spawnEnemiesInRoom 相同的活动范围（0.8 * 房间尺寸，中心为 room->getCenter）
-                Vec2 center = room->getCenter();
-                float roomWidth = Constants::ROOM_TILES_W * Constants::FLOOR_TILE_SIZE;
-                float roomHeight = Constants::ROOM_TILES_H * Constants::FLOOR_TILE_SIZE;
-                Rect roomBounds = Rect(
-                    center.x - roomWidth * 0.4f,
-                    center.y - roomHeight * 0.4f,
-                    roomWidth * 0.8f,
-                    roomHeight * 0.8f
-                );
-
-                // 将边界传给敌人（如果子类实现，会应用）
-                enemy->setRoomBounds(roomBounds);
+                // 将 Room::getWalkableArea 直接传给敌人，保证边界与房间墙匹配
+                enemy->setRoomBounds(walk);
 
                 GAME_LOG("GameScene::addEnemy - enemy assigned to room (%d,%d) and bounds set",
                          room->getGridX(), room->getGridY());
