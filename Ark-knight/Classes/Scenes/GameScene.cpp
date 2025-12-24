@@ -924,7 +924,19 @@ void GameScene::checkBarrierCollisions()
     if (_player && !_player->isDead())
     {
         Vec2 playerPos = _player->getPosition();
-        Rect playerBox = _player->getBoundingBox();
+        
+        // 获取玩家碰撞箱（使用精灵大小的60%作为碰撞体积）
+        Size playerSize = Size(32, 32); 
+        if (_player->getSprite()) {
+             playerSize = _player->getSprite()->getBoundingBox().size;
+             playerSize.width *= 0.6f;
+             playerSize.height *= 0.6f;
+        }
+        
+        Rect playerBox(playerPos.x - playerSize.width / 2, 
+                       playerPos.y - playerSize.height / 2, 
+                       playerSize.width, 
+                       playerSize.height);
         
         for (auto barrier : barriers)
         {
@@ -933,7 +945,15 @@ void GameScene::checkBarrierCollisions()
                 continue;
             }
             
+            // 障碍物在Room节点下，Room节点在(0,0)，所以障碍物的getBoundingBox就是世界坐标（相对于GameLayer）
             Rect barrierBox = barrier->getBoundingBox();
+            
+            // 缩小障碍物碰撞箱一点点，避免卡住
+            float shrink = 2.0f;
+            barrierBox.origin.x += shrink;
+            barrierBox.origin.y += shrink;
+            barrierBox.size.width -= shrink * 2;
+            barrierBox.size.height -= shrink * 2;
             
             if (playerBox.intersectsRect(barrierBox))
             {
@@ -970,6 +990,9 @@ void GameScene::checkBarrierCollisions()
                         _player->setPositionY(playerPos.y - overlapY);
                     }
                 }
+                
+                // 更新位置后重新获取
+                playerPos = _player->getPosition();
             }
         }
     }
@@ -983,7 +1006,19 @@ void GameScene::checkBarrierCollisions()
         }
         
         Vec2 enemyPos = enemy->getPosition();
-        Rect enemyBox = enemy->getBoundingBox();
+        
+        // 获取敌人碰撞箱
+        Size enemySize = Size(32, 32); 
+        if (enemy->getSprite()) {
+             enemySize = enemy->getSprite()->getBoundingBox().size;
+             enemySize.width *= 0.6f;
+             enemySize.height *= 0.6f;
+        }
+        
+        Rect enemyBox(enemyPos.x - enemySize.width / 2, 
+                      enemyPos.y - enemySize.height / 2, 
+                      enemySize.width, 
+                      enemySize.height);
         
         for (auto barrier : barriers)
         {
@@ -993,6 +1028,12 @@ void GameScene::checkBarrierCollisions()
             }
             
             Rect barrierBox = barrier->getBoundingBox();
+            // 缩小障碍物碰撞箱
+            float shrink = 2.0f;
+            barrierBox.origin.x += shrink;
+            barrierBox.origin.y += shrink;
+            barrierBox.size.width -= shrink * 2;
+            barrierBox.size.height -= shrink * 2;
             
             if (enemyBox.intersectsRect(barrierBox))
             {
@@ -1029,6 +1070,9 @@ void GameScene::checkBarrierCollisions()
                         enemy->setPositionY(enemyPos.y - overlapY);
                     }
                 }
+                
+                // 更新位置
+                enemyPos = enemy->getPosition();
             }
         }
     }

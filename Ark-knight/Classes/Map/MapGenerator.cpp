@@ -107,8 +107,8 @@ TerrainLayout MapGenerator::pickRandomTerrainLayout() const {
         TerrainLayout::UPDOWN_SPIKES,
         TerrainLayout::LEFTRIGHT_SPIKES,
         TerrainLayout::ALL_SPIKES,
-        TerrainLayout::UPDOWN_WALLS,
-        TerrainLayout::LEFTRIGHT_WALLS,
+        TerrainLayout::UPDOWN_BOXES,
+        TerrainLayout::LEFTRIGHT_BOXES,
         TerrainLayout::CENTER_PILLAR,
         TerrainLayout::FOUR_PILLARS,
         TerrainLayout::RANDOM_MESS
