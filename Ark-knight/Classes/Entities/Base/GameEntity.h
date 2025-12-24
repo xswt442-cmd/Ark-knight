@@ -100,6 +100,10 @@ protected:
     int _maxHP;                   // 最大生命值
     
     bool _isAlive;                // 是否存活
+
+    // 新增：受击无敌计时器，防止短时间内重复受击（默认 0.1s）
+    float _hitInvulTimer;
+    static constexpr float HIT_INVUL_DURATION = 0.1f;
 };
 
 #endif // __GAME_ENTITY_H__
