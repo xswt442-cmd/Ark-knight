@@ -79,6 +79,7 @@ list(APPEND GAME_SOURCE
      Classes/Map/Hallway.cpp
      # UI
      Classes/UI/MiniMap.cpp
+     Classes/UI/SettingsLayer.cpp
      # Managers
      Classes/Managers/GameManager.cpp
      Classes/Managers/SoundManager.cpp
@@ -106,6 +107,7 @@ list(APPEND GAME_HEADER
      Classes/Map/MapGenerator.h
      # UI
      Classes/UI/MiniMap.h
+     Classes/UI/SettingsLayer.h
      # Managers
      Classes/Managers/GameManager.h
      Classes/Managers/SoundManager.h

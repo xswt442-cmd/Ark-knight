@@ -1114,78 +1114,15 @@ void GameScene::showSettings()
     _uiLayer->getChildByName("pauseMenuBtn")->setVisible(false);
     _uiLayer->getChildByName("pauseExitBtn")->setVisible(false);
     
-    // 创建设置菜单UI
-    auto settingsTitle = Label::createWithTTF(u8"设置", "fonts/msyh.ttf", 56);
-    settingsTitle->setPosition(Vec2(SCREEN_CENTER.x, SCREEN_CENTER.y + 200));
-    settingsTitle->setTextColor(Color4B::WHITE);
-    settingsTitle->setName("settingsTitle");
-    settingsTitle->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL + 2);
-    _uiLayer->addChild(settingsTitle);
-    
-    // 分辨率标签
-    auto resLabel = Label::createWithTTF(u8"分辨率：", "fonts/msyh.ttf", 32);
-    resLabel->setPosition(Vec2(SCREEN_CENTER.x - 200, SCREEN_CENTER.y + 100));
-    resLabel->setTextColor(Color4B::WHITE);
-    resLabel->setName("resLabel");
-    resLabel->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL + 2);
-    _uiLayer->addChild(resLabel);
-    
-    // 分辨率选项按钮
-    const char* resolutions[] = {u8"800x600", u8"1280x720", u8"1920x1080"};
-    int resWidth[] = {800, 1280, 1920};
-    int resHeight[] = {600, 720, 1080};
-    
-    for (int i = 0; i < 3; i++)
-    {
-        auto resButton = ui::Button::create();
-        resButton->setTitleText(resolutions[i]);
-        resButton->setTitleFontName("fonts/msyh.ttf");
-        resButton->setTitleFontSize(28);
-        resButton->setPosition(Vec2(SCREEN_CENTER.x + 80 + i * 200, SCREEN_CENTER.y + 100));
-        resButton->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL + 2);
-        resButton->setName("resButton" + std::to_string(i));
-        int width = resWidth[i];
-        int height = resHeight[i];
-        resButton->addClickEventListener([width, height](Ref* sender) {
-            auto director = Director::getInstance();
-            auto glview = director->getOpenGLView();
-            glview->setFrameSize(width, height);
-            glview->setDesignResolutionSize(Constants::DESIGN_WIDTH, Constants::DESIGN_HEIGHT, ResolutionPolicy::SHOW_ALL);
-            GAME_LOG("Resolution changed to %dx%d", width, height);
-        });
-        _uiLayer->addChild(resButton);
-    }
-    
-    // 返回按钮
-    auto backButton = ui::Button::create();
-    backButton->setTitleText(u8"返回");
-    backButton->setTitleFontName("fonts/msyh.ttf");
-    backButton->setTitleFontSize(32);
-    backButton->setPosition(Vec2(SCREEN_CENTER.x, SCREEN_CENTER.y - 100));
-    backButton->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL + 2);
-    backButton->setName("settingsBackBtn");
-    backButton->addClickEventListener([this](Ref* sender) {
-        hideSettings();
+    // 创建设置层
+    auto settingsLayer = SettingsLayer::create();
+    settingsLayer->setCloseCallback([this]() {
+        // 恢复显示暂停菜单
+        _uiLayer->getChildByName("pauseTitle")->setVisible(true);
+        _uiLayer->getChildByName("pauseResumeBtn")->setVisible(true);
+        _uiLayer->getChildByName("pauseSettingsBtn")->setVisible(true);
+        _uiLayer->getChildByName("pauseMenuBtn")->setVisible(true);
+        _uiLayer->getChildByName("pauseExitBtn")->setVisible(true);
     });
-    _uiLayer->addChild(backButton);
-}
-
-void GameScene::hideSettings()
-{
-    GAME_LOG("Closing settings menu");
-    
-    // 移除设置菜单UI
-    _uiLayer->removeChildByName("settingsTitle");
-    _uiLayer->removeChildByName("resLabel");
-    _uiLayer->removeChildByName("resButton0");
-    _uiLayer->removeChildByName("resButton1");
-    _uiLayer->removeChildByName("resButton2");
-    _uiLayer->removeChildByName("settingsBackBtn");
-    
-    // 恢复显示暂停菜单
-    _uiLayer->getChildByName("pauseTitle")->setVisible(true);
-    _uiLayer->getChildByName("pauseResumeBtn")->setVisible(true);
-    _uiLayer->getChildByName("pauseSettingsBtn")->setVisible(true);
-    _uiLayer->getChildByName("pauseMenuBtn")->setVisible(true);
-    _uiLayer->getChildByName("pauseExitBtn")->setVisible(true);
+    _uiLayer->addChild(settingsLayer);
 }

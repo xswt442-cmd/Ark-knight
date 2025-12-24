@@ -4,6 +4,7 @@
 #include "cocos2d.h"
 #include "Core/Constants.h"
 #include "Core/GameMacros.h"
+#include "UI/SettingsLayer.h"
 
 USING_NS_CC;
 
@@ -61,11 +62,6 @@ private:
      * 显示设置菜单
      */
     void showSettings();
-    
-    /**
-     * 隐藏设置菜单
-     */
-    void hideSettings();
     
 private:
     Layer* _uiLayer;

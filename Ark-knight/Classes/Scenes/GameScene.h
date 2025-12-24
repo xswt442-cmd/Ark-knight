@@ -11,6 +11,7 @@
 #include "Map/MapGenerator.h"
 #include "Map/Room.h"
 #include "UI/MiniMap.h"
+#include "UI/SettingsLayer.h"
 
 USING_NS_CC;
 
@@ -121,11 +122,6 @@ private:
      * 显示设置菜单
      */
     void showSettings();
-    
-    /**
-     * 隐藏设置菜单
-     */
-    void hideSettings();
     
     /**
      * 显示游戏结束界面
