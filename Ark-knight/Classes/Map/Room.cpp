@@ -255,7 +255,7 @@ void Room::generateDoor(float x, float y, int direction) {
 
 void Room::addSpikeAtPosition(const Vec2& pos)
 {
-    auto spike = Spike::createSpike();
+    auto spike = Spike::create();
     if (!spike)
     {
         GAME_LOG("Failed to create spike sprite");

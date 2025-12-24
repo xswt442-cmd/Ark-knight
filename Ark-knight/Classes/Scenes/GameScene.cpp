@@ -722,8 +722,7 @@ void GameScene::updateSpikes(float dt)
     for (auto spike : spikes)
     {
         if (!spike) continue;
-        bool stepped = spike->getBoundingBox().containsPoint(_player->getPosition());
-        spike->updateState(dt, stepped, _player);
+        spike->updateState(dt, _player);
     }
 }
 

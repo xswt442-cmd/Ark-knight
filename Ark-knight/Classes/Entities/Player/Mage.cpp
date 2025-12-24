@@ -35,8 +35,8 @@ bool Mage::init()
     }
     
     // 设置妮芙属性
-    setMaxHP(1000);
-    setHP(1000);
+    setMaxHP(100000);
+    setHP(100000);
     setMaxMP(150);
     setMP(150);
     setAttack(50);
