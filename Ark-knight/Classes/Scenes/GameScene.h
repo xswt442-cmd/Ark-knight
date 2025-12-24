@@ -116,6 +116,11 @@ private:
     void checkCollisions();
     
     /**
+     * 检测并解决实体与障碍物的碰撞
+     */
+    void checkBarrierCollisions();
+    
+    /**
      * 暂停游戏
      */
     void pauseGame();

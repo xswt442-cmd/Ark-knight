@@ -908,10 +908,14 @@ void Room::createPortal()
     for (int i = 1; i <= 7; i++)
     {
         std::string framePath = "Map/Portal/Portal_000" + std::to_string(i) + ".png";
-        auto frame = cocos2d::SpriteFrame::create(framePath, cocos2d::Rect(0, 0, 0, 0));
-        if (frame)
+        auto texture = cocos2d::Director::getInstance()->getTextureCache()->addImage(framePath);
+        if (texture)
         {
-            portalFrames.pushBack(frame);
+            auto frame = cocos2d::SpriteFrame::createWithTexture(texture, cocos2d::Rect(0, 0, texture->getContentSize().width, texture->getContentSize().height));
+            if (frame)
+            {
+                portalFrames.pushBack(frame);
+            }
         }
     }
     
@@ -950,10 +954,14 @@ void Room::createPortal()
     for (int i = 1; i <= 4; i++)
     {
         std::string framePath = "Map/Portal/Portallighting_000" + std::to_string(i) + ".png";
-        auto frame = cocos2d::SpriteFrame::create(framePath, cocos2d::Rect(0, 0, 0, 0));
-        if (frame)
+        auto texture = cocos2d::Director::getInstance()->getTextureCache()->addImage(framePath);
+        if (texture)
         {
-            lightingFrames.pushBack(frame);
+            auto frame = cocos2d::SpriteFrame::createWithTexture(texture, cocos2d::Rect(0, 0, texture->getContentSize().width, texture->getContentSize().height));
+            if (frame)
+            {
+                lightingFrames.pushBack(frame);
+            }
         }
     }
     

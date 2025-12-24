@@ -495,6 +495,7 @@ void GameScene::update(float dt)
     updateSpikes(dt);     // 更新地刺伤害
     updateInteraction(dt); // 更新交互提示
     updateHUD(dt);
+    checkBarrierCollisions(); // 检测障碍物碰撞
     checkCollisions();
 }
 
@@ -904,6 +905,133 @@ void GameScene::checkCollisions()
     }
     
     // 玩家技能判定（火球等） - 在Mage::castFireball中处理
+}
+
+void GameScene::checkBarrierCollisions()
+{
+    if (!_currentRoom)
+    {
+        return;
+    }
+    
+    const auto& barriers = _currentRoom->getBarriers();
+    if (barriers.empty())
+    {
+        return;
+    }
+    
+    // 检测玩家与障碍物碰撞
+    if (_player && !_player->isDead())
+    {
+        Vec2 playerPos = _player->getPosition();
+        Rect playerBox = _player->getBoundingBox();
+        
+        for (auto barrier : barriers)
+        {
+            if (!barrier || !barrier->blocksMovement())
+            {
+                continue;
+            }
+            
+            Rect barrierBox = barrier->getBoundingBox();
+            
+            if (playerBox.intersectsRect(barrierBox))
+            {
+                // 发生碰撞，计算推出方向
+                Vec2 barrierPos = barrier->getPosition();
+                Vec2 delta = playerPos - barrierPos;
+                
+                // 计算重叠量
+                float overlapX = (playerBox.size.width + barrierBox.size.width) / 2.0f - abs(delta.x);
+                float overlapY = (playerBox.size.height + barrierBox.size.height) / 2.0f - abs(delta.y);
+                
+                // 沿重叠较小的方向推出
+                if (overlapX < overlapY)
+                {
+                    // 水平方向推出
+                    if (delta.x > 0)
+                    {
+                        _player->setPositionX(playerPos.x + overlapX);
+                    }
+                    else
+                    {
+                        _player->setPositionX(playerPos.x - overlapX);
+                    }
+                }
+                else
+                {
+                    // 垂直方向推出
+                    if (delta.y > 0)
+                    {
+                        _player->setPositionY(playerPos.y + overlapY);
+                    }
+                    else
+                    {
+                        _player->setPositionY(playerPos.y - overlapY);
+                    }
+                }
+            }
+        }
+    }
+    
+    // 检测敌人与障碍物碰撞
+    for (auto enemy : _enemies)
+    {
+        if (!enemy || enemy->isDead())
+        {
+            continue;
+        }
+        
+        Vec2 enemyPos = enemy->getPosition();
+        Rect enemyBox = enemy->getBoundingBox();
+        
+        for (auto barrier : barriers)
+        {
+            if (!barrier || !barrier->blocksMovement())
+            {
+                continue;
+            }
+            
+            Rect barrierBox = barrier->getBoundingBox();
+            
+            if (enemyBox.intersectsRect(barrierBox))
+            {
+                // 发生碰撞，计算推出方向
+                Vec2 barrierPos = barrier->getPosition();
+                Vec2 delta = enemyPos - barrierPos;
+                
+                // 计算重叠量
+                float overlapX = (enemyBox.size.width + barrierBox.size.width) / 2.0f - abs(delta.x);
+                float overlapY = (enemyBox.size.height + barrierBox.size.height) / 2.0f - abs(delta.y);
+                
+                // 沿重叠较小的方向推出
+                if (overlapX < overlapY)
+                {
+                    // 水平方向推出
+                    if (delta.x > 0)
+                    {
+                        enemy->setPositionX(enemyPos.x + overlapX);
+                    }
+                    else
+                    {
+                        enemy->setPositionX(enemyPos.x - overlapX);
+                    }
+                }
+                else
+                {
+                    // 垂直方向推出
+                    if (delta.y > 0)
+                    {
+                        enemy->setPositionY(enemyPos.y + overlapY);
+                    }
+                    else
+                    {
+                        enemy->setPositionY(enemyPos.y - overlapY);
+                    }
+                }
+            }
+        }
+    }
 }
 
 void GameScene::setupKeyboardListener()
