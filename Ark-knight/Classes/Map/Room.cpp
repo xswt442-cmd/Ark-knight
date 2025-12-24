@@ -279,6 +279,58 @@ void Room::addSpikeAtTile(int tileX, int tileY)
     addSpikeAtPosition(Vec2(spikeX, spikeY));
 }
 
+void Room::addBoxAtPosition(const Vec2& pos, Box::BoxType type)
+{
+    auto box = Box::create(type);
+    if (!box)
+    {
+        GAME_LOG("Failed to create box sprite");
+        return;
+    }
+    box->setPosition(pos);
+    box->setGlobalZOrder(Constants::ZOrder::WALL_ABOVE);
+    this->addChild(box, Constants::ZOrder::WALL_ABOVE);
+    _barriers.pushBack(box);
+}
+
+void Room::addBoxAtTile(int tileX, int tileY, Box::BoxType type)
+{
+    float tileSize = Constants::FLOOR_TILE_SIZE;
+    float startX = _centerX - tileSize * (_tilesWidth / 2.0f - 0.5f);
+    float startY = _centerY + tileSize * (_tilesHeight / 2.0f - 0.5f);
+    
+    float boxX = startX + tileX * tileSize;
+    float boxY = startY - tileY * tileSize;
+    
+    addBoxAtPosition(Vec2(boxX, boxY), type);
+}
+
+void Room::addPillarAtPosition(const Vec2& pos, Pillar::PillarType type)
+{
+    auto pillar = Pillar::create(type);
+    if (!pillar)
+    {
+        GAME_LOG("Failed to create pillar sprite");
+        return;
+    }
+    pillar->setPosition(pos);
+    pillar->setGlobalZOrder(Constants::ZOrder::WALL_ABOVE);
+    this->addChild(pillar, Constants::ZOrder::WALL_ABOVE);
+    _barriers.pushBack(pillar);
+}
+
+void Room::addPillarAtTile(int tileX, int tileY, Pillar::PillarType type)
+{
+    float tileSize = Constants::FLOOR_TILE_SIZE;
+    float startX = _centerX - tileSize * (_tilesWidth / 2.0f - 0.5f);
+    float startY = _centerY + tileSize * (_tilesHeight / 2.0f - 0.5f);
+    
+    float pillarX = startX + tileX * tileSize;
+    float pillarY = startY - tileY * tileSize;
+    
+    addPillarAtPosition(Vec2(pillarX, pillarY), type);
+}
+
 void Room::setDoorOpen(int direction, bool open) {
     if (direction >= 0 && direction < Constants::DIR_COUNT) {
         _doorDirections[direction] = open;

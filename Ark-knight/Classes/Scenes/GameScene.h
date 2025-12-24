@@ -12,7 +12,7 @@
 #include "Map/Room.h"
 #include "UI/MiniMap.h"
 #include "UI/SettingsLayer.h"
-#include "Map/Spike.h"
+#include "Map/Barriers.h"
 
 USING_NS_CC;
 

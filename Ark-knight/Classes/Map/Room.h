@@ -3,7 +3,7 @@
 
 #include "cocos2d.h"
 #include "Core/Constants.h"
-#include "Map/Spike.h"
+#include "Map/Barriers.h"
 
 class Enemy;
 class Player;
@@ -43,6 +43,13 @@ public:
     void addSpikeAtPosition(const cocos2d::Vec2& pos);
     void addSpikeAtTile(int tileX, int tileY);
     const cocos2d::Vector<Spike*>& getSpikes() const { return _spikes; }
+    
+    // Box和Pillar管理
+    void addBoxAtPosition(const cocos2d::Vec2& pos, Box::BoxType type = Box::BoxType::NORMAL);
+    void addBoxAtTile(int tileX, int tileY, Box::BoxType type = Box::BoxType::NORMAL);
+    void addPillarAtPosition(const cocos2d::Vec2& pos, Pillar::PillarType type = Pillar::PillarType::CLEAR);
+    void addPillarAtTile(int tileX, int tileY, Pillar::PillarType type = Pillar::PillarType::CLEAR);
+    const cocos2d::Vector<Barrier*>& getBarriers() const { return _barriers; }
     
     void openDoors();
     void closeDoors();
@@ -90,6 +97,7 @@ private:
     cocos2d::Vector<cocos2d::Sprite*> _doorsClosedSprites;
     cocos2d::Vector<Enemy*> _enemies;
     cocos2d::Vector<Spike*> _spikes;
+    cocos2d::Vector<Barrier*> _barriers;  // 所有障碍物(Box和Pillar)
 };
 
 #endif // __ROOM_H__
