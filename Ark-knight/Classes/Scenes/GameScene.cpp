@@ -1082,5 +1082,9 @@ void GameScene::addEnemy(Enemy* enemy)
     }
     // --- end 新增 ---
 
+    // 确保动态生成的敌人也有机会成为“红色标记”怪以生成 KongKaZi
+    // spawnEnemiesInRoom 已对初生群体调用 tryApplyRedMark，但通过 addEnemy 动态加入的（如 XinXing 死后生成的 IronLance）也需要调用
+    enemy->tryApplyRedMark(0.3f);
+
     GAME_LOG("GameScene::addEnemy - enemy added and registered (total=%zu)", _enemies.size());
 }

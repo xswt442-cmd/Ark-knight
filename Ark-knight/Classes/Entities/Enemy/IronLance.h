@@ -30,11 +30,13 @@ public:
     // 房间边界
     virtual void setRoomBounds(const cocos2d::Rect& bounds) override { _roomBounds = bounds; _hasRoomBounds = true; }
 
-
+    // 覆写移动以按 Ayao 的动画逻辑控制移动循环与停止恢复首帧
+    virtual void move(const cocos2d::Vec2& direction, float dt) override;
 
 protected:
 
     cocos2d::Animation* _moveAnimation;
+    cocos2d::Animation* _dieAnimation;
     cocos2d::Rect _roomBounds;
     bool _hasRoomBounds;
 };
