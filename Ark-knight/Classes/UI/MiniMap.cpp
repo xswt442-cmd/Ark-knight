@@ -177,7 +177,7 @@ bool MiniMap::init() {
     _levelLabel->setTextColor(Color4B::WHITE);
     _levelLabel->enableOutline(Color4B::BLACK, 1);  // 添加黑色描边增强可读性
     _levelLabel->setPosition(Vec2(_totalWidth / 2, -30));  // 在小地图下方
-    _levelLabel->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL + 1);  // 稍高于小地图背景
+    _levelLabel->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL);
     this->addChild(_levelLabel);
     
     return true;

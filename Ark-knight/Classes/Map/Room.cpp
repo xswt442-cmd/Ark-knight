@@ -650,10 +650,10 @@ void Room::layoutNineBoxes()
     // 右下
     addBoxCluster(rightX, bottomY, 3, 3);
     
-    // 中间一排（左中、中心、右中）：4x2
-    addBoxCluster(leftX, centerY, 4, 2);
+    // 中间一排（左中、右中：3x2，中心：4x2）
+    addBoxCluster(leftX, centerY, 3, 2);
     addBoxCluster(centerX, centerY, 4, 2);
-    addBoxCluster(rightX, centerY, 4, 2);
+    addBoxCluster(rightX, centerY, 3, 2);
     
     // 上中、下中：4x3
     addBoxCluster(centerX, topY, 4, 3);
