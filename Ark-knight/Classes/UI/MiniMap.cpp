@@ -50,8 +50,7 @@ void MiniRoom::setRoomColor(Constants::RoomType type) {
         case Constants::RoomType::BOSS:
             color = Color4F(0.9f, 0.0f, 0.0f, 0.8f);  // 红色：BOSS房间
             break;
-        case Constants::RoomType::WEAPON:
-        case Constants::RoomType::PROP:
+        case Constants::RoomType::REWARD:
             color = Color4F(0.9f, 0.6f, 0.1f, 0.8f);  // 橙色：奖励房间
             break;
         case Constants::RoomType::NORMAL:

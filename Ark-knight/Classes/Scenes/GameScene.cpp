@@ -808,8 +808,7 @@ void GameScene::updateHUD(float dt)
                 case Constants::RoomType::NORMAL: roomTypeStr = "Normal"; break;
                 case Constants::RoomType::BOSS: roomTypeStr = "Boss"; break;
                 case Constants::RoomType::END: roomTypeStr = "End"; break;
-                case Constants::RoomType::WEAPON: roomTypeStr = "Weapon"; break;
-                case Constants::RoomType::PROP: roomTypeStr = "Prop"; break;
+                case Constants::RoomType::REWARD: roomTypeStr = "Reward"; break;
                 default: break;
             }
         }

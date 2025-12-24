@@ -70,8 +70,7 @@ void MapGenerator::generateMap() {
                     room->applyTerrainLayout(layout);
                 }
                 // 奖励房间生成宝箱
-                else if (room->getRoomType() == Constants::RoomType::WEAPON || 
-                         room->getRoomType() == Constants::RoomType::PROP) {
+                else if (room->getRoomType() == Constants::RoomType::REWARD) {
                     room->createChest();
                 }
             }
@@ -240,10 +239,10 @@ void MapGenerator::assignRoomTypes() {
     std::random_shuffle(normalRooms.begin(), normalRooms.end());
     
     if (normalRooms.size() >= 1) {
-        normalRooms[0]->setRoomType(Constants::RoomType::WEAPON);
+        normalRooms[0]->setRoomType(Constants::RoomType::REWARD);
     }
     if (normalRooms.size() >= 2) {
-        normalRooms[1]->setRoomType(Constants::RoomType::PROP);
+        normalRooms[1]->setRoomType(Constants::RoomType::REWARD);
     }
 }
 

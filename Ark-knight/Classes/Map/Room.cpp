@@ -78,8 +78,7 @@ void Room::createMap() {
             _tilesWidth = Constants::ROOM_TILES_W + 4;
             _tilesHeight = Constants::ROOM_TILES_H + 4;
             break;
-        case Constants::RoomType::WEAPON:
-        case Constants::RoomType::PROP:
+        case Constants::RoomType::REWARD:
         case Constants::RoomType::END:
             _tilesWidth = Constants::ROOM_TILES_W - 4;
             _tilesHeight = Constants::ROOM_TILES_H - 4;
@@ -816,8 +815,8 @@ void Room::layoutRandomMess()
 
 void Room::createChest()
 {
-    // 只在奖励房间（武器和道具房间）生成宝箱
-    if (_roomType != Constants::RoomType::WEAPON && _roomType != Constants::RoomType::PROP)
+    // 只在奖励房间生成宝箱
+    if (_roomType != Constants::RoomType::REWARD)
     {
         return;
     }

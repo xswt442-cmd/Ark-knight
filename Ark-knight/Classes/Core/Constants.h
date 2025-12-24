@@ -121,8 +121,7 @@ namespace Constants {
         NORMAL,     // 普通战斗房间
         BOSS,       // Boss房间
         END,        // 终点房间(下一关传送门)
-        WEAPON,     // 武器房间
-        PROP        // 道具房间
+        REWARD      // 奖励房间（原武器/道具房间）
     };
 }
 
