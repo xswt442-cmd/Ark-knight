@@ -549,7 +549,7 @@ void Room::applyTerrainLayout(TerrainLayout layout)
     }
 }
 
-void Room::addBoxCluster3x3(int centerTileX, int centerTileY)
+void Room::addBoxCluster(int centerTileX, int centerTileY, int width, int height)
 {
     // 随机选择一种木箱材质（单堆内统一）
     int typeIndex = cocos2d::RandomHelper::random_int(0, 2);
@@ -562,63 +562,25 @@ void Room::addBoxCluster3x3(int centerTileX, int centerTileY)
     default: type = Box::BoxType::NORMAL; break;
     }
     
-    // 放置3x3的木箱
-    for (int dy = -1; dy <= 1; dy++)
-    {
-        for (int dx = -1; dx <= 1; dx++)
-        {
-            addBoxAtTile(centerTileX + dx, centerTileY + dy, type);
-        }
-    }
-}
-
-void Room::addBoxCluster4x2(int centerTileX, int centerTileY)
-{
-    // 随机选择一种木箱材质（单堆内统一）
-    int typeIndex = cocos2d::RandomHelper::random_int(0, 2);
-    Box::BoxType type;
-    switch (typeIndex)
-    {
-    case 0: type = Box::BoxType::NORMAL; break;
-    case 1: type = Box::BoxType::LIGHT; break;
-    case 2: type = Box::BoxType::DARK; break;
-    default: type = Box::BoxType::NORMAL; break;
-    }
+    // 计算起始偏移（以中心为基准）
+    int halfWidth = width / 2;
+    int halfHeight = height / 2;
+    int startX = -halfWidth;
+    int startY = -halfHeight;
+    int endX = startX + width - 1;
+    int endY = startY + height - 1;
     
-    // 放置4x2的木箱（4宽2高）
-    for (int dy = -1; dy <= 0; dy++)  // 2行
+    // 放置指定大小的木箱堆
+    for (int dy = startY; dy <= endY; dy++)
     {
-        for (int dx = -2; dx <= 1; dx++)  // 4列
+        for (int dx = startX; dx <= endX; dx++)
         {
             addBoxAtTile(centerTileX + dx, centerTileY + dy, type);
         }
     }
 }
 
-void Room::addBoxCluster4x3(int centerTileX, int centerTileY)
-{
-    // 随机选择一种木箱材质（单堆内统一）
-    int typeIndex = cocos2d::RandomHelper::random_int(0, 2);
-    Box::BoxType type;
-    switch (typeIndex)
-    {
-    case 0: type = Box::BoxType::NORMAL; break;
-    case 1: type = Box::BoxType::LIGHT; break;
-    case 2: type = Box::BoxType::DARK; break;
-    default: type = Box::BoxType::NORMAL; break;
-    }
-    
-    // 放置4x3的木箱（4宽3高）
-    for (int dy = -1; dy <= 1; dy++)  // 3行
-    {
-        for (int dx = -2; dx <= 1; dx++)  // 4列
-        {
-            addBoxAtTile(centerTileX + dx, centerTileY + dy, type);
-        }
-    }
-}
-
-void Room::addPillarCluster2x2(int centerTileX, int centerTileY)
+void Room::addPillarCluster(int centerTileX, int centerTileY, int width, int height)
 {
     // 随机选择一种石柱材质（单堆内统一）
     int typeIndex = cocos2d::RandomHelper::random_int(0, 2);
@@ -657,15 +619,15 @@ void Room::layoutFiveBoxes()
     int bottomY = 4;
     
     // 左上
-    addBoxCluster3x3(leftX, topY);
+    addBoxCluster(leftX, topY, 3, 3);
     // 左下
-    addBoxCluster3x3(leftX, bottomY);
+    addBoxCluster(leftX, bottomY, 3, 3);
     // 右上
-    addBoxCluster3x3(rightX, topY);
+    addBoxCluster(rightX, topY, 3, 3);
     // 右下
-    addBoxCluster3x3(rightX, bottomY);
+    addBoxCluster(rightX, bottomY, 3, 3);
     // 中心
-    addBoxCluster3x3(centerX, centerY);
+    addBoxCluster(centerX, centerY, 3, 3);
 }
 
 void Room::layoutNineBoxes()
@@ -680,22 +642,22 @@ void Room::layoutNineBoxes()
     
     // 四角：3x3
     // 左上
-    addBoxCluster3x3(leftX, topY);
+    addBoxCluster(leftX, topY, 3, 3);
     // 左下
-    addBoxCluster3x3(leftX, bottomY);
+    addBoxCluster(leftX, bottomY, 3, 3);
     // 右上
-    addBoxCluster3x3(rightX, topY);
+    addBoxCluster(rightX, topY, 3, 3);
     // 右下
-    addBoxCluster3x3(rightX, bottomY);
+    addBoxCluster(rightX, bottomY, 3, 3);
     
     // 中间一排（左中、中心、右中）：4x2
-    addBoxCluster4x2(leftX, centerY);
-    addBoxCluster4x2(centerX, centerY);
-    addBoxCluster4x2(rightX, centerY);
+    addBoxCluster(leftX, centerY, 4, 2);
+    addBoxCluster(centerX, centerY, 4, 2);
+    addBoxCluster(rightX, centerY, 4, 2);
     
     // 上中、下中：4x3
-    addBoxCluster4x3(centerX, topY);
-    addBoxCluster4x3(centerX, bottomY);
+    addBoxCluster(centerX, topY, 4, 3);
+    addBoxCluster(centerX, bottomY, 4, 3);
 }
 
 void Room::layoutUpDownSpikes()
@@ -797,10 +759,10 @@ void Room::layoutLeftRightBoxes()
 void Room::layoutCenterPillar()
 {
     // 中心2x2石柱
-    int centerX = _tilesWidth / 2 - 1;  // 偏移以放置2x2
-    int centerY = _tilesHeight / 2 - 1;
+    int centerX = _tilesWidth / 2;
+    int centerY = _tilesHeight / 2;
     
-    addPillarCluster2x2(centerX, centerY);
+    addPillarCluster(centerX, centerY, 2, 2);
 }
 
 void Room::layoutFourPillars()
@@ -812,13 +774,13 @@ void Room::layoutFourPillars()
     int bottomY = 3;
     
     // 左上
-    addPillarCluster2x2(leftX, topY);
+    addPillarCluster(leftX, topY, 2, 2);
     // 左下
-    addPillarCluster2x2(leftX, bottomY);
+    addPillarCluster(leftX, bottomY, 2, 2);
     // 右上
-    addPillarCluster2x2(rightX, topY);
+    addPillarCluster(rightX, topY, 2, 2);
     // 右下
-    addPillarCluster2x2(rightX, bottomY);
+    addPillarCluster(rightX, bottomY, 2, 2);
 }
 
 void Room::layoutRandomMess()
