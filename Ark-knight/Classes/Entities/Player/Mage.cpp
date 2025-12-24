@@ -39,7 +39,7 @@ bool Mage::init()
     setHP(1000);
     setMaxMP(150);
     setMP(150);
-    setAttack(10);
+    setAttack(50);
     setMoveSpeed(180.0f);
     
     // 设置技能冷却
