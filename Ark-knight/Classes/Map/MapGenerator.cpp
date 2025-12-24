@@ -64,6 +64,11 @@ void MapGenerator::generateMap() {
             if (room) {
                 room->createMap();
                 this->addChild(room);
+                // 普通战斗房间应用随机地形布局
+                if (room->getRoomType() == Constants::RoomType::NORMAL) {
+                    TerrainLayout layout = pickRandomTerrainLayout();
+                    room->applyTerrainLayout(layout);
+                }
             }
         }
     }
@@ -80,6 +85,29 @@ void MapGenerator::generateMap() {
     _currentRoom = _beginRoom;
     
     log("MapGenerator: Generated %d rooms and %d hallways", _roomCount, static_cast<int>(_hallways.size()));
+}
+
+// 随机选择普通战斗房间地形布局（概率：空10%，其余各9%）
+TerrainLayout MapGenerator::pickRandomTerrainLayout() const {
+    int r = rand() % 100; // 0..99
+    if (r < 10) {
+        return TerrainLayout::NONE; // 空 10%
+    }
+    static const TerrainLayout layouts[10] = {
+        TerrainLayout::FIVE_BOXES,
+        TerrainLayout::NINE_BOXES,
+        TerrainLayout::UPDOWN_SPIKES,
+        TerrainLayout::LEFTRIGHT_SPIKES,
+        TerrainLayout::ALL_SPIKES,
+        TerrainLayout::UPDOWN_WALLS,
+        TerrainLayout::LEFTRIGHT_WALLS,
+        TerrainLayout::CENTER_PILLAR,
+        TerrainLayout::FOUR_PILLARS,
+        TerrainLayout::RANDOM_MESS
+    };
+    int idx = (r - 10) / 9; // 将剩余90范围均分为10段，每段9%
+    if (idx < 0) idx = 0; if (idx > 9) idx = 9;
+    return layouts[idx];
 }
 
 void MapGenerator::randomGenerate(int startX, int startY) {

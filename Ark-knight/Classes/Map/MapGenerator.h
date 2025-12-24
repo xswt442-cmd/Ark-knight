@@ -73,6 +73,9 @@ private:
     // 生成走廊
     void generateHallways();
     
+    // 随机选择普通战斗房间地形布局（概率：空10%，其余各9%）
+    TerrainLayout pickRandomTerrainLayout() const;
+    
 private:
     // 5x5 房间矩阵
     Room* _roomMatrix[Constants::MAP_GRID_SIZE][Constants::MAP_GRID_SIZE];
