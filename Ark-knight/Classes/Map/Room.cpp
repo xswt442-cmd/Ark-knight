@@ -528,11 +528,11 @@ void Room::applyTerrainLayout(TerrainLayout layout)
     case TerrainLayout::ALL_SPIKES:
         layoutAllSpikes();
         break;
-    case TerrainLayout::UPDOWN_WALLS:
-        layoutUpDownWalls();
+    case TerrainLayout::UPDOWN_BOXES:
+        layoutUpDownBoxes();
         break;
-    case TerrainLayout::LEFTRIGHT_WALLS:
-        layoutLeftRightWalls();
+    case TerrainLayout::LEFTRIGHT_BOXES:
+        layoutLeftRightBoxes();
         break;
     case TerrainLayout::CENTER_PILLAR:
         layoutCenterPillar();
@@ -647,14 +647,14 @@ void Room::layoutNineBoxes()
 
 void Room::layoutUpDownSpikes()
 {
-    // 矩形围城：左右墙，上下地刺，四角墙
+    // 矩形围城：左右木箱，上下地刺，四角木箱
     // 在有效范围内创建一个小矩形，更靠边缘
     int innerLeft = 4;
     int innerRight = _tilesWidth - 5;
     int innerTop = _tilesHeight - 5;
     int innerBottom = 4;
     
-    // 左右墙（宽度1）
+    // 左右木箱（宽度1）
     for (int y = innerBottom; y <= innerTop; y++)
     {
         addBoxAtTile(innerLeft, y, Box::BoxType::NORMAL);
@@ -671,13 +671,13 @@ void Room::layoutUpDownSpikes()
 
 void Room::layoutLeftRightSpikes()
 {
-    // 矩形围城：上下墙，左右地刺，四角墙
+    // 矩形围城：上下木箱，左右地刺，四角木箱
     int innerLeft = 4;
     int innerRight = _tilesWidth - 5;
     int innerTop = _tilesHeight - 5;
     int innerBottom = 4;
     
-    // 上下墙（宽度1）
+    // 上下木箱（宽度1）
     for (int x = innerLeft; x <= innerRight; x++)
     {
         addBoxAtTile(x, innerTop, Box::BoxType::NORMAL);
@@ -715,9 +715,9 @@ void Room::layoutAllSpikes()
     }
 }
 
-void Room::layoutUpDownWalls()
+void Room::layoutUpDownBoxes()
 {
-    // 上下各一排墙，更靠边缘
+    // 上下各一排木箱，更靠边缘
     int wallY_top = _tilesHeight - 4;
     int wallY_bottom = 3;
     
@@ -728,9 +728,9 @@ void Room::layoutUpDownWalls()
     }
 }
 
-void Room::layoutLeftRightWalls()
+void Room::layoutLeftRightBoxes()
 {
-    // 左右各一排墙，更靠边缘
+    // 左右各一排木箱，更靠边缘
     int wallX_left = 3;
     int wallX_right = _tilesWidth - 4;
     
