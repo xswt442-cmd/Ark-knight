@@ -3,6 +3,8 @@
 #include "Entities/Player/Mage.h"
 #include "Entities/Enemy/KongKaZi.h"
 #include "Entities/Enemy/DeYi.h"
+#include "Entities/Enemy/Ayao.h"
+#include "Entities/Enemy/XinXing.h"
 #include "ui/CocosGUI.h"
 #include <algorithm>
 #include"Map/Room.h"
@@ -250,20 +252,25 @@ void GameScene::spawnEnemiesInRoom(Room* room)
     // 使用房间自身计算的可行走区域（基于墙与玩家半径），确保边界与墙对齐
     Rect walk = room->getWalkableArea();
     
-    // 随机生成3-8个怪（Ayao 或 DeYi）
+    // 随机生成3-8个怪（Ayao / DeYi / XinXing）
     int enemyCount = RANDOM_INT(3, 8);
 
     for (int i = 0; i < enemyCount; i++)
     {
         Enemy* enemy = nullptr;
         float r = CCRANDOM_0_1();
-        if (r < 0.5f)
+        // 概率分配：40% Ayao, 50% DeYi, 10% XinXing (精英)
+        if (r < 0.3f)
         {
             enemy = Ayao::create();
         }
-        else
+        else if (r < 0.6f)
         {
             enemy = DeYi::create();
+        }
+        else
+        {
+            enemy = XinXing::create();
         }
 
         if (!enemy) continue;
@@ -274,20 +281,21 @@ void GameScene::spawnEnemiesInRoom(Room* room)
         Vec2 spawnPos = Vec2(spawnX, spawnY);
 
         enemy->setPosition(spawnPos);
-        enemy->setRoomBounds(walk);  // 设置房间边界限制移动（使用 Room 的真实可行走区）
+        // 通过统一入口设置房间边界并将敌人注册到场景/列表中
+        enemy->setRoomBounds(walk);
 
-        // 添加到场景和全局敌人列表
-        _gameLayer->addChild(enemy);
-        _enemies.pushBack(enemy);
-
-        // 同时添加到房间的敌人列表（用于房间门控制）
-        room->getEnemies().pushBack(enemy);
+        // 使用 GameScene::addEnemy 统一注册（会加入场景、_enemies，并尝试将其加入对应房间）
+        addEnemy(enemy);
 
         // 尝试应用红色标记（30%）
         enemy->tryApplyRedMark(0.3f);
 
-        GAME_LOG("Enemy spawned at (%.1f, %.1f) in room - type=%s", spawnPos.x, spawnPos.y,
-                 (dynamic_cast<Ayao*>(enemy) ? "Ayao" : "DeYi"));
+        const char* typeName = "Unknown";
+        if (dynamic_cast<Ayao*>(enemy)) typeName = "Ayao";
+        else if (dynamic_cast<DeYi*>(enemy)) typeName = "DeYi";
+        else if (dynamic_cast<XinXing*>(enemy)) typeName = "XinXing";
+
+        GAME_LOG("Enemy spawned at (%.1f, %.1f) in room - type=%s", spawnPos.x, spawnPos.y, typeName);
     }
 }
 
@@ -1041,15 +1049,18 @@ void GameScene::addEnemy(Enemy* enemy)
             Rect walk = room->getWalkableArea();
             if (walk.containsPoint(enemy->getPosition()))
             {
-                // 将敌人加入房间管理列表（避免重复）
-                bool inRoom = false;
-                for (auto re : room->getEnemies())
+                // 将敌人加入房间管理列表（避免重复），但只有在 countsForRoomClear() == true 时才计入
+                if (enemy->countsForRoomClear())
                 {
-                    if (re == enemy) { inRoom = true; break; }
-                }
-                if (!inRoom)
-                {
-                    room->getEnemies().pushBack(enemy);
+                    bool inRoom = false;
+                    for (auto re : room->getEnemies())
+                    {
+                        if (re == enemy) { inRoom = true; break; }
+                    }
+                    if (!inRoom)
+                    {
+                        room->getEnemies().pushBack(enemy);
+                    }
                 }
 
                 // 将 Room::getWalkableArea 直接传给敌人，保证边界与房间墙匹配
