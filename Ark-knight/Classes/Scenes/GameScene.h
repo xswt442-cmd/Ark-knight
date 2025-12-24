@@ -118,6 +118,16 @@ private:
     void resumeGame();
     
     /**
+     * 显示设置菜单
+     */
+    void showSettings();
+    
+    /**
+     * 隐藏设置菜单
+     */
+    void hideSettings();
+    
+    /**
      * 显示游戏结束界面
      */
     void showGameOver();
