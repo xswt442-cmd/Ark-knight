@@ -11,6 +11,8 @@ USING_NS_CC;
 static const int XINX_MOVE_ACTION_TAG    = 0xE101;
 static const int XINX_HIT_ACTION_TAG     = 0xE102;
 static const int XINX_WINDUP_ACTION_TAG  = 0xE103;
+// 节点层面的风箱回退（与 sprite 上的 windup 区分）
+static const int XINX_WINDUP_NODE_TAG   = 0xE104;
 
 XinXing::XinXing()
     : _moveAnimation(nullptr)
@@ -119,12 +121,12 @@ void XinXing::loadAnimations()
     // 尝试若干可能的路径模式（兼容不同资源组织）
     std::vector<std::string> movePatterns = {
         "Enemy/XinXing&&Iron Lance/XinXing/XinXing_Move/XinXing_Move_%04d.png",
-        "Enemy/XinXing&&Iron Lance/XinXing_Move/XinXing_Move_%04d.png",
+        "Enemy/XinXing&&IronXing_Move/XinXing_Move_%04d.png",
         "Enemy/XinXing/XinXing_Move/XinXing_Move_%04d.png",
         "Enemy/XinXing_Move/XinXing_Move_%04d.png"
     };
 
-    Vector<SpriteFrame*> moveFrames = tryLoadFramesFromPatterns(movePatterns, 5);
+    Vector<SpriteFrame*> moveFrames = tryLoadFramesFromPatterns(movePatterns, 6);
     if (!moveFrames.empty())
     {
         _moveAnimation = Animation::createWithSpriteFrames(moveFrames, 0.10f);
@@ -142,7 +144,7 @@ void XinXing::loadAnimations()
         "Enemy/XinXing/XinXing_Attack/XinXing_Attack_%04d.png",
         "Enemy/XinXing_Attack/XinXing_Attack_%04d.png"
     };
-    Vector<SpriteFrame*> atkFrames = tryLoadFramesFromPatterns(atkPatterns, 5);
+    Vector<SpriteFrame*> atkFrames = tryLoadFramesFromPatterns(atkPatterns, 9);
     if (!atkFrames.empty())
     {
         _attackAnimation = Animation::createWithSpriteFrames(atkFrames, 0.08f);
@@ -160,7 +162,7 @@ void XinXing::loadAnimations()
         "Enemy/XinXing/XinXing_Die/XinXing_Die_%04d.png",
         "Enemy/XinXing_Die/XinXing_Die_%04d.png"
     };
-    Vector<SpriteFrame*> dieFrames = tryLoadFramesFromPatterns(diePatterns, 5);
+    Vector<SpriteFrame*> dieFrames = tryLoadFramesFromPatterns(diePatterns, 6);
     if (!dieFrames.empty())
     {
         _dieAnimation = Animation::createWithSpriteFrames(dieFrames, 0.12f);
@@ -202,31 +204,45 @@ void XinXing::attack()
     setState(EntityState::ATTACK);
     resetAttackCooldown();
 
+    // 先在节点层面注册一个风箱延迟回退（确保即便 playAttackAnimation 未被调用也不会一直卡在 ATTACK）
+    float windup = getAttackWindup();
+    // 先移除已有同 tag 的（避免重复）
+    this->stopActionByTag(XINX_WINDUP_NODE_TAG);
+    auto nodeDelay = Sequence::create(DelayTime::create(windup),
+                                      CallFunc::create([this]() {
+                                          if (_currentState == EntityState::ATTACK) setState(EntityState::IDLE);
+                                      }), nullptr);
+    nodeDelay->setTag(XINX_WINDUP_NODE_TAG);
+    this->runAction(nodeDelay);
+
     if (_attackAnimation && _sprite)
     {
         // 停止移动循环
         auto moveAct = _sprite->getActionByTag(XINX_MOVE_ACTION_TAG);
         if (moveAct) _sprite->stopAction(moveAct);
 
-        // 播放前摇动画（简单用攻击动画作为前摇视觉）
+        // 停止之前的前摇动作（如果有）
+        auto prevWind = _sprite->getActionByTag(XINX_WINDUP_ACTION_TAG);
+        if (prevWind) _sprite->stopAction(prevWind);
+
+        // 播放前摇动画（使用攻击动画作为前摇视觉）
         _attackAnimation->setRestoreOriginalFrame(true);
         auto animate = Animate::create(_attackAnimation);
         animate->setTag(XINX_WINDUP_ACTION_TAG);
         _sprite->runAction(animate);
 
-        float windup = getAttackWindup();
-        this->runAction(Sequence::create(DelayTime::create(windup),
-                                         CallFunc::create([this]() {
-                                             if (_currentState == EntityState::ATTACK) setState(EntityState::IDLE);
-                                         }), nullptr));
+        // 注意：不要在这里再强制把状态置回 IDLE（节点层面的延时回退会处理逃跑场景；当 playAttackAnimation 被调用时会停止该回退）
     }
     else
     {
-        float windup = getAttackWindup();
-        this->runAction(Sequence::create(DelayTime::create(windup),
+        // 没有动画时按风箱时长回退到 IDLE（兼容无视觉资源）
+        this->stopActionByTag(XINX_WINDUP_NODE_TAG);
+        auto fallback = Sequence::create(DelayTime::create(windup),
                                          CallFunc::create([this]() {
                                              if (_currentState == EntityState::ATTACK) setState(EntityState::IDLE);
-                                         }), nullptr));
+                                         }), nullptr);
+        fallback->setTag(XINX_WINDUP_NODE_TAG);
+        this->runAction(fallback);
     }
 }
 
@@ -234,6 +250,9 @@ void XinXing::playAttackAnimation()
 {
     if (!_sprite) return;
     if (_currentState == EntityState::DIE) return;
+
+    // 如果我们即将播放命中动画，先取消节点层面的风箱回退，避免在命中动画进行中被置回 IDLE
+    this->stopActionByTag(XINX_WINDUP_NODE_TAG);
 
     if (_currentState != EntityState::ATTACK) setState(EntityState::ATTACK);
 
