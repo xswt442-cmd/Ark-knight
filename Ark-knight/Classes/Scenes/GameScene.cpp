@@ -1433,16 +1433,18 @@ void GameScene::goToNextLevel()
     }
     
     // 保存当前血蓝量
-    _savedHP = _player->getHP();
-    _savedMP = _player->getMP();
-    
-    GAME_LOG("Going to next level. Saving HP: %d, MP: %d", _savedHP, _savedMP);
+    int savedHP = _player->getHP();
+    int savedMP = _player->getMP();
     
     // 进入下一小关
-    _currentStage++;
+    int nextLevel = _currentLevel;
+    int nextStage = _currentStage + 1;
+    
+    GAME_LOG("Going to next level. Current: %d-%d, Next: %d-%d, Saving HP: %d, MP: %d", 
+             _currentLevel, _currentStage, nextLevel, nextStage, savedHP, savedMP);
     
     // 判断是否通关（1-2 后结束）
-    if (_currentLevel == 1 && _currentStage > 2)
+    if (nextLevel == 1 && nextStage > 2)
     {
         // 显示胜利界面
         showVictory();
@@ -1453,10 +1455,18 @@ void GameScene::goToNextLevel()
     auto newScene = GameScene::create();
     if (newScene)
     {
-        newScene->_currentLevel = _currentLevel;
-        newScene->_currentStage = _currentStage;
-        newScene->_savedHP = _savedHP;
-        newScene->_savedMP = _savedMP;
+        // 设置新场景的关卡信息和血蓝量
+        newScene->_currentLevel = nextLevel;
+        newScene->_currentStage = nextStage;
+        newScene->_savedHP = savedHP;
+        newScene->_savedMP = savedMP;
+        
+        // 立即更新小地图显示（因为在init时已经用旧值初始化过了）
+        if (newScene->_miniMap)
+        {
+            newScene->_miniMap->updateLevelDisplay(nextLevel, nextStage);
+            GAME_LOG("Updated minimap to show: %d-%d", nextLevel, nextStage);
+        }
         
         // 切换场景
         Director::getInstance()->replaceScene(TransitionFade::create(0.5f, newScene));
