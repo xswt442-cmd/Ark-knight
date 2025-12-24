@@ -73,6 +73,10 @@ void MapGenerator::generateMap() {
                 else if (room->getRoomType() == Constants::RoomType::REWARD) {
                     room->createChest();
                 }
+                // 终点房间生成传送门
+                else if (room->getRoomType() == Constants::RoomType::END) {
+                    room->createPortal();
+                }
             }
         }
     }

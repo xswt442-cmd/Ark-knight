@@ -40,6 +40,8 @@ bool Room::init() {
     _floorTextureIndex = (rand() % 5) + 1;  // 随机选择1-5号地板
     _chest = nullptr;  // 初始化宝箱指针
     _chestOpened = false;  // 初始化宝箱状态
+    _portal = nullptr;  // 初始化传送门指针
+    _portalLighting = nullptr;  // 初始化传送门闪电特效指针
     
     for (int i = 0; i < Constants::DIR_COUNT; i++) {
         _doorDirections[i] = false;
@@ -889,4 +891,104 @@ void Room::openChest()
     GAME_LOG("Chest opened!");
     
     // TODO: 这里之后添加奖励逻辑（武器、道具等）
+}
+
+// ==================== 传送门生成 ====================
+
+void Room::createPortal()
+{
+    // 只在终点房间生成传送门
+    if (_roomType != Constants::RoomType::END)
+    {
+        return;
+    }
+    
+    // 创建传送门主体动画（7帧）
+    cocos2d::Vector<cocos2d::SpriteFrame*> portalFrames;
+    for (int i = 1; i <= 7; i++)
+    {
+        std::string framePath = "Map/Portal/Portal_000" + std::to_string(i) + ".png";
+        auto frame = cocos2d::SpriteFrame::create(framePath, cocos2d::Rect(0, 0, 0, 0));
+        if (frame)
+        {
+            portalFrames.pushBack(frame);
+        }
+    }
+    
+    if (portalFrames.empty())
+    {
+        GAME_LOG("Failed to load portal frames");
+        return;
+    }
+    
+    _portal = cocos2d::Sprite::createWithSpriteFrame(portalFrames.at(0));
+    if (!_portal)
+    {
+        GAME_LOG("Failed to create portal sprite");
+        return;
+    }
+    
+    // 放置在房间中央
+    _portal->setPosition(cocos2d::Vec2(_centerX, _centerY));
+    
+    // 缩放到合适大小（3倍地板砖大小）
+    float targetSize = Constants::FLOOR_TILE_SIZE * 3.0f;
+    float scale = targetSize / _portal->getContentSize().width;
+    _portal->setScale(scale);
+    
+    _portal->setGlobalZOrder(Constants::ZOrder::FLOOR + 2);
+    this->addChild(_portal, Constants::ZOrder::FLOOR + 2);
+    
+    // 播放传送门主体动画（循环）
+    auto portalAnimation = cocos2d::Animation::createWithSpriteFrames(portalFrames, 0.1f);
+    auto portalAnimate = cocos2d::Animate::create(portalAnimation);
+    auto portalRepeat = cocos2d::RepeatForever::create(portalAnimate);
+    _portal->runAction(portalRepeat);
+    
+    // 创建闪电特效动画（4帧）
+    cocos2d::Vector<cocos2d::SpriteFrame*> lightingFrames;
+    for (int i = 1; i <= 4; i++)
+    {
+        std::string framePath = "Map/Portal/Portallighting_000" + std::to_string(i) + ".png";
+        auto frame = cocos2d::SpriteFrame::create(framePath, cocos2d::Rect(0, 0, 0, 0));
+        if (frame)
+        {
+            lightingFrames.pushBack(frame);
+        }
+    }
+    
+    if (!lightingFrames.empty())
+    {
+        _portalLighting = cocos2d::Sprite::createWithSpriteFrame(lightingFrames.at(0));
+        if (_portalLighting)
+        {
+            // 闪电特效放在传送门同一位置
+            _portalLighting->setPosition(cocos2d::Vec2(_centerX, _centerY));
+            _portalLighting->setScale(scale);
+            _portalLighting->setGlobalZOrder(Constants::ZOrder::FLOOR + 3);
+            this->addChild(_portalLighting, Constants::ZOrder::FLOOR + 3);
+            
+            // 播放闪电动画（循环，速度更快）
+            auto lightingAnimation = cocos2d::Animation::createWithSpriteFrames(lightingFrames, 0.08f);
+            auto lightingAnimate = cocos2d::Animate::create(lightingAnimation);
+            auto lightingRepeat = cocos2d::RepeatForever::create(lightingAnimate);
+            _portalLighting->runAction(lightingRepeat);
+        }
+    }
+    
+    GAME_LOG("Created portal at center of end room");
+}
+
+bool Room::canInteractWithPortal(Player* player) const
+{
+    if (!_portal || !player)
+    {
+        return false;
+    }
+    
+    // 检测玩家与传送门的距离
+    float interactionDistance = Constants::FLOOR_TILE_SIZE * 2.5f;
+    float distance = _portal->getPosition().distance(player->getPosition());
+    
+    return distance <= interactionDistance;
 }

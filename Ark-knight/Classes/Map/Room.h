@@ -96,6 +96,11 @@ public:
     void openChest();
     bool canInteractWithChest(Player* player) const;
     
+    // 传送门管理
+    void createPortal();
+    cocos2d::Sprite* getPortal() const { return _portal; }
+    bool canInteractWithPortal(Player* player) const;
+    
 protected:
     void generateFloor(float x, float y);
     void generateWall(float x, float y, int zOrder);
@@ -144,6 +149,8 @@ private:
     cocos2d::Vector<Barrier*> _barriers;  // 所有障碍物(Box和Pillar)
     cocos2d::Sprite* _chest;  // 奖励房间的宝箱
     bool _chestOpened;  // 宝箱是否已打开
+    cocos2d::Sprite* _portal;  // 传送门主体
+    cocos2d::Sprite* _portalLighting;  // 传送门闪电特效
 };
 
 #endif // __ROOM_H__
