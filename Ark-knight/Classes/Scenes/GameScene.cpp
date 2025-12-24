@@ -29,6 +29,12 @@ bool GameScene::init()
     _currentRoom = nullptr;
     _interactionLabel = nullptr;
     
+    // 初始化关卡系统
+    _currentLevel = 1;
+    _currentStage = 1;
+    _savedHP = 0;
+    _savedMP = 0;
+    
     initLayers();
     initMapSystem();    // 初始化地图系统
     createPlayer();
@@ -74,6 +80,7 @@ void GameScene::initMapSystem()
     _miniMap = MiniMap::create();
     _miniMap->initFromMapGenerator(_mapGenerator);
     _miniMap->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL);
+    _miniMap->updateLevelDisplay(_currentLevel, _currentStage);
     _uiLayer->addChild(_miniMap);
     
     // 设置当前房间
@@ -169,6 +176,13 @@ void GameScene::createPlayer()
     if (_player == nullptr) {
         GAME_LOG_ERROR("Failed to create Mage!");
         return;
+    }
+    
+    // 如果有保存的血蓝量，恢复之
+    if (_savedHP > 0) {
+        _player->setHP(_savedHP);
+        _player->setMP(_savedMP);
+        GAME_LOG("Restored player HP: %d, MP: %d", _savedHP, _savedMP);
     }
     
     // 设置玩家初始位置在起始房间的中心
@@ -741,11 +755,44 @@ void GameScene::updateInteraction(float dt)
         return;
     }
     
+    // 优先检测传送门交互
+    bool canInteractPortal = _currentRoom->canInteractWithPortal(_player);
+    if (canInteractPortal)
+    {
+        Sprite* portal = _currentRoom->getPortal();
+        if (portal)
+        {
+            if (!_interactionLabel)
+            {
+                // 创建交互提示标签
+                _interactionLabel = Label::createWithTTF(u8"[E] 进入传送门", "fonts/msyh.ttf", 20);
+                _interactionLabel->setTextColor(Color4B::YELLOW);
+                _interactionLabel->enableOutline(Color4B::BLACK, 2);
+                _interactionLabel->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL + 5);
+                _uiLayer->addChild(_interactionLabel);
+            }
+            else
+            {
+                _interactionLabel->setString(u8"[E] 进入传送门");
+            }
+            
+            // 将传送门的世界坐标转换为屏幕坐标
+            Vec2 portalWorldPos = portal->getParent()->convertToWorldSpace(portal->getPosition());
+            Vec2 screenPos = _uiLayer->convertToNodeSpace(portalWorldPos);
+            
+            // 显示在传送门下方
+            float portalHeight = portal->getContentSize().height * portal->getScale();
+            _interactionLabel->setPosition(Vec2(screenPos.x, screenPos.y - portalHeight * 0.6f));
+            _interactionLabel->setVisible(true);
+            return;
+        }
+    }
+    
     // 检测是否可以与宝箱交互
-    bool canInteract = _currentRoom->canInteractWithChest(_player);
+    bool canInteractChest = _currentRoom->canInteractWithChest(_player);
     
     // 显示或隐藏交互提示
-    if (canInteract)
+    if (canInteractChest)
     {
         Sprite* chest = _currentRoom->getChest();
         if (!chest)
@@ -765,6 +812,10 @@ void GameScene::updateInteraction(float dt)
             _interactionLabel->enableOutline(Color4B::BLACK, 2);
             _interactionLabel->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL + 5);
             _uiLayer->addChild(_interactionLabel);
+        }
+        else
+        {
+            _interactionLabel->setString(u8"[E] 打开宝箱");
         }
         
         // 将宝箱的世界坐标转换为屏幕坐标
@@ -1097,8 +1148,13 @@ void GameScene::setupKeyboardListener()
         else if (keyCode == EventKeyboard::KeyCode::KEY_E)
         {
             _keyE = true;
+            // 处理交互：传送门优先
+            if (_currentRoom && _currentRoom->canInteractWithPortal(_player))
+            {
+                goToNextLevel();
+            }
             // 处理交互：宝箱
-            if (_currentRoom && _currentRoom->canInteractWithChest(_player))
+            else if (_currentRoom && _currentRoom->canInteractWithChest(_player))
             {
                 _currentRoom->openChest();
             }
@@ -1301,6 +1357,110 @@ void GameScene::showGameOver()
         }
     };
     _eventDispatcher->addEventListenerWithSceneGraphPriority(listener, this);
+}
+
+void GameScene::showVictory()
+{
+    GAME_LOG("Victory!");
+    
+    // 停止游戏更新
+    this->unscheduleUpdate();
+    
+    // 停止玩家输入
+    if (_player != nullptr)
+    {
+        _player->removeInputEvents();
+        _player->stopAllActions();
+    }
+    
+    // 停止所有敌人
+    for (auto enemy : _enemies)
+    {
+        if (enemy != nullptr)
+        {
+            enemy->stopAllActions();
+            enemy->unscheduleAllCallbacks();
+        }
+    }
+    
+    // 添加半透明遮罩
+    auto mask = LayerColor::create(Color4B(0, 0, 0, 180));
+    mask->setName("victoryMask");
+    mask->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL);
+    _uiLayer->addChild(mask);
+    
+    // 显示胜利文字
+    auto victoryLabel = Label::createWithTTF(u8"通关成功！", "fonts/msyh.ttf", 64);
+    victoryLabel->setPosition(Vec2(SCREEN_CENTER.x, SCREEN_CENTER.y + 50));
+    victoryLabel->setTextColor(Color4B::YELLOW);
+    victoryLabel->setName("victoryLabel");
+    victoryLabel->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL + 1);
+    _uiLayer->addChild(victoryLabel);
+    
+    // 显示提示
+    auto hintLabel = Label::createWithTTF(u8"按 R 重新开始\n按 Q 退出到主菜单", "fonts/msyh.ttf", 32);
+    hintLabel->setPosition(Vec2(SCREEN_CENTER.x, SCREEN_CENTER.y - 50));
+    hintLabel->setTextColor(Color4B::WHITE);
+    hintLabel->setName("victoryHint");
+    hintLabel->setAlignment(TextHAlignment::CENTER);
+    hintLabel->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL + 1);
+    _uiLayer->addChild(hintLabel);
+    
+    // 添加键盘监听
+    auto listener = EventListenerKeyboard::create();
+    listener->onKeyPressed = [this](EventKeyboard::KeyCode keyCode, Event* event) {
+        if (keyCode == EventKeyboard::KeyCode::KEY_R)
+        {
+            // 重新开始
+            auto newScene = GameScene::createScene();
+            Director::getInstance()->replaceScene(TransitionFade::create(0.5f, newScene));
+        }
+        else if (keyCode == EventKeyboard::KeyCode::KEY_Q)
+        {
+            // 返回主菜单
+            auto menuScene = MainMenuScene::createScene();
+            Director::getInstance()->replaceScene(TransitionFade::create(0.5f, menuScene));
+        }
+    };
+    _eventDispatcher->addEventListenerWithSceneGraphPriority(listener, this);
+}
+
+void GameScene::goToNextLevel()
+{
+    if (!_player)
+    {
+        return;
+    }
+    
+    // 保存当前血蓝量
+    _savedHP = _player->getHP();
+    _savedMP = _player->getMP();
+    
+    GAME_LOG("Going to next level. Saving HP: %d, MP: %d", _savedHP, _savedMP);
+    
+    // 进入下一小关
+    _currentStage++;
+    
+    // 判断是否通关（1-2 后结束）
+    if (_currentLevel == 1 && _currentStage > 2)
+    {
+        // 显示胜利界面
+        showVictory();
+        return;
+    }
+    
+    // 创建新场景，继承血蓝量
+    auto newScene = GameScene::create();
+    if (newScene)
+    {
+        newScene->_currentLevel = _currentLevel;
+        newScene->_currentStage = _currentStage;
+        newScene->_savedHP = _savedHP;
+        newScene->_savedMP = _savedMP;
+        
+        // 切换场景
+        Director::getInstance()->replaceScene(TransitionFade::create(0.5f, newScene));
+    }
 }
 
 void GameScene::addEnemy(Enemy* enemy)
