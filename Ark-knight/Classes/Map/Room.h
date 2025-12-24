@@ -120,6 +120,10 @@ protected:
     
     // 辅助方法：添加一个3x3的木箱堆（单堆材质统一）
     void addBoxCluster3x3(int centerTileX, int centerTileY);
+    // 辅助方法：添加一个4x2的木箱堆（单堆材质统一）
+    void addBoxCluster4x2(int centerTileX, int centerTileY);
+    // 辅助方法：添加一个4x3的木箱堆（单堆材质统一）
+    void addBoxCluster4x3(int centerTileX, int centerTileY);
     // 辅助方法：添加一个2x2的石柱堆（单堆材质统一）
     void addPillarCluster2x2(int centerTileX, int centerTileY);
     

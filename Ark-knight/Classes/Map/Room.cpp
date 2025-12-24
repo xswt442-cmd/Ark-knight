@@ -572,6 +572,52 @@ void Room::addBoxCluster3x3(int centerTileX, int centerTileY)
     }
 }
 
+void Room::addBoxCluster4x2(int centerTileX, int centerTileY)
+{
+    // 随机选择一种木箱材质（单堆内统一）
+    int typeIndex = cocos2d::RandomHelper::random_int(0, 2);
+    Box::BoxType type;
+    switch (typeIndex)
+    {
+    case 0: type = Box::BoxType::NORMAL; break;
+    case 1: type = Box::BoxType::LIGHT; break;
+    case 2: type = Box::BoxType::DARK; break;
+    default: type = Box::BoxType::NORMAL; break;
+    }
+    
+    // 放置4x2的木箱（4宽2高）
+    for (int dy = -1; dy <= 0; dy++)  // 2行
+    {
+        for (int dx = -2; dx <= 1; dx++)  // 4列
+        {
+            addBoxAtTile(centerTileX + dx, centerTileY + dy, type);
+        }
+    }
+}
+
+void Room::addBoxCluster4x3(int centerTileX, int centerTileY)
+{
+    // 随机选择一种木箱材质（单堆内统一）
+    int typeIndex = cocos2d::RandomHelper::random_int(0, 2);
+    Box::BoxType type;
+    switch (typeIndex)
+    {
+    case 0: type = Box::BoxType::NORMAL; break;
+    case 1: type = Box::BoxType::LIGHT; break;
+    case 2: type = Box::BoxType::DARK; break;
+    default: type = Box::BoxType::NORMAL; break;
+    }
+    
+    // 放置4x3的木箱（4宽3高）
+    for (int dy = -1; dy <= 1; dy++)  // 3行
+    {
+        for (int dx = -2; dx <= 1; dx++)  // 4列
+        {
+            addBoxAtTile(centerTileX + dx, centerTileY + dy, type);
+        }
+    }
+}
+
 void Room::addPillarCluster2x2(int centerTileX, int centerTileY)
 {
     // 随机选择一种石柱材质（单堆内统一）
@@ -624,10 +670,7 @@ void Room::layoutFiveBoxes()
 
 void Room::layoutNineBoxes()
 {
-    // 先放5堆
-    layoutFiveBoxes();
-    
-    // 再放4堆（左中、上中、右中、下中）
+    // 先放四角的4堆
     int centerX = _tilesWidth / 2;
     int centerY = _tilesHeight / 2;
     int leftX = 4;
@@ -635,14 +678,24 @@ void Room::layoutNineBoxes()
     int topY = _tilesHeight - 5;
     int bottomY = 4;
     
-    // 左中
-    addBoxCluster3x3(leftX, centerY);
-    // 上中
-    addBoxCluster3x3(centerX, topY);
-    // 右中
-    addBoxCluster3x3(rightX, centerY);
-    // 下中
-    addBoxCluster3x3(centerX, bottomY);
+    // 四角：3x3
+    // 左上
+    addBoxCluster3x3(leftX, topY);
+    // 左下
+    addBoxCluster3x3(leftX, bottomY);
+    // 右上
+    addBoxCluster3x3(rightX, topY);
+    // 右下
+    addBoxCluster3x3(rightX, bottomY);
+    
+    // 中间一排（左中、中心、右中）：4x2
+    addBoxCluster4x2(leftX, centerY);
+    addBoxCluster4x2(centerX, centerY);
+    addBoxCluster4x2(rightX, centerY);
+    
+    // 上中、下中：4x3
+    addBoxCluster4x3(centerX, topY);
+    addBoxCluster4x3(centerX, bottomY);
 }
 
 void Room::layoutUpDownSpikes()
