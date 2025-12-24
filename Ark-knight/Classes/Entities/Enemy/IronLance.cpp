@@ -36,22 +36,35 @@ bool IronLance::init()
     setAttackRange(0.0f);
     setAttackCooldown(10.0f);
 
-    // 加载移动动画（若不存在会保持空）
+    // 尝试加载 Move 动画帧（优先）
     Vector<SpriteFrame*> moveFrames;
-    for (int i = 1; i <= 5; ++i)
+    for (int i = 1; i <= 7; ++i)
     {
         char filename[256];
-        sprintf(filename, "Enemy/XinXing&&Iron Lance/Iron Lance/Iron Lance_Move/IronLance_Move_%04d.png", i);
+        sprintf(filename, "Enemy/XinXing&&Iron Lance/Iron Lance/IronLance_Move/IronLance_Move_%04d.png", i);
         auto s = Sprite::create(filename);
-        if (s) moveFrames.pushBack(s->getSpriteFrame());
+        if (s && s->getSpriteFrame()) moveFrames.pushBack(s->getSpriteFrame());
     }
+
+    // 若没有 Move，尝试加载 Die（部分资源只有 Die 命名）
+    if (moveFrames.empty())
+    {
+        for (int i = 1; i <= 5; ++i)
+        {
+            char filename[256];
+            sprintf(filename, "Enemy/XinXing&&Iron Lance/Iron Lance/IronLance_Die/IronLance_Die_%04d.png", i);
+            auto s = Sprite::create(filename);
+            if (s && s->getSpriteFrame()) moveFrames.pushBack(s->getSpriteFrame());
+        }
+    }
+
     if (!moveFrames.empty())
     {
         _moveAnimation = Animation::createWithSpriteFrames(moveFrames, 0.12f);
         _moveAnimation->retain();
     }
 
-    // 初始精灵并缩小 0.5
+    // 初始精灵并缩小 0.5（使用已加载的帧的第一帧）
     if (_moveAnimation)
     {
         auto frames = _moveAnimation->getFrames();
@@ -108,7 +121,7 @@ void IronLance::executeAI(Player* /*player*/, float dt)
         move(Vec2::ZERO, dt);
     }
 
-    // 保持移动动画
+    // 保持移动动画（如果存在）
     if (_sprite && _moveAnimation)
     {
         if (!_sprite->getActionByTag(IRONL_MOVE_ACTION_TAG))
