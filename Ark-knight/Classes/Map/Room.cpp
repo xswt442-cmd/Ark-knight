@@ -39,6 +39,7 @@ bool Room::init() {
     _enemiesSpawned = false;  // 初始化敌人生成标记
     _floorTextureIndex = (rand() % 5) + 1;  // 随机选择1-5号地板
     _chest = nullptr;  // 初始化宝箱指针
+    _chestOpened = false;  // 初始化宝箱状态
     
     for (int i = 0; i < Constants::DIR_COUNT; i++) {
         _doorDirections[i] = false;
@@ -851,4 +852,41 @@ void Room::createChest()
     this->addChild(_chest, Constants::ZOrder::FLOOR + 2);
     
     GAME_LOG("Created chest at center of reward room");
+}
+
+bool Room::canInteractWithChest(Player* player) const
+{
+    if (!_chest || _chestOpened || !player)
+    {
+        return false;
+    }
+    
+    // 检测玩家与宝箱的距离
+    float interactionDistance = Constants::FLOOR_TILE_SIZE * 2.0f;  // 2格距离内可交互
+    float distance = _chest->getPosition().distance(player->getPosition());
+    
+    return distance <= interactionDistance;
+}
+
+void Room::openChest()
+{
+    if (!_chest || _chestOpened)
+    {
+        return;
+    }
+    
+    _chestOpened = true;
+    
+    // 播放打开动画：宝箱慢慢消失（淡出+缩小）
+    auto fadeOut = cocos2d::FadeOut::create(0.5f);
+    auto scaleDown = cocos2d::ScaleTo::create(0.5f, 0.0f);
+    auto spawn = cocos2d::Spawn::create(fadeOut, scaleDown, nullptr);
+    auto remove = cocos2d::RemoveSelf::create();
+    auto sequence = cocos2d::Sequence::create(spawn, remove, nullptr);
+    
+    _chest->runAction(sequence);
+    
+    GAME_LOG("Chest opened!");
+    
+    // TODO: 这里之后添加奖励逻辑（武器、道具等）
 }

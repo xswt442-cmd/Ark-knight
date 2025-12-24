@@ -101,6 +101,11 @@ private:
     void updateSpikes(float dt);
     
     /**
+     * 更新交互系统
+     */
+    void updateInteraction(float dt);
+    
+    /**
      * 更新HUD
      */
     void updateHUD(float dt);
@@ -159,6 +164,7 @@ private:
     Label* _mpLabel;                      // 蓝量数值
     Label* _debugLabel;
     Label* _skillLabel;
+    Label* _interactionLabel;             // 交互提示标签
     
     // 技能图标系统
     Sprite* _skillIcon;                   // 角色技能图标
@@ -173,6 +179,7 @@ private:
     // 状态
     bool _isPaused;
     bool _isGameOver;
+    bool _keyE;  // E键交互状态
 };
 
 #endif // __GAME_SCENE_H__

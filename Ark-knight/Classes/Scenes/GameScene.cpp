@@ -23,9 +23,11 @@ bool GameScene::init()
     
     _isPaused = false;
     _isGameOver = false;
+    _keyE = false;
     _mapGenerator = nullptr;
     _miniMap = nullptr;
     _currentRoom = nullptr;
+    _interactionLabel = nullptr;
     
     initLayers();
     initMapSystem();    // 初始化地图系统
@@ -491,6 +493,7 @@ void GameScene::update(float dt)
     updateMapSystem(dt);  // 更新地图系统
     updateEnemies(dt);
     updateSpikes(dt);     // 更新地刺伤害
+    updateInteraction(dt); // 更新交互提示
     updateHUD(dt);
     checkCollisions();
 }
@@ -726,6 +729,43 @@ void GameScene::updateSpikes(float dt)
     }
 }
 
+void GameScene::updateInteraction(float dt)
+{
+    if (!_player || !_currentRoom)
+    {
+        if (_interactionLabel && _interactionLabel->isVisible())
+        {
+            _interactionLabel->setVisible(false);
+        }
+        return;
+    }
+    
+    // 检测是否可以与宝箱交互
+    bool canInteract = _currentRoom->canInteractWithChest(_player);
+    
+    // 显示或隐藏交互提示
+    if (canInteract)
+    {
+        if (!_interactionLabel)
+        {
+            // 创建交互提示标签
+            _interactionLabel = Label::createWithTTF("[E] Open Chest", "fonts/msyh.ttf", 24);
+            _interactionLabel->setTextColor(Color4B::YELLOW);
+            _interactionLabel->setPosition(Vec2(SCREEN_CENTER.x, SCREEN_CENTER.y + 100));
+            _interactionLabel->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL + 5);
+            _uiLayer->addChild(_interactionLabel);
+        }
+        _interactionLabel->setVisible(true);
+    }
+    else
+    {
+        if (_interactionLabel && _interactionLabel->isVisible())
+        {
+            _interactionLabel->setVisible(false);
+        }
+    }
+}
+
 void GameScene::updateHUD(float dt)
 {
     if (_player == nullptr)
@@ -863,6 +903,22 @@ void GameScene::setupKeyboardListener()
             {
                 pauseGame();
             }
+        }
+        else if (keyCode == EventKeyboard::KeyCode::KEY_E)
+        {
+            _keyE = true;
+            // 处理交互：宝箱
+            if (_currentRoom && _currentRoom->canInteractWithChest(_player))
+            {
+                _currentRoom->openChest();
+            }
+        }
+    };
+    
+    listener->onKeyReleased = [this](EventKeyboard::KeyCode keyCode, Event* event) {
+        if (keyCode == EventKeyboard::KeyCode::KEY_E)
+        {
+            _keyE = false;
         }
     };
     
