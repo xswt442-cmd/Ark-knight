@@ -5,12 +5,13 @@ GameEntity::GameEntity()
     , _hp(100)
     , _maxHP(100)
     , _isAlive(true)
-    , _hitInvulTimer(0.0f) // 初始化无敌计时器
+    , _hitInvulTimer(0.0f)
 {
 }
 
 GameEntity::~GameEntity()
 {
+    // Sprite会被Node自动管理，不需要手动释放
 }
 
 bool GameEntity::init()
@@ -19,9 +20,10 @@ bool GameEntity::init()
     {
         return false;
     }
-
+    
+    // 开启update
     scheduleUpdate();
-
+    
     return true;
 }
 
@@ -35,8 +37,8 @@ void GameEntity::update(float dt)
         _hitInvulTimer -= dt;
         if (_hitInvulTimer < 0.0f) _hitInvulTimer = 0.0f;
     }
-
-    // 检查死亡（保持原逻辑）
+    
+    // 检查死亡
     if (_hp <= 0 && _isAlive)
     {
         _isAlive = false;
@@ -50,7 +52,7 @@ void GameEntity::bindSprite(Sprite* sprite, int zOrder)
     {
         _sprite->removeFromParent();
     }
-
+    
     _sprite = sprite;
     if (_sprite != nullptr)
     {
@@ -61,8 +63,8 @@ void GameEntity::bindSprite(Sprite* sprite, int zOrder)
 
 void GameEntity::takeDamage(int damage)
 {
-    // 过滤负值与已死亡
-    if (!_isAlive || damage < 0)
+    // 过滤负值、0、或已死亡
+    if (!_isAlive || damage <= 0)
     {
         return;
     }
@@ -72,8 +74,7 @@ void GameEntity::takeDamage(int damage)
     {
         return;
     }
-
-    // 应用伤害
+    
     _hp -= damage;
     if (_hp < 0)
     {
@@ -82,26 +83,29 @@ void GameEntity::takeDamage(int damage)
 
     // 设置短暂无敌窗口，防止短时间重复受击
     _hitInvulTimer = HIT_INVUL_DURATION;
-
+    
     GAME_LOG("Entity takes %d damage, HP: %d/%d", damage, _hp, _maxHP);
-
+    
+    // 检查是否死亡
     if (_hp <= 0)
     {
+        // 立即标记为死亡，避免后续再触发受击/动作
         _isAlive = false;
         die();
-        return;
+        return;  // 死亡后不播放受击效果
     }
-
-    // 受击视觉（闪烁）
+    
+    // 受击效果 - 闪烁
     if (_sprite != nullptr)
     {
+        // 先停止之前的闪烁动作，避免叠加导致精灵消失
         _sprite->stopActionByTag(100);
-        _sprite->setVisible(true);
-
+        _sprite->setVisible(true);  // 确保可见
+        
         auto blink = Blink::create(0.2f, 2);
-        auto show = Show::create();
+        auto show = Show::create();  // 闪烁结束后确保显示
         auto sequence = Sequence::create(blink, show, nullptr);
-        sequence->setTag(100);
+        sequence->setTag(100);  // 设置标签用于停止
         _sprite->runAction(sequence);
     }
 }
@@ -112,13 +116,13 @@ void GameEntity::heal(int healAmount)
     {
         return;
     }
-
+    
     _hp += healAmount;
     if (_hp > _maxHP)
     {
         _hp = _maxHP;
     }
-
+    
     GAME_LOG("Entity heals %d HP, HP: %d/%d", healAmount, _hp, _maxHP);
 }
 
@@ -137,27 +141,30 @@ bool GameEntity::checkCollision(GameEntity* other) const
     {
         return false;
     }
-
+    
     return this->getBoundingBox().intersectsRect(other->getBoundingBox());
 }
 
 void GameEntity::showDeathEffect()
 {
+    // 停止所有动作和更新
     this->stopAllActions();
     this->unscheduleUpdate();
-
+    
     if (_sprite != nullptr)
     {
+        // 死亡效果：淡出 + 缩小（不删除对象，只隐藏）
         auto fadeOut = FadeOut::create(0.5f);
         auto scaleDown = ScaleTo::create(0.5f, 0.0f);
         auto spawn = Spawn::create(fadeOut, scaleDown, nullptr);
         auto hide = Hide::create();
         auto sequence = Sequence::create(spawn, hide, nullptr);
-
+        
         this->runAction(sequence);
     }
     else
     {
+        // 没有精灵直接隐藏
         this->setVisible(false);
     }
 }
