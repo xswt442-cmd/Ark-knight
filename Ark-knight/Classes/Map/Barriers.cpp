@@ -29,8 +29,6 @@ bool Spike::initWithTexturePath(const std::string& texturePath)
     float scale = targetSize / this->getContentSize().width;
     this->setScale(scale);
     
-    // 初始颜色稍微压暗，触发后会变白
-    this->setColor(Color3B(200, 200, 200));
     this->setGlobalZOrder(Constants::ZOrder::FLOOR + 1);
     
     return true;
@@ -41,11 +39,21 @@ void Spike::setTriggered(bool triggered)
     _triggered = triggered;
     if (_triggered)
     {
-        this->setColor(Color3B::WHITE);
+        // 切换到触发状态贴图
+        auto texture = Director::getInstance()->getTextureCache()->addImage("Map/Barrier/Spikes_up.png");
+        if (texture)
+        {
+            this->setTexture(texture);
+        }
     }
     else
     {
-        this->setColor(Color3B(200, 200, 200));
+        // 切换回未触发状态贴图
+        auto texture = Director::getInstance()->getTextureCache()->addImage("Map/Barrier/Spikes_down.png");
+        if (texture)
+        {
+            this->setTexture(texture);
+        }
         _damageTimer = 0.0f;
     }
 }
