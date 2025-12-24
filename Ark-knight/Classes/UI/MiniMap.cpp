@@ -172,6 +172,13 @@ bool MiniMap::init() {
     
     this->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL);
     
+    // 创建关卡进度标签
+    _levelLabel = Label::createWithTTF("1-1", "fonts/msyh.ttf", 18);
+    _levelLabel->setTextColor(Color4B::WHITE);
+    _levelLabel->setPosition(Vec2(_totalWidth / 2, -30));  // 在小地图下方
+    _levelLabel->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL);
+    this->addChild(_levelLabel);
+    
     return true;
 }
 
@@ -281,4 +288,20 @@ MiniRoom* MiniMap::getMiniRoom(int x, int y) {
         return nullptr;
     }
     return _miniRooms[x][y];
+}
+
+void MiniMap::updateLevelDisplay(int level, int stage) {
+    if (_levelLabel) {
+        char levelText[16];
+        sprintf(levelText, "%d-%d", level, stage);
+        _levelLabel->setString(levelText);
+    }
+}
+
+void MiniMap::updateLevelDisplay(int level, int stage) {
+    if (_levelLabel) {
+        char levelText[16];
+        sprintf(levelText, "%d-%d", level, stage);
+        _levelLabel->setString(levelText);
+    }
 }

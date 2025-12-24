@@ -140,6 +140,16 @@ private:
      */
     void showGameOver();
     
+    /**
+     * 显示胜利界面
+     */
+    void showVictory();
+    
+    /**
+     * 切换到下一关
+     */
+    void goToNextLevel();
+    
     // ==================== 按键回调 ====================
     void setupKeyboardListener();
     
@@ -185,6 +195,12 @@ private:
     bool _isPaused;
     bool _isGameOver;
     bool _keyE;  // E键交互状态
+    
+    // 关卡系统
+    int _currentLevel;     // 当前大关（1-3）
+    int _currentStage;     // 当前小关（1-5）
+    int _savedHP;          // 保存的血量
+    int _savedMP;          // 保存的蓝量
 };
 
 #endif // __GAME_SCENE_H__

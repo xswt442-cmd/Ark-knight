@@ -68,6 +68,13 @@ private:
     Room* _currentRoom;
     int _currentGridX;
     int _currentGridY;
+    
+    // 关卡进度显示
+    cocos2d::Label* _levelLabel;
+    
+public:
+    // 更新关卡进度显示
+    void updateLevelDisplay(int level, int stage);
 };
 
 #endif // __MINI_MAP_H__
