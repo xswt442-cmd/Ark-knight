@@ -50,8 +50,7 @@ void MiniRoom::setRoomColor(Constants::RoomType type) {
         case Constants::RoomType::BOSS:
             color = Color4F(0.9f, 0.0f, 0.0f, 0.8f);  // 红色：BOSS房间
             break;
-        case Constants::RoomType::WEAPON:
-        case Constants::RoomType::PROP:
+        case Constants::RoomType::REWARD:
             color = Color4F(0.9f, 0.6f, 0.1f, 0.8f);  // 橙色：奖励房间
             break;
         case Constants::RoomType::NORMAL:
@@ -173,6 +172,14 @@ bool MiniMap::init() {
     
     this->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL);
     
+    // 创建关卡进度标签
+    _levelLabel = Label::createWithTTF("1-1", "fonts/msyh.ttf", 18);
+    _levelLabel->setTextColor(Color4B::WHITE);
+    _levelLabel->enableOutline(Color4B::BLACK, 1);  // 添加黑色描边增强可读性
+    _levelLabel->setPosition(Vec2(_totalWidth / 2, -30));  // 在小地图下方
+    _levelLabel->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL);
+    this->addChild(_levelLabel);
+    
     return true;
 }
 
@@ -282,4 +289,12 @@ MiniRoom* MiniMap::getMiniRoom(int x, int y) {
         return nullptr;
     }
     return _miniRooms[x][y];
+}
+
+void MiniMap::updateLevelDisplay(int level, int stage) {
+    if (_levelLabel) {
+        char levelText[16];
+        sprintf(levelText, "%d-%d", level, stage);
+        _levelLabel->setString(levelText);
+    }
 }

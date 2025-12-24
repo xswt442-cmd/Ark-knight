@@ -64,6 +64,19 @@ void MapGenerator::generateMap() {
             if (room) {
                 room->createMap();
                 this->addChild(room);
+                // 普通战斗房间应用随机地形布局
+                if (room->getRoomType() == Constants::RoomType::NORMAL) {
+                    TerrainLayout layout = pickRandomTerrainLayout();
+                    room->applyTerrainLayout(layout);
+                }
+                // 奖励房间生成宝箱
+                else if (room->getRoomType() == Constants::RoomType::REWARD) {
+                    room->createChest();
+                }
+                // 终点房间生成传送门
+                else if (room->getRoomType() == Constants::RoomType::END) {
+                    room->createPortal();
+                }
             }
         }
     }
@@ -80,6 +93,29 @@ void MapGenerator::generateMap() {
     _currentRoom = _beginRoom;
     
     log("MapGenerator: Generated %d rooms and %d hallways", _roomCount, static_cast<int>(_hallways.size()));
+}
+
+// 随机选择普通战斗房间地形布局（概率：空10%，其余各9%）
+TerrainLayout MapGenerator::pickRandomTerrainLayout() const {
+    int r = rand() % 100; // 0..99
+    if (r < 10) {
+        return TerrainLayout::NONE; // 空 10%
+    }
+    static const TerrainLayout layouts[10] = {
+        TerrainLayout::FIVE_BOXES,
+        TerrainLayout::NINE_BOXES,
+        TerrainLayout::UPDOWN_SPIKES,
+        TerrainLayout::LEFTRIGHT_SPIKES,
+        TerrainLayout::ALL_SPIKES,
+        TerrainLayout::UPDOWN_BOXES,
+        TerrainLayout::LEFTRIGHT_BOXES,
+        TerrainLayout::CENTER_PILLAR,
+        TerrainLayout::FOUR_PILLARS,
+        TerrainLayout::RANDOM_MESS
+    };
+    int idx = (r - 10) / 9; // 将剩余90范围均分为10段，每段9%
+    if (idx < 0) idx = 0; if (idx > 9) idx = 9;
+    return layouts[idx];
 }
 
 void MapGenerator::randomGenerate(int startX, int startY) {
@@ -207,10 +243,10 @@ void MapGenerator::assignRoomTypes() {
     std::random_shuffle(normalRooms.begin(), normalRooms.end());
     
     if (normalRooms.size() >= 1) {
-        normalRooms[0]->setRoomType(Constants::RoomType::WEAPON);
+        normalRooms[0]->setRoomType(Constants::RoomType::REWARD);
     }
     if (normalRooms.size() >= 2) {
-        normalRooms[1]->setRoomType(Constants::RoomType::PROP);
+        normalRooms[1]->setRoomType(Constants::RoomType::REWARD);
     }
 }
 

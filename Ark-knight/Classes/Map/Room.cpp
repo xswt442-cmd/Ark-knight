@@ -38,6 +38,10 @@ bool Room::init() {
     _visited = false;
     _enemiesSpawned = false;  // 初始化敌人生成标记
     _floorTextureIndex = (rand() % 5) + 1;  // 随机选择1-5号地板
+    _chest = nullptr;  // 初始化宝箱指针
+    _chestOpened = false;  // 初始化宝箱状态
+    _portal = nullptr;  // 初始化传送门指针
+    _portalLighting = nullptr;  // 初始化传送门闪电特效指针
     
     for (int i = 0; i < Constants::DIR_COUNT; i++) {
         _doorDirections[i] = false;
@@ -77,8 +81,7 @@ void Room::createMap() {
             _tilesWidth = Constants::ROOM_TILES_W + 4;
             _tilesHeight = Constants::ROOM_TILES_H + 4;
             break;
-        case Constants::RoomType::WEAPON:
-        case Constants::RoomType::PROP:
+        case Constants::RoomType::REWARD:
         case Constants::RoomType::END:
             _tilesWidth = Constants::ROOM_TILES_W - 4;
             _tilesHeight = Constants::ROOM_TILES_H - 4;
@@ -253,6 +256,84 @@ void Room::generateDoor(float x, float y, int direction) {
     _doorsClosedSprites.pushBack(doorClosed);
 }
 
+void Room::addSpikeAtPosition(const Vec2& pos)
+{
+    auto spike = Spike::create();
+    if (!spike)
+    {
+        GAME_LOG("Failed to create spike sprite");
+        return;
+    }
+    spike->setPosition(pos);
+    spike->setGlobalZOrder(Constants::ZOrder::FLOOR + 1);
+    this->addChild(spike, Constants::ZOrder::FLOOR + 1);
+    _spikes.pushBack(spike);
+}
+
+void Room::addSpikeAtTile(int tileX, int tileY)
+{
+    float tileSize = Constants::FLOOR_TILE_SIZE;
+    float startX = _centerX - tileSize * (_tilesWidth / 2.0f - 0.5f);
+    float startY = _centerY + tileSize * (_tilesHeight / 2.0f - 0.5f);
+    
+    float spikeX = startX + tileX * tileSize;
+    float spikeY = startY - tileY * tileSize;
+    
+    addSpikeAtPosition(Vec2(spikeX, spikeY));
+}
+
+void Room::addBoxAtPosition(const Vec2& pos, Box::BoxType type)
+{
+    auto box = Box::create(type);
+    if (!box)
+    {
+        GAME_LOG("Failed to create box sprite");
+        return;
+    }
+    box->setPosition(pos);
+    box->setGlobalZOrder(Constants::ZOrder::WALL_ABOVE);
+    this->addChild(box, Constants::ZOrder::WALL_ABOVE);
+    _barriers.pushBack(box);
+}
+
+void Room::addBoxAtTile(int tileX, int tileY, Box::BoxType type)
+{
+    float tileSize = Constants::FLOOR_TILE_SIZE;
+    float startX = _centerX - tileSize * (_tilesWidth / 2.0f - 0.5f);
+    float startY = _centerY + tileSize * (_tilesHeight / 2.0f - 0.5f);
+    
+    float boxX = startX + tileX * tileSize;
+    float boxY = startY - tileY * tileSize;
+    
+    addBoxAtPosition(Vec2(boxX, boxY), type);
+}
+
+void Room::addPillarAtPosition(const Vec2& pos, Pillar::PillarType type)
+{
+    auto pillar = Pillar::create(type);
+    if (!pillar)
+    {
+        GAME_LOG("Failed to create pillar sprite");
+        return;
+    }
+    pillar->setPosition(pos);
+    pillar->setGlobalZOrder(Constants::ZOrder::WALL_ABOVE);
+    this->addChild(pillar, Constants::ZOrder::WALL_ABOVE);
+    _barriers.pushBack(pillar);
+}
+
+void Room::addPillarAtTile(int tileX, int tileY, Pillar::PillarType type)
+{
+    float tileSize = Constants::FLOOR_TILE_SIZE;
+    float startX = _centerX - tileSize * (_tilesWidth / 2.0f - 0.5f);
+    float startY = _centerY + tileSize * (_tilesHeight / 2.0f - 0.5f);
+    
+    float pillarX = startX + tileX * tileSize;
+    float pillarY = startY - tileY * tileSize;
+    
+    addPillarAtPosition(Vec2(pillarX, pillarY), type);
+}
+
 void Room::setDoorOpen(int direction, bool open) {
     if (direction >= 0 && direction < Constants::DIR_COUNT) {
         _doorDirections[direction] = open;
@@ -424,4 +505,513 @@ bool Room::checkPlayerPosition(Player* player, float& speedX, float& speedY) {
     }
     
     return false;  // 玩家不在房间范围内
+}
+
+// ==================== 地形布局系统 ====================
+
+void Room::applyTerrainLayout(TerrainLayout layout)
+{
+    switch (layout)
+    {
+    case TerrainLayout::FIVE_BOXES:
+        layoutFiveBoxes();
+        break;
+    case TerrainLayout::NINE_BOXES:
+        layoutNineBoxes();
+        break;
+    case TerrainLayout::UPDOWN_SPIKES:
+        layoutUpDownSpikes();
+        break;
+    case TerrainLayout::LEFTRIGHT_SPIKES:
+        layoutLeftRightSpikes();
+        break;
+    case TerrainLayout::ALL_SPIKES:
+        layoutAllSpikes();
+        break;
+    case TerrainLayout::UPDOWN_BOXES:
+        layoutUpDownBoxes();
+        break;
+    case TerrainLayout::LEFTRIGHT_BOXES:
+        layoutLeftRightBoxes();
+        break;
+    case TerrainLayout::CENTER_PILLAR:
+        layoutCenterPillar();
+        break;
+    case TerrainLayout::FOUR_PILLARS:
+        layoutFourPillars();
+        break;
+    case TerrainLayout::RANDOM_MESS:
+        layoutRandomMess();
+        break;
+    case TerrainLayout::NONE:
+    default:
+        break;
+    }
+}
+
+void Room::addBoxCluster(int centerTileX, int centerTileY, int width, int height)
+{
+    // 随机选择一种木箱材质（单堆内统一）
+    int typeIndex = cocos2d::RandomHelper::random_int(0, 2);
+    Box::BoxType type;
+    switch (typeIndex)
+    {
+    case 0: type = Box::BoxType::NORMAL; break;
+    case 1: type = Box::BoxType::LIGHT; break;
+    case 2: type = Box::BoxType::DARK; break;
+    default: type = Box::BoxType::NORMAL; break;
+    }
+    
+    // 计算起始偏移（以中心为基准）
+    int halfWidth = width / 2;
+    int halfHeight = height / 2;
+    int startX = -halfWidth;
+    int startY = -halfHeight;
+    int endX = startX + width - 1;
+    int endY = startY + height - 1;
+    
+    // 放置指定大小的木箱堆
+    for (int dy = startY; dy <= endY; dy++)
+    {
+        for (int dx = startX; dx <= endX; dx++)
+        {
+            addBoxAtTile(centerTileX + dx, centerTileY + dy, type);
+        }
+    }
+}
+
+void Room::addPillarCluster(int centerTileX, int centerTileY, int width, int height)
+{
+    // 随机选择一种石柱材质（单堆内统一）
+    int typeIndex = cocos2d::RandomHelper::random_int(0, 2);
+    Pillar::PillarType type;
+    switch (typeIndex)
+    {
+    case 0: type = Pillar::PillarType::CLEAR; break;
+    case 1: type = Pillar::PillarType::BROKEN; break;
+    case 2: type = Pillar::PillarType::GLASSES; break;
+    default: type = Pillar::PillarType::CLEAR; break;
+    }
+    
+    // 放置2x2的石柱（中心点偏移0.5，确保2x2居中）
+    for (int dy = 0; dy <= 1; dy++)
+    {
+        for (int dx = 0; dx <= 1; dx++)
+        {
+            addPillarAtTile(centerTileX + dx, centerTileY + dy, type);
+        }
+    }
+}
+
+void Room::layoutFiveBoxes()
+{
+    // 离墙最近的一圈是禁止放置区，所以有效范围是 [2, _tilesWidth-3] x [2, _tilesHeight-3]
+    // 房间大小：26x18（索引从0开始）
+    // 有效范围：[2, 23] x [2, 15]
+    
+    int centerX = _tilesWidth / 2;
+    int centerY = _tilesHeight / 2;
+    
+    // 计算5个位置（左上、左下、右上、右下、中心），四周更靠近边缘
+    int leftX = 4;    // 更靠左
+    int rightX = _tilesWidth - 5;
+    int topY = _tilesHeight - 5;
+    int bottomY = 4;
+    
+    // 左上
+    addBoxCluster(leftX, topY, 3, 3);
+    // 左下
+    addBoxCluster(leftX, bottomY, 3, 3);
+    // 右上
+    addBoxCluster(rightX, topY, 3, 3);
+    // 右下
+    addBoxCluster(rightX, bottomY, 3, 3);
+    // 中心
+    addBoxCluster(centerX, centerY, 3, 3);
+}
+
+void Room::layoutNineBoxes()
+{
+    // 先放四角的4堆
+    int centerX = _tilesWidth / 2;
+    int centerY = _tilesHeight / 2;
+    int leftX = 4;
+    int rightX = _tilesWidth - 5;
+    int topY = _tilesHeight - 5;
+    int bottomY = 4;
+    
+    // 四角：3x3
+    // 左上
+    addBoxCluster(leftX, topY, 3, 3);
+    // 左下
+    addBoxCluster(leftX, bottomY, 3, 3);
+    // 右上
+    addBoxCluster(rightX, topY, 3, 3);
+    // 右下
+    addBoxCluster(rightX, bottomY, 3, 3);
+    
+    // 中间一排（左中、右中：3x2，中心：4x2）
+    addBoxCluster(leftX, centerY, 3, 2);
+    addBoxCluster(centerX, centerY, 4, 2);
+    addBoxCluster(rightX, centerY, 3, 2);
+    
+    // 上中、下中：4x3
+    addBoxCluster(centerX, topY, 4, 3);
+    addBoxCluster(centerX, bottomY, 4, 3);
+}
+
+void Room::layoutUpDownSpikes()
+{
+    // 矩形围城：左右木箱，上下地刺，四角木箱
+    // 在有效范围内创建一个小矩形，更靠边缘
+    int innerLeft = 4;
+    int innerRight = _tilesWidth - 5;
+    int innerTop = _tilesHeight - 5;
+    int innerBottom = 4;
+    
+    // 左右木箱（宽度1）
+    for (int y = innerBottom; y <= innerTop; y++)
+    {
+        addBoxAtTile(innerLeft, y, Box::BoxType::NORMAL);
+        addBoxAtTile(innerRight, y, Box::BoxType::NORMAL);
+    }
+    
+    // 上下地刺（宽度1）
+    for (int x = innerLeft + 1; x < innerRight; x++)
+    {
+        addSpikeAtTile(x, innerTop);
+        addSpikeAtTile(x, innerBottom);
+    }
+}
+
+void Room::layoutLeftRightSpikes()
+{
+    // 矩形围城：上下木箱，左右地刺，四角木箱
+    int innerLeft = 4;
+    int innerRight = _tilesWidth - 5;
+    int innerTop = _tilesHeight - 5;
+    int innerBottom = 4;
+    
+    // 上下木箱（宽度1）
+    for (int x = innerLeft; x <= innerRight; x++)
+    {
+        addBoxAtTile(x, innerTop, Box::BoxType::NORMAL);
+        addBoxAtTile(x, innerBottom, Box::BoxType::NORMAL);
+    }
+    
+    // 左右地刺（宽度1）
+    for (int y = innerBottom + 1; y < innerTop; y++)
+    {
+        addSpikeAtTile(innerLeft, y);
+        addSpikeAtTile(innerRight, y);
+    }
+}
+
+void Room::layoutAllSpikes()
+{
+    // 一圈地刺，四角也是地刺
+    int innerLeft = 4;
+    int innerRight = _tilesWidth - 5;
+    int innerTop = _tilesHeight - 5;
+    int innerBottom = 4;
+    
+    // 上下地刺
+    for (int x = innerLeft; x <= innerRight; x++)
+    {
+        addSpikeAtTile(x, innerTop);
+        addSpikeAtTile(x, innerBottom);
+    }
+    
+    // 左右地刺
+    for (int y = innerBottom + 1; y < innerTop; y++)
+    {
+        addSpikeAtTile(innerLeft, y);
+        addSpikeAtTile(innerRight, y);
+    }
+}
+
+void Room::layoutUpDownBoxes()
+{
+    // 上下各一排木箱，更靠边缘
+    int wallY_top = _tilesHeight - 4;
+    int wallY_bottom = 3;
+    
+    for (int x = 2; x < _tilesWidth - 2; x++)
+    {
+        addBoxAtTile(x, wallY_top, Box::BoxType::NORMAL);
+        addBoxAtTile(x, wallY_bottom, Box::BoxType::NORMAL);
+    }
+}
+
+void Room::layoutLeftRightBoxes()
+{
+    // 左右各一排木箱，更靠边缘
+    int wallX_left = 3;
+    int wallX_right = _tilesWidth - 4;
+    
+    for (int y = 2; y < _tilesHeight - 2; y++)
+    {
+        addBoxAtTile(wallX_left, y, Box::BoxType::NORMAL);
+        addBoxAtTile(wallX_right, y, Box::BoxType::NORMAL);
+    }
+}
+
+void Room::layoutCenterPillar()
+{
+    // 中心2x2石柱
+    int centerX = _tilesWidth / 2;
+    int centerY = _tilesHeight / 2;
+    
+    addPillarCluster(centerX, centerY, 2, 2);
+}
+
+void Room::layoutFourPillars()
+{
+    // 四个角各放2x2石柱，更靠边缘
+    int leftX = 3;
+    int rightX = _tilesWidth - 5;  // 预留2x2空间
+    int topY = _tilesHeight - 5;
+    int bottomY = 3;
+    
+    // 左上
+    addPillarCluster(leftX, topY, 2, 2);
+    // 左下
+    addPillarCluster(leftX, bottomY, 2, 2);
+    // 右上
+    addPillarCluster(rightX, topY, 2, 2);
+    // 右下
+    addPillarCluster(rightX, bottomY, 2, 2);
+}
+
+void Room::layoutRandomMess()
+{
+    // 在禁止放置区之外随机放置10个石柱和10个木箱
+    // 有效范围：[2, _tilesWidth-3] x [2, _tilesHeight-3]
+    
+    // 放置10个石柱
+    for (int i = 0; i < 10; i++)
+    {
+        int x = cocos2d::RandomHelper::random_int(2, _tilesWidth - 3);
+        int y = cocos2d::RandomHelper::random_int(2, _tilesHeight - 3);
+        
+        // 随机选择石柱类型
+        int typeIndex = cocos2d::RandomHelper::random_int(0, 2);
+        Pillar::PillarType type;
+        switch (typeIndex)
+        {
+        case 0: type = Pillar::PillarType::CLEAR; break;
+        case 1: type = Pillar::PillarType::BROKEN; break;
+        case 2: type = Pillar::PillarType::GLASSES; break;
+        default: type = Pillar::PillarType::CLEAR; break;
+        }
+        
+        addPillarAtTile(x, y, type);
+    }
+    
+    // 放置10个木箱
+    for (int i = 0; i < 10; i++)
+    {
+        int x = cocos2d::RandomHelper::random_int(2, _tilesWidth - 3);
+        int y = cocos2d::RandomHelper::random_int(2, _tilesHeight - 3);
+        
+        // 随机选择木箱类型
+        int typeIndex = cocos2d::RandomHelper::random_int(0, 2);
+        Box::BoxType type;
+        switch (typeIndex)
+        {
+        case 0: type = Box::BoxType::NORMAL; break;
+        case 1: type = Box::BoxType::LIGHT; break;
+        case 2: type = Box::BoxType::DARK; break;
+        default: type = Box::BoxType::NORMAL; break;
+        }
+        
+        addBoxAtTile(x, y, type);
+    }
+}
+
+// ==================== 宝箱生成 ====================
+
+void Room::createChest()
+{
+    // 只在奖励房间生成宝箱
+    if (_roomType != Constants::RoomType::REWARD)
+    {
+        return;
+    }
+    
+    // 随机选择宝箱类型
+    std::string chestPath;
+    if (cocos2d::RandomHelper::random_int(0, 1) == 0)
+    {
+        chestPath = "Map/Chest/Wooden_chest.png";
+    }
+    else
+    {
+        chestPath = "Map/Chest/Iron_chest.png";
+    }
+    
+    _chest = cocos2d::Sprite::create(chestPath);
+    if (!_chest)
+    {
+        GAME_LOG("Failed to create chest sprite");
+        return;
+    }
+    
+    // 放置在房间中央
+    _chest->setPosition(cocos2d::Vec2(_centerX, _centerY));
+    
+    // 缩放到合适大小（2倍地板砖大小）
+    float targetSize = Constants::FLOOR_TILE_SIZE * 2.0f;
+    float scale = targetSize / _chest->getContentSize().width;
+    _chest->setScale(scale);
+    
+    _chest->setGlobalZOrder(Constants::ZOrder::FLOOR + 2);
+    this->addChild(_chest, Constants::ZOrder::FLOOR + 2);
+    
+    GAME_LOG("Created chest at center of reward room");
+}
+
+bool Room::canInteractWithChest(Player* player) const
+{
+    if (!_chest || _chestOpened || !player)
+    {
+        return false;
+    }
+    
+    // 检测玩家与宝箱的距离
+    float interactionDistance = Constants::FLOOR_TILE_SIZE * 2.0f;  // 2格距离内可交互
+    float distance = _chest->getPosition().distance(player->getPosition());
+    
+    return distance <= interactionDistance;
+}
+
+void Room::openChest()
+{
+    if (!_chest || _chestOpened)
+    {
+        return;
+    }
+    
+    _chestOpened = true;
+    
+    // 播放打开动画：宝箱慢慢消失（淡出+缩小）
+    auto fadeOut = cocos2d::FadeOut::create(0.5f);
+    auto scaleDown = cocos2d::ScaleTo::create(0.5f, 0.0f);
+    auto spawn = cocos2d::Spawn::create(fadeOut, scaleDown, nullptr);
+    auto remove = cocos2d::RemoveSelf::create();
+    auto sequence = cocos2d::Sequence::create(spawn, remove, nullptr);
+    
+    _chest->runAction(sequence);
+    
+    GAME_LOG("Chest opened!");
+    
+    // TODO: 这里之后添加奖励逻辑（武器、道具等）
+}
+
+// ==================== 传送门生成 ====================
+
+void Room::createPortal()
+{
+    // 只在终点房间生成传送门
+    if (_roomType != Constants::RoomType::END)
+    {
+        return;
+    }
+    
+    // 创建传送门主体动画（7帧）
+    cocos2d::Vector<cocos2d::SpriteFrame*> portalFrames;
+    for (int i = 1; i <= 7; i++)
+    {
+        std::string framePath = "Map/Portal/Portal_000" + std::to_string(i) + ".png";
+        auto texture = cocos2d::Director::getInstance()->getTextureCache()->addImage(framePath);
+        if (texture)
+        {
+            auto frame = cocos2d::SpriteFrame::createWithTexture(texture, cocos2d::Rect(0, 0, texture->getContentSize().width, texture->getContentSize().height));
+            if (frame)
+            {
+                portalFrames.pushBack(frame);
+            }
+        }
+    }
+    
+    if (portalFrames.empty())
+    {
+        GAME_LOG("Failed to load portal frames");
+        return;
+    }
+    
+    _portal = cocos2d::Sprite::createWithSpriteFrame(portalFrames.at(0));
+    if (!_portal)
+    {
+        GAME_LOG("Failed to create portal sprite");
+        return;
+    }
+    
+    // 放置在房间中央
+    _portal->setPosition(cocos2d::Vec2(_centerX, _centerY));
+    
+    // 缩放到合适大小（3倍地板砖大小）
+    float targetSize = Constants::FLOOR_TILE_SIZE * 3.0f;
+    float scale = targetSize / _portal->getContentSize().width;
+    _portal->setScale(scale);
+    
+    _portal->setGlobalZOrder(Constants::ZOrder::FLOOR + 2);
+    this->addChild(_portal, Constants::ZOrder::FLOOR + 2);
+    
+    // 播放传送门主体动画（循环）
+    auto portalAnimation = cocos2d::Animation::createWithSpriteFrames(portalFrames, 0.1f);
+    auto portalAnimate = cocos2d::Animate::create(portalAnimation);
+    auto portalRepeat = cocos2d::RepeatForever::create(portalAnimate);
+    _portal->runAction(portalRepeat);
+    
+    // 创建闪电特效动画（4帧）
+    cocos2d::Vector<cocos2d::SpriteFrame*> lightingFrames;
+    for (int i = 1; i <= 4; i++)
+    {
+        std::string framePath = "Map/Portal/Portallighting_000" + std::to_string(i) + ".png";
+        auto texture = cocos2d::Director::getInstance()->getTextureCache()->addImage(framePath);
+        if (texture)
+        {
+            auto frame = cocos2d::SpriteFrame::createWithTexture(texture, cocos2d::Rect(0, 0, texture->getContentSize().width, texture->getContentSize().height));
+            if (frame)
+            {
+                lightingFrames.pushBack(frame);
+            }
+        }
+    }
+    
+    if (!lightingFrames.empty())
+    {
+        _portalLighting = cocos2d::Sprite::createWithSpriteFrame(lightingFrames.at(0));
+        if (_portalLighting)
+        {
+            // 闪电特效放在传送门同一位置
+            _portalLighting->setPosition(cocos2d::Vec2(_centerX, _centerY));
+            _portalLighting->setScale(scale);
+            _portalLighting->setGlobalZOrder(Constants::ZOrder::FLOOR + 3);
+            this->addChild(_portalLighting, Constants::ZOrder::FLOOR + 3);
+            
+            // 播放闪电动画（循环，速度更快）
+            auto lightingAnimation = cocos2d::Animation::createWithSpriteFrames(lightingFrames, 0.08f);
+            auto lightingAnimate = cocos2d::Animate::create(lightingAnimation);
+            auto lightingRepeat = cocos2d::RepeatForever::create(lightingAnimate);
+            _portalLighting->runAction(lightingRepeat);
+        }
+    }
+    
+    GAME_LOG("Created portal at center of end room");
+}
+
+bool Room::canInteractWithPortal(Player* player) const
+{
+    if (!_portal || !player)
+    {
+        return false;
+    }
+    
+    // 检测玩家与传送门的距离
+    float interactionDistance = Constants::FLOOR_TILE_SIZE * 2.5f;
+    float distance = _portal->getPosition().distance(player->getPosition());
+    
+    return distance <= interactionDistance;
 }

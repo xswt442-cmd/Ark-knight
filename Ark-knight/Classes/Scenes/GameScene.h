@@ -12,6 +12,7 @@
 #include "Map/Room.h"
 #include "UI/MiniMap.h"
 #include "UI/SettingsLayer.h"
+#include "Map/Barriers.h"
 
 USING_NS_CC;
 
@@ -30,6 +31,12 @@ public:
     virtual void update(float dt) override;
     
     CREATE_FUNC(GameScene);
+    
+    // 静态变量：用于场景切换时传递关卡信息和血蓝量
+    static int s_nextLevel;
+    static int s_nextStage;
+    static int s_savedHP;
+    static int s_savedMP;
     
     /**
      * 获取玩家对象
@@ -97,6 +104,12 @@ private:
      * 更新敌人
      */
     void updateEnemies(float dt);
+    void updateSpikes(float dt);
+    
+    /**
+     * 更新交互系统
+     */
+    void updateInteraction(float dt);
     
     /**
      * 更新HUD
@@ -107,6 +120,11 @@ private:
      * 检测碰撞
      */
     void checkCollisions();
+    
+    /**
+     * 检测并解决实体与障碍物的碰撞
+     */
+    void checkBarrierCollisions();
     
     /**
      * 暂停游戏
@@ -127,6 +145,16 @@ private:
      * 显示游戏结束界面
      */
     void showGameOver();
+    
+    /**
+     * 显示胜利界面
+     */
+    void showVictory();
+    
+    /**
+     * 切换到下一关
+     */
+    void goToNextLevel();
     
     // ==================== 按键回调 ====================
     void setupKeyboardListener();
@@ -157,6 +185,7 @@ private:
     Label* _mpLabel;                      // 蓝量数值
     Label* _debugLabel;
     Label* _skillLabel;
+    Label* _interactionLabel;             // 交互提示标签
     
     // 技能图标系统
     Sprite* _skillIcon;                   // 角色技能图标
@@ -171,6 +200,13 @@ private:
     // 状态
     bool _isPaused;
     bool _isGameOver;
+    bool _keyE;  // E键交互状态
+    
+    // 关卡系统
+    int _currentLevel;     // 当前大关（1-3）
+    int _currentStage;     // 当前小关（1-5）
+    int _savedHP;          // 保存的血量
+    int _savedMP;          // 保存的蓝量
 };
 
 #endif // __GAME_SCENE_H__
