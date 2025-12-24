@@ -253,6 +253,32 @@ void Room::generateDoor(float x, float y, int direction) {
     _doorsClosedSprites.pushBack(doorClosed);
 }
 
+void Room::addSpikeAtPosition(const Vec2& pos)
+{
+    auto spike = Spike::createSpike();
+    if (!spike)
+    {
+        GAME_LOG("Failed to create spike sprite");
+        return;
+    }
+    spike->setPosition(pos);
+    spike->setGlobalZOrder(Constants::ZOrder::FLOOR + 1);
+    this->addChild(spike, Constants::ZOrder::FLOOR + 1);
+    _spikes.pushBack(spike);
+}
+
+void Room::addSpikeAtTile(int tileX, int tileY)
+{
+    float tileSize = Constants::FLOOR_TILE_SIZE;
+    float startX = _centerX - tileSize * (_tilesWidth / 2.0f - 0.5f);
+    float startY = _centerY + tileSize * (_tilesHeight / 2.0f - 0.5f);
+    
+    float spikeX = startX + tileX * tileSize;
+    float spikeY = startY - tileY * tileSize;
+    
+    addSpikeAtPosition(Vec2(spikeX, spikeY));
+}
+
 void Room::setDoorOpen(int direction, bool open) {
     if (direction >= 0 && direction < Constants::DIR_COUNT) {
         _doorDirections[direction] = open;

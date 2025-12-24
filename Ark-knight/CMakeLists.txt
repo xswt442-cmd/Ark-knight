@@ -81,6 +81,7 @@ list(APPEND GAME_SOURCE
      Classes/Map/Room.cpp
      Classes/Map/MapGenerator.cpp
      Classes/Map/Hallway.cpp
+     Classes/Map/Spike.cpp
      # UI
      Classes/UI/MiniMap.cpp
      Classes/UI/SettingsLayer.cpp
@@ -115,6 +116,7 @@ list(APPEND GAME_HEADER
      # Map
      Classes/Map/Room.h
      Classes/Map/MapGenerator.h
+     Classes/Map/Spike.h
      # UI
      Classes/UI/MiniMap.h
      Classes/UI/SettingsLayer.h

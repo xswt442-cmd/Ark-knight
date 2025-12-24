@@ -12,6 +12,7 @@
 #include "Map/Room.h"
 #include "UI/MiniMap.h"
 #include "UI/SettingsLayer.h"
+#include "Map/Spike.h"
 
 USING_NS_CC;
 
@@ -97,6 +98,7 @@ private:
      * 更新敌人
      */
     void updateEnemies(float dt);
+    void updateSpikes(float dt);
     
     /**
      * 更新HUD

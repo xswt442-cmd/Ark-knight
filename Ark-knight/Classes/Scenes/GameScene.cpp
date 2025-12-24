@@ -490,6 +490,7 @@ void GameScene::update(float dt)
     updateCamera(dt);     // 更新相机位置
     updateMapSystem(dt);  // 更新地图系统
     updateEnemies(dt);
+    updateSpikes(dt);     // 更新地刺伤害
     updateHUD(dt);
     checkCollisions();
 }
@@ -697,6 +698,32 @@ void GameScene::updateEnemies(float dt)
         {
             ++it;
         }
+    }
+}
+
+void GameScene::updateSpikes(float dt)
+{
+    if (_isGameOver)
+    {
+        return;
+    }
+
+    if (_player == nullptr || _player->isDead())
+    {
+        return;
+    }
+
+    if (_currentRoom == nullptr)
+    {
+        return;
+    }
+
+    const auto& spikes = _currentRoom->getSpikes();
+    for (auto spike : spikes)
+    {
+        if (!spike) continue;
+        bool stepped = spike->getBoundingBox().containsPoint(_player->getPosition());
+        spike->updateState(dt, stepped, _player);
     }
 }
 

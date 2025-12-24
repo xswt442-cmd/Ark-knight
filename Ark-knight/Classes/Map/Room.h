@@ -3,6 +3,7 @@
 
 #include "cocos2d.h"
 #include "Core/Constants.h"
+#include "Map/Spike.h"
 
 class Enemy;
 class Player;
@@ -37,6 +38,11 @@ public:
     void createEnemies(int count);
     bool allEnemiesKilled() const;
     cocos2d::Vector<Enemy*>& getEnemies() { return _enemies; }
+
+    // 地刺管理
+    void addSpikeAtPosition(const cocos2d::Vec2& pos);
+    void addSpikeAtTile(int tileX, int tileY);
+    const cocos2d::Vector<Spike*>& getSpikes() const { return _spikes; }
     
     void openDoors();
     void closeDoors();
@@ -83,6 +89,7 @@ private:
     cocos2d::Vector<cocos2d::Sprite*> _doorsOpenSprites;
     cocos2d::Vector<cocos2d::Sprite*> _doorsClosedSprites;
     cocos2d::Vector<Enemy*> _enemies;
+    cocos2d::Vector<Spike*> _spikes;
 };
 
 #endif // __ROOM_H__
