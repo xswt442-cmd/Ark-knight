@@ -69,6 +69,11 @@ void MapGenerator::generateMap() {
                     TerrainLayout layout = pickRandomTerrainLayout();
                     room->applyTerrainLayout(layout);
                 }
+                // 奖励房间生成宝箱
+                else if (room->getRoomType() == Constants::RoomType::WEAPON || 
+                         room->getRoomType() == Constants::RoomType::PROP) {
+                    room->createChest();
+                }
             }
         }
     }

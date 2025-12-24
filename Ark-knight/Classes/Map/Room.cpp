@@ -38,6 +38,7 @@ bool Room::init() {
     _visited = false;
     _enemiesSpawned = false;  // 初始化敌人生成标记
     _floorTextureIndex = (rand() % 5) + 1;  // 随机选择1-5号地板
+    _chest = nullptr;  // 初始化宝箱指针
     
     for (int i = 0; i < Constants::DIR_COUNT; i++) {
         _doorDirections[i] = false;
@@ -809,4 +810,46 @@ void Room::layoutRandomMess()
         
         addBoxAtTile(x, y, type);
     }
+}
+
+// ==================== 宝箱生成 ====================
+
+void Room::createChest()
+{
+    // 只在奖励房间（武器和道具房间）生成宝箱
+    if (_roomType != Constants::RoomType::WEAPON && _roomType != Constants::RoomType::PROP)
+    {
+        return;
+    }
+    
+    // 随机选择宝箱类型
+    std::string chestPath;
+    if (cocos2d::RandomHelper::random_int(0, 1) == 0)
+    {
+        chestPath = "Map/Chest/Wooden_chest.png";
+    }
+    else
+    {
+        chestPath = "Map/Chest/Iron_chest.png";
+    }
+    
+    _chest = cocos2d::Sprite::create(chestPath);
+    if (!_chest)
+    {
+        GAME_LOG("Failed to create chest sprite");
+        return;
+    }
+    
+    // 放置在房间中央
+    _chest->setPosition(cocos2d::Vec2(_centerX, _centerY));
+    
+    // 缩放到合适大小（2倍地板砖大小）
+    float targetSize = Constants::FLOOR_TILE_SIZE * 2.0f;
+    float scale = targetSize / _chest->getContentSize().width;
+    _chest->setScale(scale);
+    
+    _chest->setGlobalZOrder(Constants::ZOrder::FLOOR + 2);
+    this->addChild(_chest, Constants::ZOrder::FLOOR + 2);
+    
+    GAME_LOG("Created chest at center of reward room");
 }

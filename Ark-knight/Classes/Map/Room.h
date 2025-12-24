@@ -89,6 +89,10 @@ public:
     // 地形布局
     void applyTerrainLayout(TerrainLayout layout);
     
+    // 宝箱管理
+    void createChest();
+    cocos2d::Sprite* getChest() const { return _chest; }
+    
 protected:
     void generateFloor(float x, float y);
     void generateWall(float x, float y, int zOrder);
@@ -135,6 +139,7 @@ private:
     cocos2d::Vector<Enemy*> _enemies;
     cocos2d::Vector<Spike*> _spikes;
     cocos2d::Vector<Barrier*> _barriers;  // 所有障碍物(Box和Pillar)
+    cocos2d::Sprite* _chest;  // 奖励房间的宝箱
 };
 
 #endif // __ROOM_H__
