@@ -32,6 +32,12 @@ public:
     
     CREATE_FUNC(GameScene);
     
+    // 静态变量：用于场景切换时传递关卡信息和血蓝量
+    static int s_nextLevel;
+    static int s_nextStage;
+    static int s_savedHP;
+    static int s_savedMP;
+    
     /**
      * 获取玩家对象
      */

@@ -1,6 +1,12 @@
 ﻿#include "GameScene.h"
 #include "MainMenuScene.h"
 #include "Entities/Player/Mage.h"
+
+// 静态变量定义
+int GameScene::s_nextLevel = 1;
+int GameScene::s_nextStage = 1;
+int GameScene::s_savedHP = 0;
+int GameScene::s_savedMP = 0;
 #include "Entities/Enemy/KongKaZi.h"
 #include "Entities/Enemy/DeYi.h"
 #include "Entities/Enemy/Ayao.h"
@@ -29,11 +35,20 @@ bool GameScene::init()
     _currentRoom = nullptr;
     _interactionLabel = nullptr;
     
-    // 初始化关卡系统
-    _currentLevel = 1;
-    _currentStage = 1;
-    _savedHP = 0;
-    _savedMP = 0;
+    // 初始化关卡系统（从静态变量读取）
+    _currentLevel = s_nextLevel;
+    _currentStage = s_nextStage;
+    _savedHP = s_savedHP;
+    _savedMP = s_savedMP;
+    
+    GAME_LOG("GameScene init: Level %d-%d, SavedHP: %d, SavedMP: %d", 
+             _currentLevel, _currentStage, _savedHP, _savedMP);
+    
+    // 重置静态变量为默认值（防止影响后续的重新开始）
+    s_nextLevel = 1;
+    s_nextStage = 1;
+    s_savedHP = 0;
+    s_savedMP = 0;
     
     initLayers();
     initMapSystem();    // 初始化地图系统
@@ -1451,23 +1466,19 @@ void GameScene::goToNextLevel()
         return;
     }
     
-    // 创建新场景，继承血蓝量
-    auto newScene = GameScene::create();
+    // 使用静态变量传递信息给新场景
+    s_nextLevel = nextLevel;
+    s_nextStage = nextStage;
+    s_savedHP = savedHP;
+    s_savedMP = savedMP;
+    
+    GAME_LOG("Set static vars for next scene: Level %d-%d, HP: %d, MP: %d", 
+             nextLevel, nextStage, savedHP, savedMP);
+    
+    // 创建新场景（init时会读取静态变量）
+    auto newScene = GameScene::createScene();
     if (newScene)
     {
-        // 设置新场景的关卡信息和血蓝量
-        newScene->_currentLevel = nextLevel;
-        newScene->_currentStage = nextStage;
-        newScene->_savedHP = savedHP;
-        newScene->_savedMP = savedMP;
-        
-        // 立即更新小地图显示（因为在init时已经用旧值初始化过了）
-        if (newScene->_miniMap)
-        {
-            newScene->_miniMap->updateLevelDisplay(nextLevel, nextStage);
-            GAME_LOG("Updated minimap to show: %d-%d", nextLevel, nextStage);
-        }
-        
         // 切换场景
         Director::getInstance()->replaceScene(TransitionFade::create(0.5f, newScene));
     }
