@@ -503,3 +503,310 @@ bool Room::checkPlayerPosition(Player* player, float& speedX, float& speedY) {
     
     return false;  // 玩家不在房间范围内
 }
+
+// ==================== 地形布局系统 ====================
+
+void Room::applyTerrainLayout(TerrainLayout layout)
+{
+    switch (layout)
+    {
+    case TerrainLayout::FIVE_BOXES:
+        layoutFiveBoxes();
+        break;
+    case TerrainLayout::NINE_BOXES:
+        layoutNineBoxes();
+        break;
+    case TerrainLayout::UPDOWN_SPIKES:
+        layoutUpDownSpikes();
+        break;
+    case TerrainLayout::LEFTRIGHT_SPIKES:
+        layoutLeftRightSpikes();
+        break;
+    case TerrainLayout::ALL_SPIKES:
+        layoutAllSpikes();
+        break;
+    case TerrainLayout::UPDOWN_WALLS:
+        layoutUpDownWalls();
+        break;
+    case TerrainLayout::LEFTRIGHT_WALLS:
+        layoutLeftRightWalls();
+        break;
+    case TerrainLayout::CENTER_PILLAR:
+        layoutCenterPillar();
+        break;
+    case TerrainLayout::FOUR_PILLARS:
+        layoutFourPillars();
+        break;
+    case TerrainLayout::RANDOM_MESS:
+        layoutRandomMess();
+        break;
+    case TerrainLayout::NONE:
+    default:
+        break;
+    }
+}
+
+void Room::addBoxCluster3x3(int centerTileX, int centerTileY)
+{
+    // 随机选择一种木箱材质（单堆内统一）
+    int typeIndex = cocos2d::RandomHelper::random_int(0, 2);
+    Box::BoxType type;
+    switch (typeIndex)
+    {
+    case 0: type = Box::BoxType::NORMAL; break;
+    case 1: type = Box::BoxType::LIGHT; break;
+    case 2: type = Box::BoxType::DARK; break;
+    default: type = Box::BoxType::NORMAL; break;
+    }
+    
+    // 放置3x3的木箱
+    for (int dy = -1; dy <= 1; dy++)
+    {
+        for (int dx = -1; dx <= 1; dx++)
+        {
+            addBoxAtTile(centerTileX + dx, centerTileY + dy, type);
+        }
+    }
+}
+
+void Room::addPillarCluster2x2(int centerTileX, int centerTileY)
+{
+    // 随机选择一种石柱材质（单堆内统一）
+    int typeIndex = cocos2d::RandomHelper::random_int(0, 2);
+    Pillar::PillarType type;
+    switch (typeIndex)
+    {
+    case 0: type = Pillar::PillarType::CLEAR; break;
+    case 1: type = Pillar::PillarType::BROKEN; break;
+    case 2: type = Pillar::PillarType::GLASSES; break;
+    default: type = Pillar::PillarType::CLEAR; break;
+    }
+    
+    // 放置2x2的石柱（中心点偏移0.5，确保2x2居中）
+    for (int dy = 0; dy <= 1; dy++)
+    {
+        for (int dx = 0; dx <= 1; dx++)
+        {
+            addPillarAtTile(centerTileX + dx, centerTileY + dy, type);
+        }
+    }
+}
+
+void Room::layoutFiveBoxes()
+{
+    // 离墙最近的一圈是禁止放置区，所以有效范围是 [2, _tilesWidth-3] x [2, _tilesHeight-3]
+    // 房间大小：26x18（索引从0开始）
+    // 有效范围：[2, 23] x [2, 15]
+    
+    int centerX = _tilesWidth / 2;
+    int centerY = _tilesHeight / 2;
+    
+    // 计算5个位置（左上、左下、右上、右下、中心）
+    int leftX = 5;    // 留出足够空间
+    int rightX = _tilesWidth - 6;
+    int topY = _tilesHeight - 6;
+    int bottomY = 5;
+    
+    // 左上
+    addBoxCluster3x3(leftX, topY);
+    // 左下
+    addBoxCluster3x3(leftX, bottomY);
+    // 右上
+    addBoxCluster3x3(rightX, topY);
+    // 右下
+    addBoxCluster3x3(rightX, bottomY);
+    // 中心
+    addBoxCluster3x3(centerX, centerY);
+}
+
+void Room::layoutNineBoxes()
+{
+    // 先放5堆
+    layoutFiveBoxes();
+    
+    // 再放4堆（左中、上中、右中、下中）
+    int centerX = _tilesWidth / 2;
+    int centerY = _tilesHeight / 2;
+    int leftX = 5;
+    int rightX = _tilesWidth - 6;
+    int topY = _tilesHeight - 6;
+    int bottomY = 5;
+    
+    // 左中
+    addBoxCluster3x3(leftX, centerY);
+    // 上中
+    addBoxCluster3x3(centerX, topY);
+    // 右中
+    addBoxCluster3x3(rightX, centerY);
+    // 下中
+    addBoxCluster3x3(centerX, bottomY);
+}
+
+void Room::layoutUpDownSpikes()
+{
+    // 矩形围城：左右墙，上下地刺，四角墙
+    // 在有效范围内创建一个小矩形
+    int innerLeft = 6;
+    int innerRight = _tilesWidth - 7;
+    int innerTop = _tilesHeight - 7;
+    int innerBottom = 6;
+    
+    // 左右墙（宽度1）
+    for (int y = innerBottom; y <= innerTop; y++)
+    {
+        addBoxAtTile(innerLeft, y, Box::BoxType::NORMAL);
+        addBoxAtTile(innerRight, y, Box::BoxType::NORMAL);
+    }
+    
+    // 上下地刺（宽度1）
+    for (int x = innerLeft + 1; x < innerRight; x++)
+    {
+        addSpikeAtTile(x, innerTop);
+        addSpikeAtTile(x, innerBottom);
+    }
+}
+
+void Room::layoutLeftRightSpikes()
+{
+    // 矩形围城：上下墙，左右地刺，四角墙
+    int innerLeft = 6;
+    int innerRight = _tilesWidth - 7;
+    int innerTop = _tilesHeight - 7;
+    int innerBottom = 6;
+    
+    // 上下墙（宽度1）
+    for (int x = innerLeft; x <= innerRight; x++)
+    {
+        addBoxAtTile(x, innerTop, Box::BoxType::NORMAL);
+        addBoxAtTile(x, innerBottom, Box::BoxType::NORMAL);
+    }
+    
+    // 左右地刺（宽度1）
+    for (int y = innerBottom + 1; y < innerTop; y++)
+    {
+        addSpikeAtTile(innerLeft, y);
+        addSpikeAtTile(innerRight, y);
+    }
+}
+
+void Room::layoutAllSpikes()
+{
+    // 一圈地刺，四角也是地刺
+    int innerLeft = 6;
+    int innerRight = _tilesWidth - 7;
+    int innerTop = _tilesHeight - 7;
+    int innerBottom = 6;
+    
+    // 上下地刺
+    for (int x = innerLeft; x <= innerRight; x++)
+    {
+        addSpikeAtTile(x, innerTop);
+        addSpikeAtTile(x, innerBottom);
+    }
+    
+    // 左右地刺
+    for (int y = innerBottom + 1; y < innerTop; y++)
+    {
+        addSpikeAtTile(innerLeft, y);
+        addSpikeAtTile(innerRight, y);
+    }
+}
+
+void Room::layoutUpDownWalls()
+{
+    // 上下各一排墙
+    int wallY_top = _tilesHeight - 6;
+    int wallY_bottom = 5;
+    
+    for (int x = 2; x < _tilesWidth - 2; x++)
+    {
+        addBoxAtTile(x, wallY_top, Box::BoxType::NORMAL);
+        addBoxAtTile(x, wallY_bottom, Box::BoxType::NORMAL);
+    }
+}
+
+void Room::layoutLeftRightWalls()
+{
+    // 左右各一排墙
+    int wallX_left = 5;
+    int wallX_right = _tilesWidth - 6;
+    
+    for (int y = 2; y < _tilesHeight - 2; y++)
+    {
+        addBoxAtTile(wallX_left, y, Box::BoxType::NORMAL);
+        addBoxAtTile(wallX_right, y, Box::BoxType::NORMAL);
+    }
+}
+
+void Room::layoutCenterPillar()
+{
+    // 中心2x2石柱
+    int centerX = _tilesWidth / 2 - 1;  // 偏移以放置2x2
+    int centerY = _tilesHeight / 2 - 1;
+    
+    addPillarCluster2x2(centerX, centerY);
+}
+
+void Room::layoutFourPillars()
+{
+    // 四个角各放2x2石柱
+    int leftX = 5;
+    int rightX = _tilesWidth - 7;  // 预留2x2空间
+    int topY = _tilesHeight - 7;
+    int bottomY = 5;
+    
+    // 左上
+    addPillarCluster2x2(leftX, topY);
+    // 左下
+    addPillarCluster2x2(leftX, bottomY);
+    // 右上
+    addPillarCluster2x2(rightX, topY);
+    // 右下
+    addPillarCluster2x2(rightX, bottomY);
+}
+
+void Room::layoutRandomMess()
+{
+    // 在禁止放置区之外随机放置10个石柱和10个木箱
+    // 有效范围：[2, _tilesWidth-3] x [2, _tilesHeight-3]
+    
+    // 放置10个石柱
+    for (int i = 0; i < 10; i++)
+    {
+        int x = cocos2d::RandomHelper::random_int(2, _tilesWidth - 3);
+        int y = cocos2d::RandomHelper::random_int(2, _tilesHeight - 3);
+        
+        // 随机选择石柱类型
+        int typeIndex = cocos2d::RandomHelper::random_int(0, 2);
+        Pillar::PillarType type;
+        switch (typeIndex)
+        {
+        case 0: type = Pillar::PillarType::CLEAR; break;
+        case 1: type = Pillar::PillarType::BROKEN; break;
+        case 2: type = Pillar::PillarType::GLASSES; break;
+        default: type = Pillar::PillarType::CLEAR; break;
+        }
+        
+        addPillarAtTile(x, y, type);
+    }
+    
+    // 放置10个木箱
+    for (int i = 0; i < 10; i++)
+    {
+        int x = cocos2d::RandomHelper::random_int(2, _tilesWidth - 3);
+        int y = cocos2d::RandomHelper::random_int(2, _tilesHeight - 3);
+        
+        // 随机选择木箱类型
+        int typeIndex = cocos2d::RandomHelper::random_int(0, 2);
+        Box::BoxType type;
+        switch (typeIndex)
+        {
+        case 0: type = Box::BoxType::NORMAL; break;
+        case 1: type = Box::BoxType::LIGHT; break;
+        case 2: type = Box::BoxType::DARK; break;
+        default: type = Box::BoxType::NORMAL; break;
+        }
+        
+        addBoxAtTile(x, y, type);
+    }
+}

@@ -9,6 +9,23 @@ class Enemy;
 class Player;
 
 /**
+ * 普通战斗房间的地形布局类型
+ */
+enum class TerrainLayout {
+    NONE = 0,           // 无特殊地形
+    FIVE_BOXES,         // 5堆木箱（左上、左下、右上、右下、中间各3x3）
+    NINE_BOXES,         // 9堆木箱（在FIVE_BOXES基础上加左中、上中、右中、下中）
+    UPDOWN_SPIKES,      // 矩形围城-上下地刺（左右墙，上下地刺，四角墙）
+    LEFTRIGHT_SPIKES,   // 矩形围城-左右地刺（上下墙，左右地刺，四角墙）
+    ALL_SPIKES,         // 矩形围城-一圈地刺（四周地刺，四角也是地刺）
+    UPDOWN_WALLS,       // 上下墙（上下各一排墙）
+    LEFTRIGHT_WALLS,    // 左右墙（左右各一排墙）
+    CENTER_PILLAR,      // 中心石柱（中间2x2石柱）
+    FOUR_PILLARS,       // 4堆石柱（四个角各2x2石柱）
+    RANDOM_MESS         // 乱七八糟（随机放置10个石柱+10个木箱）
+};
+
+/**
  * Room - 游戏房间类
  */
 class Room : public cocos2d::Node {
@@ -69,10 +86,30 @@ public:
     void setEnemiesSpawned(bool spawned) { _enemiesSpawned = spawned; }
     bool isEnemiesSpawned() const { return _enemiesSpawned; }
     
+    // 地形布局
+    void applyTerrainLayout(TerrainLayout layout);
+    
 protected:
     void generateFloor(float x, float y);
     void generateWall(float x, float y, int zOrder);
     void generateDoor(float x, float y, int direction);
+    
+    // 地形布局辅助方法
+    void layoutFiveBoxes();
+    void layoutNineBoxes();
+    void layoutUpDownSpikes();
+    void layoutLeftRightSpikes();
+    void layoutAllSpikes();
+    void layoutUpDownWalls();
+    void layoutLeftRightWalls();
+    void layoutCenterPillar();
+    void layoutFourPillars();
+    void layoutRandomMess();
+    
+    // 辅助方法：添加一个3x3的木箱堆（单堆材质统一）
+    void addBoxCluster3x3(int centerTileX, int centerTileY);
+    // 辅助方法：添加一个2x2的石柱堆（单堆材质统一）
+    void addPillarCluster2x2(int centerTileX, int centerTileY);
     
 private:
     float _centerX;
