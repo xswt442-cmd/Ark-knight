@@ -43,6 +43,9 @@ public:
     void setAttackWindup(float seconds) { _attackWindup = seconds; }
     float getAttackWindup() const { return _attackWindup; }
 
+    // 新增：是否算作房间清除计数（默认 true）
+    virtual bool countsForRoomClear() const { return true; }
+
     // ==================== Nymph 毒伤系统接口（已存在） ====================
     void applyNymphPoison(int sourceAttack);
     int getPoisonStacks() const { return _poisonStacks; }
