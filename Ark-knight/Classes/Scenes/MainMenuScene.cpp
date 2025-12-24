@@ -128,20 +128,7 @@ void MainMenuScene::onSelectCharacter(Ref* sender)
 void MainMenuScene::onSettings(Ref* sender)
 {
     GAME_LOG("Settings clicked");
-    
-    // 移除之前的提示（如果有）
-    this->removeChildByName("hintLabel");
-    
-    // TODO: 实现设置界面
-    auto label = Label::createWithSystemFont(u8"设置功能 - 敬请期待！", "Arial", 24);
-    label->setPosition(Vec2(SCREEN_CENTER.x, SCREEN_CENTER.y + 100));
-    label->setTextColor(Color4B::YELLOW);
-    label->setName("hintLabel");
-    this->addChild(label, 100);
-
-    auto delay = DelayTime::create(2.0f);
-    auto remove = RemoveSelf::create();
-    label->runAction(Sequence::create(delay, remove, nullptr));
+    showSettings();
 }
 
 void MainMenuScene::onExit(Ref* sender)
@@ -150,4 +137,26 @@ void MainMenuScene::onExit(Ref* sender)
     
     // 退出游戏
     Director::getInstance()->end();
+}
+
+void MainMenuScene::showSettings()
+{
+    GAME_LOG("Opening settings menu");
+    
+    // 隐藏主菜单按钮
+    for (auto child : _uiLayer->getChildren())
+    {
+        child->setVisible(false);
+    }
+    
+    // 创建设置层
+    auto settingsLayer = SettingsLayer::create();
+    settingsLayer->setCloseCallback([this]() {
+        // 恢复显示主菜单按钮
+        for (auto child : _uiLayer->getChildren())
+        {
+            child->setVisible(true);
+        }
+    });
+    this->addChild(settingsLayer);
 }

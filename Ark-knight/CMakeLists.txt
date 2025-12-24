@@ -70,6 +70,10 @@ list(APPEND GAME_SOURCE
      # Entities/Enemy
      Classes/Entities/Enemy/Enemy.cpp
      Classes/Entities/Enemy/Ayao.cpp
+     Classes/Entities/Enemy/DeYi.cpp
+     Classes/Entities/Enemy/XinXing.cpp
+     Classes/Entities/Enemy/KongKaZi.cpp
+     Classes/Entities/Enemy/IronLance.cpp
      # Scenes
      Classes/Scenes/MainMenuScene.cpp
      Classes/Scenes/GameScene.cpp
@@ -79,6 +83,8 @@ list(APPEND GAME_SOURCE
      Classes/Map/Hallway.cpp
      # UI
      Classes/UI/MiniMap.cpp
+     Classes/UI/SettingsLayer.cpp
+     Classes/UI/FloatingText.cpp
      # Managers
      Classes/Managers/GameManager.cpp
      Classes/Managers/SoundManager.cpp
@@ -98,6 +104,11 @@ list(APPEND GAME_HEADER
      Classes/Entities/Player/Mage.h
      # Entities/Enemy
      Classes/Entities/Enemy/Enemy.h
+     Classes/Entities/Enemy/Ayao.h
+     Classes/Entities/Enemy/DeYi.h
+     Classes/Entities/Enemy/XinXing.h
+     Classes/Entities/Enemy/KongKaZi.h
+     Classes/Entities/Enemy/IronLance.h
      # Scenes
      Classes/Scenes/MainMenuScene.h
      Classes/Scenes/GameScene.h
@@ -106,6 +117,8 @@ list(APPEND GAME_HEADER
      Classes/Map/MapGenerator.h
      # UI
      Classes/UI/MiniMap.h
+     Classes/UI/SettingsLayer.h
+     Classes/UI/FloatingText.h
      # Managers
      Classes/Managers/GameManager.h
      Classes/Managers/SoundManager.h

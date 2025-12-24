@@ -4,6 +4,7 @@
 #include "cocos2d.h"
 #include "Core/Constants.h"
 #include "Core/GameMacros.h"
+#include "UI/SettingsLayer.h"
 
 USING_NS_CC;
 
@@ -56,6 +57,11 @@ private:
      * 退出游戏回调
      */
     void onExit(Ref* sender);
+    
+    /**
+     * 显示设置菜单
+     */
+    void showSettings();
     
 private:
     Layer* _uiLayer;

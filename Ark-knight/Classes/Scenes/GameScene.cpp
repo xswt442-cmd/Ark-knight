@@ -884,7 +884,7 @@ void GameScene::pauseGame()
     resumeButton->setTitleText(u8"继续游戏");
     resumeButton->setTitleFontName("fonts/msyh.ttf");
     resumeButton->setTitleFontSize(32);
-    resumeButton->setPosition(Vec2(SCREEN_CENTER.x, SCREEN_CENTER.y + 20));
+    resumeButton->setPosition(Vec2(SCREEN_CENTER.x, SCREEN_CENTER.y + 60));
     resumeButton->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL + 1);
     resumeButton->setName("pauseResumeBtn");
     resumeButton->addClickEventListener([this](Ref* sender) {
@@ -892,12 +892,25 @@ void GameScene::pauseGame()
     });
     _uiLayer->addChild(resumeButton);
     
+    // 设置按钮
+    auto settingsButton = ui::Button::create();
+    settingsButton->setTitleText(u8"设置");
+    settingsButton->setTitleFontName("fonts/msyh.ttf");
+    settingsButton->setTitleFontSize(32);
+    settingsButton->setPosition(Vec2(SCREEN_CENTER.x, SCREEN_CENTER.y - 10));
+    settingsButton->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL + 1);
+    settingsButton->setName("pauseSettingsBtn");
+    settingsButton->addClickEventListener([this](Ref* sender) {
+        showSettings();
+    });
+    _uiLayer->addChild(settingsButton);
+    
     // 返回主菜单按钮
     auto menuButton = ui::Button::create();
     menuButton->setTitleText(u8"返回主菜单");
     menuButton->setTitleFontName("fonts/msyh.ttf");
     menuButton->setTitleFontSize(32);
-    menuButton->setPosition(Vec2(SCREEN_CENTER.x, SCREEN_CENTER.y - 60));
+    menuButton->setPosition(Vec2(SCREEN_CENTER.x, SCREEN_CENTER.y - 80));
     menuButton->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL + 1);
     menuButton->setName("pauseMenuBtn");
     menuButton->addClickEventListener([](Ref* sender) {
@@ -911,7 +924,7 @@ void GameScene::pauseGame()
     exitButton->setTitleText(u8"退出游戏");
     exitButton->setTitleFontName("fonts/msyh.ttf");
     exitButton->setTitleFontSize(32);
-    exitButton->setPosition(Vec2(SCREEN_CENTER.x, SCREEN_CENTER.y - 140));
+    exitButton->setPosition(Vec2(SCREEN_CENTER.x, SCREEN_CENTER.y - 150));
     exitButton->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL + 1);
     exitButton->setName("pauseExitBtn");
     exitButton->addClickEventListener([](Ref* sender) {
@@ -945,6 +958,7 @@ void GameScene::resumeGame()
     // 移除暂停菜单UI元素
     _uiLayer->removeChildByName("pauseTitle");
     _uiLayer->removeChildByName("pauseResumeBtn");
+    _uiLayer->removeChildByName("pauseSettingsBtn");
     _uiLayer->removeChildByName("pauseMenuBtn");
     _uiLayer->removeChildByName("pauseExitBtn");
     _uiLayer->removeChildByName("pauseMask");
@@ -1087,4 +1101,28 @@ void GameScene::addEnemy(Enemy* enemy)
     enemy->tryApplyRedMark(0.3f);
 
     GAME_LOG("GameScene::addEnemy - enemy added and registered (total=%zu)", _enemies.size());
+}
+
+void GameScene::showSettings()
+{
+    GAME_LOG("Opening settings menu");
+    
+    // 隐藏暂停菜单
+    _uiLayer->getChildByName("pauseTitle")->setVisible(false);
+    _uiLayer->getChildByName("pauseResumeBtn")->setVisible(false);
+    _uiLayer->getChildByName("pauseSettingsBtn")->setVisible(false);
+    _uiLayer->getChildByName("pauseMenuBtn")->setVisible(false);
+    _uiLayer->getChildByName("pauseExitBtn")->setVisible(false);
+    
+    // 创建设置层
+    auto settingsLayer = SettingsLayer::create();
+    settingsLayer->setCloseCallback([this]() {
+        // 恢复显示暂停菜单
+        _uiLayer->getChildByName("pauseTitle")->setVisible(true);
+        _uiLayer->getChildByName("pauseResumeBtn")->setVisible(true);
+        _uiLayer->getChildByName("pauseSettingsBtn")->setVisible(true);
+        _uiLayer->getChildByName("pauseMenuBtn")->setVisible(true);
+        _uiLayer->getChildByName("pauseExitBtn")->setVisible(true);
+    });
+    _uiLayer->addChild(settingsLayer);
 }
