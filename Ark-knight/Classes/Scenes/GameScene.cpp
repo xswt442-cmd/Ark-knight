@@ -746,15 +746,33 @@ void GameScene::updateInteraction(float dt)
     // 显示或隐藏交互提示
     if (canInteract)
     {
+        Sprite* chest = _currentRoom->getChest();
+        if (!chest)
+        {
+            if (_interactionLabel && _interactionLabel->isVisible())
+            {
+                _interactionLabel->setVisible(false);
+            }
+            return;
+        }
+        
         if (!_interactionLabel)
         {
             // 创建交互提示标签
-            _interactionLabel = Label::createWithTTF("[E] Open Chest", "fonts/msyh.ttf", 24);
+            _interactionLabel = Label::createWithTTF(u8"[E] 打开宝箱", "fonts/msyh.ttf", 20);
             _interactionLabel->setTextColor(Color4B::YELLOW);
-            _interactionLabel->setPosition(Vec2(SCREEN_CENTER.x, SCREEN_CENTER.y + 100));
+            _interactionLabel->enableOutline(Color4B::BLACK, 2);
             _interactionLabel->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL + 5);
             _uiLayer->addChild(_interactionLabel);
         }
+        
+        // 将宝箱的世界坐标转换为屏幕坐标
+        Vec2 chestWorldPos = chest->getParent()->convertToWorldSpace(chest->getPosition());
+        Vec2 screenPos = _uiLayer->convertToNodeSpace(chestWorldPos);
+        
+        // 显示在宝箱下方
+        float chestHeight = chest->getContentSize().height * chest->getScale();
+        _interactionLabel->setPosition(Vec2(screenPos.x, screenPos.y - chestHeight * 0.6f));
         _interactionLabel->setVisible(true);
     }
     else
