@@ -601,11 +601,11 @@ void Room::layoutFiveBoxes()
     int centerX = _tilesWidth / 2;
     int centerY = _tilesHeight / 2;
     
-    // 计算5个位置（左上、左下、右上、右下、中心）
-    int leftX = 5;    // 留出足够空间
-    int rightX = _tilesWidth - 6;
-    int topY = _tilesHeight - 6;
-    int bottomY = 5;
+    // 计算5个位置（左上、左下、右上、右下、中心），四周更靠近边缘
+    int leftX = 4;    // 更靠左
+    int rightX = _tilesWidth - 5;
+    int topY = _tilesHeight - 5;
+    int bottomY = 4;
     
     // 左上
     addBoxCluster3x3(leftX, topY);
@@ -627,10 +627,10 @@ void Room::layoutNineBoxes()
     // 再放4堆（左中、上中、右中、下中）
     int centerX = _tilesWidth / 2;
     int centerY = _tilesHeight / 2;
-    int leftX = 5;
-    int rightX = _tilesWidth - 6;
-    int topY = _tilesHeight - 6;
-    int bottomY = 5;
+    int leftX = 4;
+    int rightX = _tilesWidth - 5;
+    int topY = _tilesHeight - 5;
+    int bottomY = 4;
     
     // 左中
     addBoxCluster3x3(leftX, centerY);
@@ -645,11 +645,11 @@ void Room::layoutNineBoxes()
 void Room::layoutUpDownSpikes()
 {
     // 矩形围城：左右墙，上下地刺，四角墙
-    // 在有效范围内创建一个小矩形
-    int innerLeft = 6;
-    int innerRight = _tilesWidth - 7;
-    int innerTop = _tilesHeight - 7;
-    int innerBottom = 6;
+    // 在有效范围内创建一个小矩形，更靠边缘
+    int innerLeft = 4;
+    int innerRight = _tilesWidth - 5;
+    int innerTop = _tilesHeight - 5;
+    int innerBottom = 4;
     
     // 左右墙（宽度1）
     for (int y = innerBottom; y <= innerTop; y++)
@@ -669,10 +669,10 @@ void Room::layoutUpDownSpikes()
 void Room::layoutLeftRightSpikes()
 {
     // 矩形围城：上下墙，左右地刺，四角墙
-    int innerLeft = 6;
-    int innerRight = _tilesWidth - 7;
-    int innerTop = _tilesHeight - 7;
-    int innerBottom = 6;
+    int innerLeft = 4;
+    int innerRight = _tilesWidth - 5;
+    int innerTop = _tilesHeight - 5;
+    int innerBottom = 4;
     
     // 上下墙（宽度1）
     for (int x = innerLeft; x <= innerRight; x++)
@@ -692,10 +692,10 @@ void Room::layoutLeftRightSpikes()
 void Room::layoutAllSpikes()
 {
     // 一圈地刺，四角也是地刺
-    int innerLeft = 6;
-    int innerRight = _tilesWidth - 7;
-    int innerTop = _tilesHeight - 7;
-    int innerBottom = 6;
+    int innerLeft = 4;
+    int innerRight = _tilesWidth - 5;
+    int innerTop = _tilesHeight - 5;
+    int innerBottom = 4;
     
     // 上下地刺
     for (int x = innerLeft; x <= innerRight; x++)
@@ -714,9 +714,9 @@ void Room::layoutAllSpikes()
 
 void Room::layoutUpDownWalls()
 {
-    // 上下各一排墙
-    int wallY_top = _tilesHeight - 6;
-    int wallY_bottom = 5;
+    // 上下各一排墙，更靠边缘
+    int wallY_top = _tilesHeight - 4;
+    int wallY_bottom = 3;
     
     for (int x = 2; x < _tilesWidth - 2; x++)
     {
@@ -727,9 +727,9 @@ void Room::layoutUpDownWalls()
 
 void Room::layoutLeftRightWalls()
 {
-    // 左右各一排墙
-    int wallX_left = 5;
-    int wallX_right = _tilesWidth - 6;
+    // 左右各一排墙，更靠边缘
+    int wallX_left = 3;
+    int wallX_right = _tilesWidth - 4;
     
     for (int y = 2; y < _tilesHeight - 2; y++)
     {
@@ -749,11 +749,11 @@ void Room::layoutCenterPillar()
 
 void Room::layoutFourPillars()
 {
-    // 四个角各放2x2石柱
-    int leftX = 5;
-    int rightX = _tilesWidth - 7;  // 预留2x2空间
-    int topY = _tilesHeight - 7;
-    int bottomY = 5;
+    // 四个角各放2x2石柱，更靠边缘
+    int leftX = 3;
+    int rightX = _tilesWidth - 5;  // 预留2x2空间
+    int topY = _tilesHeight - 5;
+    int bottomY = 3;
     
     // 左上
     addPillarCluster2x2(leftX, topY);
