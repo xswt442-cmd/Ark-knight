@@ -264,7 +264,7 @@ void GameScene::spawnEnemiesInRoom(Room* room)
         {
             enemy = Ayao::create();
         }
-        else if (r < 0.6f)
+        else if (r < 0.9f)
         {
             enemy = DeYi::create();
         }
@@ -283,6 +283,14 @@ void GameScene::spawnEnemiesInRoom(Room* room)
         enemy->setPosition(spawnPos);
         // 通过统一入口设置房间边界并将敌人注册到场景/列表中
         enemy->setRoomBounds(walk);
+
+        // ---------- 新增：对每个新生成的敌人按基础速度的 90%~110% 随机化移动速度 ----------
+        // 保持子类/基础初始化的默认值不变（只是对该实例做微调）
+        float baseSpeed = enemy->getMoveSpeed(); // 子类在 init() 里已设置基础速度
+        float randFactor = RANDOM_FLOAT(0.9f, 1.1f);
+        enemy->setMoveSpeed(baseSpeed * randFactor);
+        GAME_LOG("Enemy speed randomized: base=%.1f factor=%.3f final=%.1f", baseSpeed, randFactor, enemy->getMoveSpeed());
+        // ------------------------------------------------------------------------------
 
         // 使用 GameScene::addEnemy 统一注册（会加入场景、_enemies，并尝试将其加入对应房间）
         addEnemy(enemy);
