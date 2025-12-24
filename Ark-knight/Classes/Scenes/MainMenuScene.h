@@ -57,6 +57,16 @@ private:
      */
     void onExit(Ref* sender);
     
+    /**
+     * 显示设置菜单
+     */
+    void showSettings();
+    
+    /**
+     * 隐藏设置菜单
+     */
+    void hideSettings();
+    
 private:
     Layer* _uiLayer;
 };
