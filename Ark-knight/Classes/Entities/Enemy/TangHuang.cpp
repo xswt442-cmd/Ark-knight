@@ -12,7 +12,7 @@ static const int TANGHUANG_WINDUP_ACTION_TAG = 0xF202;
 // 新增：烟雾常量
 static constexpr float TANGHUANG_SMOKE_DELAY = 0.5f;    // 0.5s 延迟释放
 static constexpr float TANGHUANG_SMOKE_DURATION = 5.0f; // 持续 5s
-static constexpr float TANGHUANG_SMOKE_RADIUS = 150.0f; // 半径 150
+static constexpr float TANGHUANG_SMOKE_RADIUS = 250.0f; // 半径 150
 
 TangHuang::TangHuang()
     : _moveAnimation(nullptr)
@@ -139,7 +139,7 @@ void TangHuang::loadAnimations()
 
     // 新增：加载 Skill 动画（路径与其他动画一致，只将 Move 改为 Skill）
     Vector<SpriteFrame*> skillFrames;
-    for (int i = 1; i <= 6; ++i) // 假定 Skill 为 6 帧；如资源帧数不同请调整上限
+    for (int i = 1; i <= 8; ++i) 
     {
         char filename[256];
         sprintf(filename, "Enemy/TangHuang&&Iron LightCup/TangHuang/TangHuang_Skill/TangHuang_Skill_%04d.png", i);
@@ -228,9 +228,19 @@ void TangHuang::update(float dt)
 
 void TangHuang::executeAI(Player* player, float dt)
 {
-    if (!player) 
+    if (!player)
     {
         _attackTarget = nullptr;
+        return;
+    }
+
+    // 如果技能可用，则优先停止并释放技能（不继续追击）
+    if (canUseSkill() && _currentState != EntityState::ATTACK && _currentState != EntityState::DIE)
+    {
+        // 停止移动并释放技能（useSmokeSkill 内会处理延迟与冷却）
+        move(Vec2::ZERO, dt); // 停止移动，保持状态一致
+        faceToPosition(player->getPosition());
+        useSmokeSkill();
         return;
     }
 
@@ -413,6 +423,12 @@ void TangHuang::spawnSmoke()
 
     // 每帧更新：检查父节点（通常为 gameLayer）下的敌人，添加/移除 stealth 源
     smoke->schedule([this, smoke, insideVec](float dt) {
+        // 使烟雾一直跟随堂皇移动（保证即便父节点在 world 空间，位置始终同步）
+        if (smoke->getParent())
+        {
+            smoke->setPosition(this->getPosition());
+        }
+
         Node* parentLocal = this->getParent();
         if (!parentLocal) return;
 

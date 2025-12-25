@@ -106,6 +106,7 @@ void Enemy::update(float dt)
     }
 }
 
+// ==================== Nymph 中毒逻辑实现 ====================
 void Enemy::applyNymphPoison(int sourceAttack)
 {
     // 保存原始颜色（首次中毒时）
@@ -115,16 +116,32 @@ void Enemy::applyNymphPoison(int sourceAttack)
         _poisonColorSaved = true;
     }
 
+    // 重置毒计时为 10s
     _poisonTimer = POISON_DURATION;
     _poisonTickAcc = 0.0f;
+
+    // 更新毒源攻击力为当前来源攻击力（使用最近一次来源的攻击力）
     _poisonSourceAttack = sourceAttack;
+
+    // 叠加一层，最多 POISON_MAX_STACKS
     _poisonStacks = std::min(POISON_MAX_STACKS, _poisonStacks + 1);
 
-    // 只有在当前没有隐身来源时才把颜色改为偏紫（隐身优先显示浅灰）
-    if (_sprite && _stealthSources.empty())
+    // 根据当前是否处于隐身决定颜色：
+    // - 非隐身：紫色（原来行为）
+    // - 隐身中：使用更深的紫灰（以示同时中毒与隐身）
+    if (_sprite)
     {
-        Color3B purple(180, 100, 200);
-        _sprite->setColor(purple);
+        if (_stealthSources.empty())
+        {
+            Color3B purple(180, 100, 200);
+            _sprite->setColor(purple);
+        }
+        else
+        {
+            // 隐身且中毒：更深的紫灰色（可调整）
+            Color3B deepStealthPoison(120, 80, 150);
+            _sprite->setColor(deepStealthPoison);
+        }
     }
 
     GAME_LOG("applyNymphPoison: stacks=%d, srcAtk=%d", _poisonStacks, _poisonSourceAttack);
@@ -148,8 +165,16 @@ void Enemy::addStealthSource(void* source)
 
     if (_sprite)
     {
-        // 隐身用浅灰色显示
-        _sprite->setColor(Color3B(180, 180, 180));
+        // 隐身时如果同时带毒，显示更深的毒色；否则显示浅灰隐身色
+        if (_poisonStacks > 0)
+        {
+            Color3B deepStealthPoison(120, 80, 150);
+            _sprite->setColor(deepStealthPoison);
+        }
+        else
+        {
+            _sprite->setColor(Color3B(180, 180, 180));
+        }
     }
 }
 
