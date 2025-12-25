@@ -272,6 +272,13 @@ void Room::addSpikeAtPosition(const Vec2& pos)
 
 void Room::addSpikeAtTile(int tileX, int tileY)
 {
+    // 统一检查：禁止在距离房间边界 2 格范围内生成障碍（2x2）
+    const int boundaryMargin = 2;
+    if (tileX < boundaryMargin || tileY < boundaryMargin || tileX > _tilesWidth - 1 - boundaryMargin || tileY > _tilesHeight - 1 - boundaryMargin) {
+        // 超出允许范围，跳过生成
+        return;
+    }
+
     float tileSize = Constants::FLOOR_TILE_SIZE;
     float startX = _centerX - tileSize * (_tilesWidth / 2.0f - 0.5f);
     float startY = _centerY + tileSize * (_tilesHeight / 2.0f - 0.5f);
@@ -298,6 +305,13 @@ void Room::addBoxAtPosition(const Vec2& pos, Box::BoxType type)
 
 void Room::addBoxAtTile(int tileX, int tileY, Box::BoxType type)
 {
+    // 统一检查：禁止在距离房间边界 2 格范围内生成障碍（2x2）
+    const int boundaryMargin = 2;
+    if (tileX < boundaryMargin || tileY < boundaryMargin || tileX > _tilesWidth - 1 - boundaryMargin || tileY > _tilesHeight - 1 - boundaryMargin) {
+        // 超出允许范围，跳过生成
+        return;
+    }
+
     float tileSize = Constants::FLOOR_TILE_SIZE;
     float startX = _centerX - tileSize * (_tilesWidth / 2.0f - 0.5f);
     float startY = _centerY + tileSize * (_tilesHeight / 2.0f - 0.5f);
@@ -324,6 +338,13 @@ void Room::addPillarAtPosition(const Vec2& pos, Pillar::PillarType type)
 
 void Room::addPillarAtTile(int tileX, int tileY, Pillar::PillarType type)
 {
+    // 统一检查：禁止在距离房间边界 2 格范围内生成障碍（2x2）
+    const int boundaryMargin = 2;
+    if (tileX < boundaryMargin || tileY < boundaryMargin || tileX > _tilesWidth - 1 - boundaryMargin || tileY > _tilesHeight - 1 - boundaryMargin) {
+        // 超出允许范围，跳过生成
+        return;
+    }
+
     float tileSize = Constants::FLOOR_TILE_SIZE;
     float startX = _centerX - tileSize * (_tilesWidth / 2.0f - 0.5f);
     float startY = _centerY + tileSize * (_tilesHeight / 2.0f - 0.5f);
@@ -332,19 +353,6 @@ void Room::addPillarAtTile(int tileX, int tileY, Pillar::PillarType type)
     float pillarY = startY - tileY * tileSize;
     
     addPillarAtPosition(Vec2(pillarX, pillarY), type);
-}
-
-void Room::setDoorOpen(int direction, bool open) {
-    if (direction >= 0 && direction < Constants::DIR_COUNT) {
-        _doorDirections[direction] = open;
-    }
-}
-
-bool Room::hasDoor(int direction) const {
-    if (direction >= 0 && direction < Constants::DIR_COUNT) {
-        return _doorDirections[direction];
-    }
-    return false;
 }
 
 void Room::createEnemies(int count) {
@@ -546,6 +554,11 @@ void Room::applyTerrainLayout(TerrainLayout layout)
     case TerrainLayout::NONE:
     default:
         break;
+    }
+
+    // 统一保证：普通战斗房至少有 3 个障碍
+    if (_roomType == Constants::RoomType::NORMAL) {
+        ensureMinimumObstacles(3);
     }
 }
 
@@ -785,51 +798,327 @@ void Room::layoutFourPillars()
 
 void Room::layoutRandomMess()
 {
-    // 在禁止放置区之外随机放置10个石柱和10个木箱
-    // 有效范围：[2, _tilesWidth-3] x [2, _tilesHeight-3]
-    
-    // 放置10个石柱
-    for (int i = 0; i < 10; i++)
-    {
-        int x = cocos2d::RandomHelper::random_int(2, _tilesWidth - 3);
-        int y = cocos2d::RandomHelper::random_int(2, _tilesHeight - 3);
-        
-        // 随机选择石柱类型
-        int typeIndex = cocos2d::RandomHelper::random_int(0, 2);
-        Pillar::PillarType type;
-        switch (typeIndex)
-        {
-        case 0: type = Pillar::PillarType::CLEAR; break;
-        case 1: type = Pillar::PillarType::BROKEN; break;
-        case 2: type = Pillar::PillarType::GLASSES; break;
-        default: type = Pillar::PillarType::CLEAR; break;
+    // 以若干随机形状（矩形 / 正方形 / L形）放置障碍（箱子或石柱），
+    // 要求：
+    // 1) 每个 shape 内所有单元使用相同类型的 png（统一 Box::BoxType 或 Pillar::PillarType）
+    // 2) 不同 shape 之间保持禁区间隔（默认使用 padding=2 -> 每个放置单元周围 2 格内不能再放其他 shape 的单元）
+    // 3) 每个房间至少放置一个障碍（applyTerrainLayout() 末尾将确保普通战斗房至少3个障碍）
+    const int boundaryMargin = 2;
+    int minX = boundaryMargin;
+    int maxX = _tilesWidth - 1 - boundaryMargin;
+    int minY = boundaryMargin;
+    int maxY = _tilesHeight - 1 - boundaryMargin;
+    if (maxX < minX || maxY < minY) return;
+
+    // 占用表（y 行 x 列），初始将禁止区标为占用
+    std::vector<std::vector<bool>> occupied(_tilesHeight, std::vector<bool>(_tilesWidth, false));
+    for (int y = 0; y < _tilesHeight; ++y) {
+        for (int x = 0; x < _tilesWidth; ++x) {
+            if (x < minX || x > maxX || y < minY || y > maxY) occupied[y][x] = true;
         }
-        
-        addPillarAtTile(x, y, type);
     }
-    
-    // 放置10个木箱
-    for (int i = 0; i < 10; i++)
-    {
-        int x = cocos2d::RandomHelper::random_int(2, _tilesWidth - 3);
-        int y = cocos2d::RandomHelper::random_int(2, _tilesHeight - 3);
-        
-        // 随机选择木箱类型
-        int typeIndex = cocos2d::RandomHelper::random_int(0, 2);
-        Box::BoxType type;
-        switch (typeIndex)
-        {
-        case 0: type = Box::BoxType::NORMAL; break;
-        case 1: type = Box::BoxType::LIGHT; break;
-        case 2: type = Box::BoxType::DARK; break;
-        default: type = Box::BoxType::NORMAL; break;
+
+    // 标记门口为占用，避免覆盖门
+    int doorW = Constants::DOOR_WIDTH;
+    if (_doorDirections[Constants::DIR_UP]) {
+        int start = _tilesWidth / 2 - doorW / 2;
+        for (int w = start; w < start + doorW; ++w) if (w >= 0 && w < _tilesWidth) occupied[_tilesHeight - 1][w] = true;
+    }
+    if (_doorDirections[Constants::DIR_DOWN]) {
+        int start = _tilesWidth / 2 - doorW / 2;
+        for (int w = start; w < start + doorW; ++w) if (w >= 0 && w < _tilesWidth) occupied[0][w] = true;
+    }
+    if (_doorDirections[Constants::DIR_LEFT]) {
+        int start = _tilesHeight / 2 - doorW / 2;
+        for (int h = start; h < start + doorW; ++h) if (h >= 0 && h < _tilesHeight) occupied[h][0] = true;
+    }
+    if (_doorDirections[Constants::DIR_RIGHT]) {
+        int start = _tilesHeight / 2 - doorW / 2;
+        for (int h = start; h < start + doorW; ++h) if (h >= 0 && h < _tilesHeight) occupied[h][_tilesWidth - 1] = true;
+    }
+
+    // 参数：形状数量与每形状尝试次数
+    int shapesToPlace = cocos2d::RandomHelper::random_int(8, 12);
+    int maxAttemptsPerShape = 40;
+
+    // 设置禁止邻域半径（padding）
+    const int padding = 2; // padding=2 -> 每个已放置单元周围 2 格内禁止（5x5 区域）
+    // Helper lambda：判断候选 tiles 是否与已有 occupied 在 padding 半径内冲突（使用正方形检查）
+    auto tilesHaveNeighborhoodConflict = [&](const std::vector<std::pair<int,int>>& tiles) -> bool {
+        for (auto &p : tiles) {
+            int tx = p.first, ty = p.second;
+            for (int dy = -padding; dy <= padding; ++dy) {
+                for (int dx = -padding; dx <= padding; ++dx) {
+                    int nx = tx + dx;
+                    int ny = ty + dy;
+                    if (nx < 0 || nx >= _tilesWidth || ny < 0 || ny >= _tilesHeight) continue;
+                    if (occupied[ny][nx]) return true;
+                }
+            }
         }
-        
-        addBoxAtTile(x, y, type);
+        return false;
+    };
+
+    int placedShapesCount = 0;
+
+    for (int s = 0; s < shapesToPlace; ++s) {
+        bool placed = false;
+        for (int attempt = 0; attempt < maxAttemptsPerShape && !placed; ++attempt) {
+            int shapeType = cocos2d::RandomHelper::random_int(0, 2); // 0=rect,1=square,2=L
+            bool usePillar = (cocos2d::RandomHelper::random_int(0, 1) == 0);
+
+            // 统一选择本 shape 的类型（保证同 png）
+            Box::BoxType chosenBoxType = Box::BoxType::NORMAL;
+            Pillar::PillarType chosenPillarType = Pillar::PillarType::CLEAR;
+            if (usePillar) {
+                int t = cocos2d::RandomHelper::random_int(0, 2);
+                chosenPillarType = static_cast<Pillar::PillarType>(t);
+            } else {
+                int t = cocos2d::RandomHelper::random_int(0, 2);
+                chosenBoxType = static_cast<Box::BoxType>(t);
+            }
+
+            int maxShapeW = std::min(6, maxX - minX + 1);
+            int maxShapeH = std::min(6, maxY - minY + 1);
+            if (maxShapeW < 1 || maxShapeH < 1) break;
+
+            if (shapeType == 1) { // square
+                int size = cocos2d::RandomHelper::random_int(1, std::min(4, std::min(maxShapeW, maxShapeH)));
+                int x0 = cocos2d::RandomHelper::random_int(minX, maxX - size + 1);
+                int y0 = cocos2d::RandomHelper::random_int(minY, maxY - size + 1);
+
+                // 检查并收集 tiles
+                std::vector<std::pair<int,int>> tiles;
+                bool ok = true;
+                for (int yy = y0; yy < y0 + size && ok; ++yy) {
+                    for (int xx = x0; xx < x0 + size; ++xx) {
+                        if (occupied[yy][xx]) { ok = false; break; }
+                        tiles.emplace_back(xx, yy);
+                    }
+                }
+                if (!ok) continue;
+
+                // 检查 padding 邻域冲突（与已有 shapes 冲突）
+                if (tilesHaveNeighborhoodConflict(tiles)) continue;
+
+                // 放置：使用统一类型
+                for (auto &p : tiles) {
+                    if (usePillar) addPillarAtTile(p.first, p.second, chosenPillarType);
+                    else addBoxAtTile(p.first, p.second, chosenBoxType);
+                    occupied[p.second][p.first] = true;
+                }
+                placed = true;
+                placedShapesCount++;
+            }
+            else if (shapeType == 0) { // rectangle
+                int w = cocos2d::RandomHelper::random_int(1, std::min(6, maxShapeW));
+                int h = cocos2d::RandomHelper::random_int(1, std::min(4, maxShapeH));
+                int x0 = cocos2d::RandomHelper::random_int(minX, maxX - w + 1);
+                int y0 = cocos2d::RandomHelper::random_int(minY, maxY - h + 1);
+
+                std::vector<std::pair<int,int>> tiles;
+                bool ok = true;
+                for (int yy = y0; yy < y0 + h && ok; ++yy) {
+                    for (int xx = x0; xx < x0 + w; ++xx) {
+                        if (occupied[yy][xx]) { ok = false; break; }
+                        tiles.emplace_back(xx, yy);
+                    }
+                }
+                if (!ok) continue;
+
+                if (tilesHaveNeighborhoodConflict(tiles)) continue;
+
+                for (auto &p : tiles) {
+                    if (usePillar) addPillarAtTile(p.first, p.second, chosenPillarType);
+                    else addBoxAtTile(p.first, p.second, chosenBoxType);
+                    occupied[p.second][p.first] = true;
+                }
+                placed = true;
+                placedShapesCount++;
+            }
+            else { // L-shape
+                int a = cocos2d::RandomHelper::random_int(2, std::min(5, maxShapeW));
+                int b = cocos2d::RandomHelper::random_int(2, std::min(5, maxShapeH));
+                int orient = cocos2d::RandomHelper::random_int(0, 3); // 0: ┌ ,1: ┐ ,2: └ ,3: ┘
+
+                bool fits = false;
+                for (int tryXY = 0; tryXY < 8 && !fits; ++tryXY) {
+                    int x0 = cocos2d::RandomHelper::random_int(minX, maxX);
+                    int y0 = cocos2d::RandomHelper::random_int(minY, maxY);
+                    std::vector<std::pair<int,int>> tiles;
+                    if (orient == 0) {
+                        if (x0 + a - 1 > maxX || y0 + b - 1 > maxY) continue;
+                        for (int dx = 0; dx < a; ++dx) tiles.emplace_back(x0 + dx, y0);
+                        for (int dy = 0; dy < b; ++dy) tiles.emplace_back(x0, y0 + dy);
+                    } else if (orient == 1) {
+                        if (x0 - (a - 1) < minX || y0 + b - 1 > maxY) continue;
+                        for (int dx = 0; dx < a; ++dx) tiles.emplace_back(x0 - dx, y0);
+                        for (int dy = 0; dy < b; ++dy) tiles.emplace_back(x0, y0 + dy);
+                    } else if (orient == 2) {
+                        if (x0 + a - 1 > maxX || y0 - (b - 1) < minY) continue;
+                        for (int dx = 0; dx < a; ++dx) tiles.emplace_back(x0 + dx, y0);
+                        for (int dy = 0; dy < b; ++dy) tiles.emplace_back(x0, y0 - dy);
+                    } else {
+                        if (x0 - (a - 1) < minX || y0 - (b - 1) < minY) continue;
+                        for (int dx = 0; dx < a; ++dx) tiles.emplace_back(x0 - dx, y0);
+                        for (int dy = 0; dy < b; ++dy) tiles.emplace_back(x0, y0 - dy);
+                    }
+
+                    bool ok = true;
+                    for (auto &p : tiles) {
+                        int tx = p.first, ty = p.second;
+                        if (tx < minX || tx > maxX || ty < minY || ty > maxY || occupied[ty][tx]) { ok = false; break; }
+                    }
+                    if (!ok) continue;
+                    if (tilesHaveNeighborhoodConflict(tiles)) continue;
+
+                    // 放置
+                    for (auto &p : tiles) {
+                        if (usePillar) addPillarAtTile(p.first, p.second, chosenPillarType);
+                        else addBoxAtTile(p.first, p.second, chosenBoxType);
+                        occupied[p.second][p.first] = true;
+                    }
+                    placed = true;
+                    fits = true;
+                    placedShapesCount++;
+                } // tryXY
+            } // shape type
+        } // attempts
+        // 未放置成功继续下一个 shape
+    } // shapes
+
+    // 强制保证至少放置一个障碍（当随机放置全部失败时）
+    if (placedShapesCount == 0) {
+        bool forced = false;
+        for (int y = minY; y <= maxY && !forced; ++y) {
+            for (int x = minX; x <= maxX && !forced; ++x) {
+                if (!occupied[y][x]) {
+                    // 放置单格障碍，材料随机，遵守统一单格类型规则（单格即为一个 shape）
+                    bool usePillar = (cocos2d::RandomHelper::random_int(0, 1) == 0);
+                    if (usePillar) {
+                        Pillar::PillarType t = static_cast<Pillar::PillarType>(cocos2d::RandomHelper::random_int(0,2));
+                        addPillarAtTile(x, y, t);
+                    } else {
+                        Box::BoxType t = static_cast<Box::BoxType>(cocos2d::RandomHelper::random_int(0,2));
+                        addBoxAtTile(x, y, t);
+                    }
+                    occupied[y][x] = true;
+                    forced = true;
+                    placedShapesCount++;
+                    GAME_LOG("layoutRandomMess: forced single obstacle at tile (%d,%d)", x, y);
+                }
+            }
+        }
+    }
+
+    // 在 layoutRandomMess 的末尾，统计当前障碍并在普通战斗房不足时补足
+    {
+        int totalObstacles = static_cast<int>(_barriers.size() + _spikes.size());
+        if (_roomType == Constants::RoomType::NORMAL && totalObstacles < 3) {
+            ensureMinimumObstacles(3);
+        }
     }
 }
 
-// ==================== 宝箱生成 ====================
+void Room::ensureMinimumObstacles(int minCount)
+{
+    int current = static_cast<int>(_barriers.size() + _spikes.size());
+    if (current >= minCount) return;
+
+    const int boundaryMargin = 2;
+    int minX = boundaryMargin;
+    int maxX = _tilesWidth - 1 - boundaryMargin;
+    int minY = boundaryMargin;
+    int maxY = _tilesHeight - 1 - boundaryMargin;
+    if (maxX < minX || maxY < minY) return;
+
+    // 构建占用表，初始把禁止区标为占用（与 layoutRandomMess 的初始化一致）
+    std::vector<std::vector<bool>> occupied(_tilesHeight, std::vector<bool>(_tilesWidth, false));
+    for (int y = 0; y < _tilesHeight; ++y) {
+        for (int x = 0; x < _tilesWidth; ++x) {
+            if (x < minX || x > maxX || y < minY || y > maxY) occupied[y][x] = true;
+        }
+    }
+
+    // 标记门口为占用，避免覆盖门
+    int doorW = Constants::DOOR_WIDTH;
+    if (_doorDirections[Constants::DIR_UP]) {
+        int start = _tilesWidth / 2 - doorW / 2;
+        for (int w = start; w < start + doorW; ++w) if (w >= 0 && w < _tilesWidth) occupied[_tilesHeight - 1][w] = true;
+    }
+    if (_doorDirections[Constants::DIR_DOWN]) {
+        int start = _tilesWidth / 2 - doorW / 2;
+        for (int w = start; w < start + doorW; ++w) if (w >= 0 && w < _tilesWidth) occupied[0][w] = true;
+    }
+    if (_doorDirections[Constants::DIR_LEFT]) {
+        int start = _tilesHeight / 2 - doorW / 2;
+        for (int h = start; h < start + doorW; ++h) if (h >= 0 && h < _tilesHeight) occupied[h][0] = true;
+    }
+    if (_doorDirections[Constants::DIR_RIGHT]) {
+        int start = _tilesHeight / 2 - doorW / 2;
+        for (int h = start; h < start + doorW; ++h) if (h >= 0 && h < _tilesHeight) occupied[h][_tilesWidth - 1] = true;
+    }
+
+    // 标记已有障碍（_barriers 和 _spikes）在占用表上
+    float tileSize = Constants::FLOOR_TILE_SIZE;
+    float startX = _centerX - tileSize * (_tilesWidth / 2.0f - 0.5f);
+    float startY = _centerY + tileSize * (_tilesHeight / 2.0f - 0.5f);
+    auto markEntityPos = [&](const cocos2d::Vec2& pos){
+        int tx = static_cast<int>(std::round((pos.x - startX) / tileSize));
+        int ty = static_cast<int>(std::round((startY - pos.y) / tileSize));
+        if (tx >= 0 && tx < _tilesWidth && ty >= 0 && ty < _tilesHeight) {
+            occupied[ty][tx] = true;
+        }
+    };
+
+    for (auto b : _barriers) {
+        if (b) markEntityPos(b->getPosition());
+    }
+    for (auto s : _spikes) {
+        if (s) markEntityPos(s->getPosition());
+    }
+
+    // 尝试随机放置单格障碍直到达到 minCount 或尝试次数用尽
+    int tries = 0;
+    int maxTries = 500;
+    const int padding = 2; // 与 layoutRandomMess 保持一致（5x5 禁止区）
+    while (static_cast<int>(_barriers.size() + _spikes.size()) < minCount && tries < maxTries) {
+        tries++;
+        int rx = cocos2d::RandomHelper::random_int(minX, maxX);
+        int ry = cocos2d::RandomHelper::random_int(minY, maxY);
+        if (occupied[ry][rx]) continue;
+
+        // 检查与已占用格的 padding 邻域冲突（使用方形检查）
+        bool conflict = false;
+        for (int dy = -padding; dy <= padding && !conflict; ++dy) {
+            for (int dx = -padding; dx <= padding && !conflict; ++dx) {
+                int nx = rx + dx;
+                int ny = ry + dy;
+                if (nx < 0 || nx >= _tilesWidth || ny < 0 || ny >= _tilesHeight) continue;
+                if (occupied[ny][nx]) conflict = true;
+            }
+        }
+        if (conflict) continue;
+
+        // 放置单格障碍
+        bool usePillar = (cocos2d::RandomHelper::random_int(0, 1) == 0);
+        if (usePillar) {
+            Pillar::PillarType t = static_cast<Pillar::PillarType>(cocos2d::RandomHelper::random_int(0,2));
+            addPillarAtTile(rx, ry, t);
+        } else {
+            Box::BoxType t = static_cast<Box::BoxType>(cocos2d::RandomHelper::random_int(0,2));
+            addBoxAtTile(rx, ry, t);
+        }
+        occupied[ry][rx] = true;
+    }
+
+    int finalCount = static_cast<int>(_barriers.size() + _spikes.size());
+    if (finalCount < minCount) {
+        GAME_LOG("ensureMinimumObstacles: could not reach requested minCount=%d, final=%d (tries=%d)", minCount, finalCount, tries);
+    } else {
+        GAME_LOG("ensureMinimumObstacles: ensured minCount=%d (final=%d)", minCount, finalCount);
+    }
+}
 
 void Room::createChest()
 {
@@ -1014,4 +1303,19 @@ bool Room::canInteractWithPortal(Player* player) const
     float distance = _portal->getPosition().distance(player->getPosition());
     
     return distance <= interactionDistance;
+}
+
+void Room::setDoorOpen(int direction, bool open) {
+    // 与 Room.h 中声明的签名严格一致
+    if (direction >= 0 && direction < Constants::DIR_COUNT) {
+        _doorDirections[direction] = open;
+    }
+}
+
+bool Room::hasDoor(int direction) const {
+    // 与 Room.h 中声明的签名严格一致（const）
+    if (direction >= 0 && direction < Constants::DIR_COUNT) {
+        return _doorDirections[direction];
+    }
+    return false;
 }

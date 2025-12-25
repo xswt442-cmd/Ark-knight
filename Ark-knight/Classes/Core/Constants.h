@@ -37,11 +37,25 @@ namespace Constants {
     constexpr int MAP_MAX_ROOMS = 6;           // 最大房间数量
     constexpr int MAP_GRID_SIZE = 5;           // 5x5 地图矩阵
     constexpr float FLOOR_TILE_SIZE = 32.0f;   // 地板尺寸
-    constexpr int ROOM_TILES_W = 26;           // 房间宽度(地板块数) - 偶数
-    constexpr int ROOM_TILES_H = 18;           // 房间高度(地板块数) - 偶数
-    constexpr float ROOM_CENTER_DIST = 960.0f; // 房间中心距离
+
+    // 房间尺寸（以瓦片数计，偶数）
+    // 增大房间尺寸以扩大战斗空间
+    constexpr int ROOM_TILES_W = 34;           // 原 26 -> 增大
+    constexpr int ROOM_TILES_H = 26;           // 原 18 -> 增大
+
+    // 房间中心像素距离：应足够大以避免相邻房间图形重合
+    // 推荐值：ROOM_TILES_W * FLOOR_TILE_SIZE + 160（预留走廊/间隙）
+    constexpr float ROOM_CENTER_DIST = 1248.0f; // 更新后的中心距离
+
     constexpr int DOOR_WIDTH = 4;              // 门宽度(地板块数) - 偶数
-    
+
+    // 障碍生成时距离房间边界的保护区（单位：瓦片）
+    // 障碍物（箱子/石柱/地刺）不得在房间边界周围此范围内生成
+    constexpr int ROOM_OBSTACLE_MARGIN_TILES = 5;
+
+    // 走廊额外延长的瓦片数（使走廊在视觉/通行上比精确 gap 多出几格）
+    constexpr int HALLWAY_EXTRA_TILES = 2;
+
     // ==================== 方向定义 ====================
     constexpr int DIR_UP = 0;
     constexpr int DIR_RIGHT = 1;

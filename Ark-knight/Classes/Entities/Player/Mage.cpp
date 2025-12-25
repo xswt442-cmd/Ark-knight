@@ -8,7 +8,7 @@ Mage::Mage()
     : _isEnhanced(false)
     , _enhancedTimer(0.0f)
     , _enhancedDuration(8.0f)
-    , _baseAttackInterval(1.0f)
+    , _baseAttackInterval(0.1f)
     , _attackTimer(0.0f)
     , _currentAnimName("")
 {
