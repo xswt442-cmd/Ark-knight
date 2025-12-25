@@ -332,26 +332,36 @@ void Enemy::die()
     // 不改变实体状态、不调用基类的 Character::die()，以免干扰子类自定义的死亡动画流程
     if (_isRedMarked && canSpawnKongKaZiOnDeath())
     {
-        // 计算世界坐标（确保视觉圈显示在屏幕正确位置）
-        Vec2 worldPos = this->convertToWorldSpace(Vec2::ZERO);
-
-        // 把紫色圆圈添加到运行场景根节点（保证可见）
+        // 优先把紫色圆圈添加到敌人的父节点（通常为 gameLayer），使其位于地板之上、实体之下，行为类似 Cup 的范围圈
+        Vec2 localPos = this->getPosition();
         Scene* running = Director::getInstance()->getRunningScene();
-        if (running)
-        {
-            auto circle = DrawNode::create();
-            float radius = 50.0f;
-            circle->drawSolidCircle(Vec2::ZERO, radius, 0, 32, Color4F(0.6f, 0.0f, 0.6f, 0.6f));
-            circle->setPosition(worldPos);
-            // 使用全局 ZOrder 保证效果在最上层的一组效果层
-            running->addChild(circle, Constants::ZOrder::EFFECT);
 
-            auto fade = FadeOut::create(0.5f);
-            auto removeCircle = CallFunc::create([circle]() {
-                if (circle->getParent()) circle->removeFromParent();
-            });
-            circle->runAction(Sequence::create(DelayTime::create(0.25f), fade, removeCircle, nullptr));
+        auto circle = DrawNode::create();
+        float radius = 50.0f;
+        circle->drawSolidCircle(Vec2::ZERO, radius, 0, 32, Color4F(0.6f, 0.0f, 0.6f, 0.6f));
+
+        Node* parent = this->getParent();
+        if (parent)
+        {
+            int rangeZ = Constants::ZOrder::ENTITY - 1;
+            parent->addChild(circle, rangeZ);
+            circle->setPosition(localPos);
+            circle->setGlobalZOrder(static_cast<float>(rangeZ));
         }
+        else if (running)
+        {
+            // 退回到原始实现（运行场景坐标）
+            Vec2 worldPos = this->convertToWorldSpace(Vec2::ZERO);
+            running->addChild(circle, Constants::ZOrder::EFFECT);
+            circle->setPosition(worldPos);
+        }
+
+        // 在圆自身上运行淡出与移除动作（避免对 running scene 调度）
+        auto fade = FadeOut::create(0.5f);
+        auto removeCircle = CallFunc::create([circle]() {
+            if (circle->getParent()) circle->removeFromParent();
+        });
+        circle->runAction(Sequence::create(DelayTime::create(0.25f), fade, removeCircle, nullptr));
 
         // 延迟生成 KongKaZi（生成时使用本节点的本地坐标，相对通常为 gameLayer）
         Vec2 localSpawnPos = this->getPosition();
