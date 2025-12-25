@@ -13,6 +13,7 @@ int GameScene::s_savedMP = 0;
 #include "Entities/Enemy/XinXing.h"
 #include "Entities/Enemy/Cup.h"
 #include "Entities/Enemy/TangHuang.h"
+#include "Entities/Enemy/Du.h" // 新增：妒 (Du)
 #include "ui/CocosGUI.h"
 #include <algorithm>
 #include"Map/Room.h"
@@ -284,33 +285,38 @@ void GameScene::spawnEnemiesInRoom(Room* room)
     
     Rect walk = room->getWalkableArea();
     
-    // 随机生成3-8个怪（Ayao / DeYi / TangHuang / Cup / XinXing）
+    // 随机生成3-8个怪（Ayao / DeYi / Du / TangHuang / Cup / XinXing）
     int enemyCount = RANDOM_INT(3, 8);
 
     for (int i = 0; i < enemyCount; i++)
     {
         Enemy* enemy = nullptr;
         float r = CCRANDOM_0_1();
-        // 概率分配：Ayao 30%，DeYi 10%，TangHuang 40%，Cup 10%，XinXing 10%
-        if (r < 0.30f)
+        // 概率分配（调整为用户要求）:
+        // Ayao 20%, DeYi 10%, Du 40%, TangHuang 5%, XinXing 5%, Cup 20%
+        if (r < 0.20f)
         {
             enemy = Ayao::create();
         }
-        else if (r < 0.40f)
+        else if (r < 0.30f)
         {
             enemy = DeYi::create();
         }
-        else if (r < 0.80f)
+        else if (r < 0.70f)
+        {
+            enemy = Du::create();
+        }
+        else if (r < 0.75f)
         {
             enemy = TangHuang::create();
         }
-        else if (r < 0.90f)
+        else if (r < 0.80f)
         {
-            enemy = Cup::create();
+            enemy = XinXing::create();
         }
         else
         {
-            enemy = XinXing::create();
+            enemy = Cup::create(); // 修正：确保剩余 20% 为 Cup
         }
 
         if (!enemy) continue;
@@ -344,6 +350,7 @@ void GameScene::spawnEnemiesInRoom(Room* room)
         else if (dynamic_cast<TangHuang*>(enemy)) typeName = "TangHuang";
         else if (dynamic_cast<Cup*>(enemy)) typeName = "Cup";
         else if (dynamic_cast<XinXing*>(enemy)) typeName = "XinXing";
+        else if (dynamic_cast<Du*>(enemy)) typeName = "Du";
 
         GAME_LOG("Enemy spawned at (%.1f, %.1f) in room - type=%s", spawnPos.x, spawnPos.y, typeName);
     }
