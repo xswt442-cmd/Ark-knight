@@ -8,7 +8,7 @@ Mage::Mage()
     : _isEnhanced(false)
     , _enhancedTimer(0.0f)
     , _enhancedDuration(8.0f)
-    , _baseAttackInterval(1.0f)
+    , _baseAttackInterval(0.1f)
     , _attackTimer(0.0f)
     , _currentAnimName("")
 {
@@ -591,6 +591,9 @@ void Mage::shootBullet()
                         auto enemy = dynamic_cast<Enemy*>(child);
                         if (enemy != nullptr && !enemy->isDead())
                         {
+                            // 跳过隐身敌人（隐身不被我方子弹命中）
+                            if (enemy->isStealthed()) continue;
+
                             // 命中基础伤害
                             enemy->takeDamage(bulletDamage);
 

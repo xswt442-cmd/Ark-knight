@@ -1,10 +1,81 @@
 #include "IronLance.h"
 #include "cocos2d.h"
 #include "Entities/Player/Player.h"
+#include <vector>
+#include <string>
 
 USING_NS_CC;
 
 static const int IRONL_MOVE_ACTION_TAG = 0xD201;
+
+// 辅助：尝试多个路径 pattern 加载帧（与 XinXing 的实现风格保持一致）
+static Vector<SpriteFrame*> tryLoadFramesFromPatterns(const std::vector<std::string>& patterns, int count)
+{
+    Vector<SpriteFrame*> frames;
+    char filename[512];
+
+    for (const auto& pat : patterns)
+    {
+        frames.clear();
+        for (int i = 1; i <= count; ++i)
+        {
+            snprintf(filename, sizeof(filename), pat.c_str(), i);
+            std::string fn(filename);
+            auto s = Sprite::create(fn);
+            if (s && s->getSpriteFrame())
+            {
+                frames.pushBack(s->getSpriteFrame());
+            }
+            else
+            {
+                // fallback to SpriteFrameCache by base name
+                char basename[128];
+                // 试图从路径中提取 basename 模式（最后一段格式如 Name_%04d.png）
+                // 由于 pattern 中通常包含 %04d，构造简单 basename 推测
+                // 例如 "IronLance_Move_%04d.png"
+                // 这里我们尝试直接用格式化后的最后部分
+                // 先尝试用默认 basename 同样编号
+                // 作为简单方案，尝试常见 basename：IronLance_Move / IronLance_Die
+                // 具体日志利于调试
+                GAME_LOG("tryLoadFramesFromPatterns - failed to create sprite from file: %s", fn.c_str());
+            }
+        }
+
+        if (!frames.empty())
+        {
+            GAME_LOG("tryLoadFramesFromPatterns - loaded %zu frames using pattern '%s'", frames.size(), pat.c_str());
+            break;
+        }
+    }
+
+    // 如果仍为空，尝试直接从 SpriteFrameCache 用常见 basename 作为最后手段
+    if (frames.empty())
+    {
+        // 尝试常见基名组合
+        std::vector<std::string> basenames = {
+            "IronLance_Move_%04d.png",
+            "IronLance_Die_%04d.png"
+        };
+        for (const auto& bpat : basenames)
+        {
+            frames.clear();
+            for (int i = 1; i <= count; ++i)
+            {
+                snprintf(filename, sizeof(filename), bpat.c_str(), i);
+                auto frame = SpriteFrameCache::getInstance()->getSpriteFrameByName(std::string(filename));
+                if (frame) frames.pushBack(frame);
+                else break;
+            }
+            if ((int)frames.size() == count) {
+                GAME_LOG("tryLoadFramesFromPatterns - loaded %d frames from SpriteFrameCache using basename '%s'", count, bpat.c_str());
+                break;
+            }
+            frames.clear();
+        }
+    }
+
+    return frames;
+}
 
 IronLance::IronLance()
     : _moveAnimation(nullptr)
@@ -38,68 +109,22 @@ bool IronLance::init()
     setAttackRange(0.0f);
     setAttackCooldown(10.0f);
 
-    // 尝试分别加载 Move 和 Die 动画帧（优先加载 Move，但也同时尝试加载 Die）
-    Vector<SpriteFrame*> moveFrames;
-    for (int i = 1; i <= 8; ++i)
-    {
-        char filename[256];
-        sprintf(filename, "Enemy/XinXing&&Iron Lance/Iron Lance/Iron Lance_Move/IronLance_Move_%04d.png", i);
+    // 尝试分别加载 Move 和 Die 动画帧（更健壮地尝试多个路径）
+    std::vector<std::string> movePatterns = {
+        "Enemy/XinXing&&Iron Lance/Iron Lance/Iron Lance_Move/IronLance_Move_%04d.png",
+        "Enemy/XinXing&&IronLance_Move/IronLance_Move_%04d.png",
+        "Enemy/IronLance/IronLance_Move_%04d.png",
+        "Enemy/IronLance_Move/IronLance_Move_%04d.png"
+    };
+    Vector<SpriteFrame*> moveFrames = tryLoadFramesFromPatterns(movePatterns, 8);
 
-        SpriteFrame* frame = nullptr;
-        auto s = Sprite::create(filename);
-        if (s)
-        {
-            frame = s->getSpriteFrame(); // 有些平台从文件创建的 Sprite 能返回 SpriteFrame
-        }
-
-        // 回退：尝试从 SpriteFrameCache 读取（若资源打包进 plist）
-        if (!frame)
-        {
-            char basename[128];
-            sprintf(basename, "IronLance_Move_%04d.png", i);
-            frame = SpriteFrameCache::getInstance()->getSpriteFrameByName(basename);
-        }
-
-        if (frame)
-        {
-            moveFrames.pushBack(frame);
-        }
-        else
-        {
-            // 记录加载失败的帧以便调试（不会改变功能）
-            GAME_LOG("IronLance: failed to load move frame: %s", filename);
-        }
-    }
-
-    Vector<SpriteFrame*> dieFrames;
-    for (int i = 1; i <= 5; ++i)
-    {
-        char filename[256];
-        sprintf(filename, "Enemy/XinXing&&Iron Lance/Iron Lance/Iron Lance_Die/IronLance_Die_%04d.png", i);
-
-        SpriteFrame* frame = nullptr;
-        auto s = Sprite::create(filename);
-        if (s)
-        {
-            frame = s->getSpriteFrame();
-        }
-
-        if (!frame)
-        {
-            char basename[128];
-            sprintf(basename, "IronLance_Die_%04d.png", i);
-            frame = SpriteFrameCache::getInstance()->getSpriteFrameByName(basename);
-        }
-
-        if (frame)
-        {
-            dieFrames.pushBack(frame);
-        }
-        else
-        {
-            GAME_LOG("IronLance: failed to load die frame: %s", filename);
-        }
-    }
+    std::vector<std::string> diePatterns = {
+        "Enemy/XinXing&&Iron Lance/Iron Lance/Iron Lance_Die/IronLance_Die_%04d.png",
+        "Enemy/XinXing&&IronLance_Die/IronLance_Die_%04d.png",
+        "Enemy/IronLance/IronLance_Die_%04d.png",
+        "Enemy/IronLance_Die/IronLance_Die_%04d.png"
+    };
+    Vector<SpriteFrame*> dieFrames = tryLoadFramesFromPatterns(diePatterns, 5);
 
     if (!moveFrames.empty())
     {
@@ -245,8 +270,8 @@ void IronLance::takeDamage(int damage)
 {
     if (!_isAlive || damage <= 0) return;
 
-    // 不论传入 damage 为多少，每次命中固定扣 1
-    // 直接调用基类（GameEntity / Character）的伤害方法以维持浮动显示等逻辑
+    // 不論傳入 damage 為多少，每次命中固定扣 1
+    // 直接調用基類（GameEntity / Character）的傷害方法以維持浮動顯示等邏輯
     GameEntity::takeDamage(1);
 }
 

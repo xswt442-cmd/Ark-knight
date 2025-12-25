@@ -161,8 +161,8 @@ void DeYi::executeAI(Player* player, float dt)
                 _hasExploded = true;
                 doExplosion();
 
-                // 使自己立即死亡（使用当前血量造成致死）
-                this->takeDamage(this->getHP());
+                // 直接调用底层伤害处理以强制自死，绕过 Enemy::takeDamage 的 Cup 分担逻辑
+                GameEntity::takeDamage(this->getHP());
             }
         }
         else
@@ -181,25 +181,41 @@ void DeYi::executeAI(Player* player, float dt)
 void DeYi::doExplosion()
 {
     // 爆炸视觉与对玩家造成伤害（只影响玩家）
-    Vec2 worldPos = this->convertToWorldSpace(Vec2::ZERO);
+    // 将视觉圈添加到敌人的父节点（通常为 gameLayer），使之显示在地板之上、实体之下（与 Cup 的范围圈一致）
+    Vec2 localPos = this->getPosition();
+    Node* parent = this->getParent();
 
-    Scene* running = Director::getInstance()->getRunningScene();
-    if (running)
+    auto circle = DrawNode::create();
+    circle->drawSolidCircle(Vec2::ZERO, DEYI_EXPLOSION_RADIUS, 0, 32, Color4F(1.0f, 0.4f, 0.2f, 0.6f)); // 橙色半透明
+
+    if (parent)
     {
-        // 可视化：紫/红色半透明圆圈
-        auto circle = DrawNode::create();
-        circle->drawSolidCircle(Vec2::ZERO, DEYI_EXPLOSION_RADIUS, 0, 32, Color4F(1.0f, 0.4f, 0.2f, 0.6f));
-        circle->setPosition(worldPos);
-        running->addChild(circle, Constants::ZOrder::EFFECT);
-
-        auto fade = FadeOut::create(0.5f);
-        auto removeCircle = CallFunc::create([circle]() {
-            if (circle->getParent()) circle->removeFromParent();
-        });
-        circle->runAction(Sequence::create(DelayTime::create(0.1f), fade, removeCircle, nullptr));
+        int rangeZ = Constants::ZOrder::ENTITY - 1;
+        parent->addChild(circle, rangeZ);
+        circle->setPosition(localPos);
+        circle->setGlobalZOrder(static_cast<float>(rangeZ));
+    }
+    else
+    {
+        // 退回：添加到 running scene（原行为）
+        Scene* running = Director::getInstance()->getRunningScene();
+        if (running)
+        {
+            Vec2 worldPos = this->convertToWorldSpace(Vec2::ZERO);
+            running->addChild(circle, Constants::ZOrder::EFFECT);
+            circle->setPosition(worldPos);
+        }
     }
 
+    // 在圆自身上运行淡出并移除
+    auto fade = FadeOut::create(0.5f);
+    auto removeCircle = CallFunc::create([circle]() {
+        if (circle->getParent()) circle->removeFromParent();
+    });
+    circle->runAction(Sequence::create(DelayTime::create(0.1f), fade, removeCircle, nullptr));
+
     // 对玩家造成伤害（若在半径内）
+    Scene* running = Director::getInstance()->getRunningScene();
     GameScene* gs = nullptr;
     if (running)
     {
