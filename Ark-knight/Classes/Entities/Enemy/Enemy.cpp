@@ -6,6 +6,7 @@
 #include "Scenes/GameScene.h"
 #include "cocos2d.h"
 #include <cmath>
+#include <algorithm>
 
 USING_NS_CC;
 
@@ -17,12 +18,13 @@ Enemy::Enemy()
     , _patrolTimer(0.0f)
     , _patrolInterval(2.0f)
     , _hasTarget(false)
-    , _attackWindup(0.5f) // 默认前摇 0.5 秒
+    , _attackWindup(0.5f)
     , _poisonStacks(0)
     , _poisonTimer(0.0f)
     , _poisonTickAcc(0.0f)
     , _poisonSourceAttack(0)
     , _poisonColorSaved(false)
+    , _stealthColorSaved(false)
     , _isRedMarked(false)
 {
 }
@@ -38,13 +40,11 @@ bool Enemy::init()
         return false;
     }
 
-    // 设置敌人默认属性
     setHP(Constants::Enemy::MELEE_HP);
     setMaxHP(Constants::Enemy::MELEE_HP);
     setMoveSpeed(Constants::Enemy::DEFAULT_MOVE_SPEED);
     setAttack(10);
 
-    // 设置Tag
     setTag(Constants::Tag::ENEMY);
 
     return true;
@@ -54,19 +54,16 @@ void Enemy::update(float dt)
 {
     Character::update(dt);
 
-    // 处理毒伤逻辑
+    // 处理毒伤逻辑（保持原逻辑）
     if (_poisonStacks > 0)
     {
-        // 倒计时
         _poisonTimer -= dt;
         _poisonTickAcc += dt;
 
-        // 每 POISON_TICK_INTERVAL 秒造成一次毒伤
         while (_poisonTickAcc >= POISON_TICK_INTERVAL)
         {
             _poisonTickAcc -= POISON_TICK_INTERVAL;
 
-            // 计算毒伤：每层每次造成源攻击的 10%
             if (_poisonSourceAttack > 0 && _poisonStacks > 0)
             {
                 float dmgF = static_cast<float>(_poisonSourceAttack) * POISON_TICK_RATIO * static_cast<float>(_poisonStacks);
@@ -74,13 +71,10 @@ void Enemy::update(float dt)
                 if (dmg > 0)
                 {
                     this->takeDamage(dmg);
-                    // 显示紫色的持续伤害数字（使用运行场景作为 parent）
                     Scene* running = Director::getInstance()->getRunningScene();
                     if (running)
                     {
-                        // 将世界坐标转换为 running scene 的坐标（worldPos）
                         Vec2 worldPos = this->convertToWorldSpace(Vec2::ZERO);
-                        // 在 running scene 上显示浮动文字（需要使用 running scene 作为 parent）
                         FloatingText::show(running, worldPos, std::to_string(dmg), Color3B(180,100,200));
                     }
                     GAME_LOG("Poison tick: %d damage applied to enemy (stacks=%d, srcAtk=%d)", dmg, _poisonStacks, _poisonSourceAttack);
@@ -88,20 +82,97 @@ void Enemy::update(float dt)
             }
         }
 
-        // 如果倒计时结束，清除毒状态（清空层数并恢复颜色）
         if (_poisonTimer <= 0.0f)
         {
             _poisonStacks = 0;
             _poisonTimer = 0.0f;
             _poisonTickAcc = 0.0f;
             _poisonSourceAttack = 0;
-            // 恢复颜色
+            // 恢复颜色：如果当前处于隐身（存在 stealth 源），优先恢复为 stealth 原始色；否则恢复 poison 原始色
             if (_poisonColorSaved && _sprite)
             {
-                _sprite->setColor(_poisonOriginalColor);
+                if (!_stealthSources.empty() && _stealthColorSaved)
+                {
+                    // 仍处于隐身，保持隐身色（不覆盖）
+                }
+                else
+                {
+                    _sprite->setColor(_poisonOriginalColor);
+                }
             }
             _poisonColorSaved = false;
             GAME_LOG("Poison expired on enemy, stacks cleared");
+        }
+    }
+}
+
+void Enemy::applyNymphPoison(int sourceAttack)
+{
+    // 保存原始颜色（首次中毒时）
+    if (!_poisonColorSaved && _sprite)
+    {
+        _poisonOriginalColor = _sprite->getColor();
+        _poisonColorSaved = true;
+    }
+
+    _poisonTimer = POISON_DURATION;
+    _poisonTickAcc = 0.0f;
+    _poisonSourceAttack = sourceAttack;
+    _poisonStacks = std::min(POISON_MAX_STACKS, _poisonStacks + 1);
+
+    // 只有在当前没有隐身来源时才把颜色改为偏紫（隐身优先显示浅灰）
+    if (_sprite && _stealthSources.empty())
+    {
+        Color3B purple(180, 100, 200);
+        _sprite->setColor(purple);
+    }
+
+    GAME_LOG("applyNymphPoison: stacks=%d, srcAtk=%d", _poisonStacks, _poisonSourceAttack);
+}
+
+// ==================== Stealth 源管理实现 ====================
+void Enemy::addStealthSource(void* source)
+{
+    if (!source) return;
+    // 如果已存在相同来源，忽略
+    if (std::find(_stealthSources.begin(), _stealthSources.end(), source) != _stealthSources.end()) return;
+
+    // 首次加入时保存当前颜色以便恢复
+    if (_stealthSources.empty() && _sprite)
+    {
+        _stealthOriginalColor = _sprite->getColor();
+        _stealthColorSaved = true;
+    }
+
+    _stealthSources.push_back(source);
+
+    if (_sprite)
+    {
+        // 隐身用浅灰色显示
+        _sprite->setColor(Color3B(180, 180, 180));
+    }
+}
+
+void Enemy::removeStealthSource(void* source)
+{
+    if (!source) return;
+    auto it = std::find(_stealthSources.begin(), _stealthSources.end(), source);
+    if (it == _stealthSources.end()) return;
+
+    _stealthSources.erase(it);
+
+    if (_stealthSources.empty())
+    {
+        // 没有隐身来源了，恢复颜色：若仍有毒则显示毒色，否则恢复之前保存的颜色
+        if (_poisonStacks > 0 && _sprite)
+        {
+            Color3B purple(180, 100, 200);
+            _sprite->setColor(purple);
+        }
+        else if (_stealthColorSaved && _sprite)
+        {
+            _sprite->setColor(_stealthOriginalColor);
+            _stealthColorSaved = false;
         }
     }
 }
@@ -274,37 +345,6 @@ void Enemy::attackPlayer(Player* player)
 void Enemy::playAttackAnimation()
 {
     // 默认空实现，子类可覆盖以播放具体动画（不改变冷却/状态）
-}
-
-// ==================== Nymph 中毒逻辑实现 ====================
-void Enemy::applyNymphPoison(int sourceAttack)
-{
-    // 保存原始颜色（首次中毒时）
-    if (!_poisonColorSaved && _sprite)
-    {
-        _poisonOriginalColor = _sprite->getColor();
-        _poisonColorSaved = true;
-    }
-
-    // 重置毒计时为 10s
-    _poisonTimer = POISON_DURATION;
-    _poisonTickAcc = 0.0f;
-
-    // 更新毒源攻击力为当前来源攻击力（使用最近一次来源的攻击力）
-    _poisonSourceAttack = sourceAttack;
-
-    // 叠加一层，最多 POISON_MAX_STACKS
-    _poisonStacks = std::min(POISON_MAX_STACKS, _poisonStacks + 1);
-
-    // 变色为偏紫
-    if (_sprite)
-    {
-        // 选一个偏紫颜色
-        Color3B purple(180, 100, 200);
-        _sprite->setColor(purple);
-    }
-
-    GAME_LOG("applyNymphPoison: stacks=%d, srcAtk=%d", _poisonStacks, _poisonSourceAttack);
 }
 
 // ==================== 红色标记与 KongKaZi 生成功能（不改变实体状态） ============

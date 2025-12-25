@@ -3,6 +3,7 @@
 
 #include "Entities/Base/Character.h"
 #include "cocos2d.h"
+#include <vector>
 
 // 前向声明
 class Player;
@@ -49,6 +50,21 @@ public:
     // ==================== Nymph 毒伤系统接口（已存在） ====================
     void applyNymphPoison(int sourceAttack);
     int getPoisonStacks() const { return _poisonStacks; }
+
+    // ==================== Stealth（隐身） 管理 ====================
+    /**
+     * 将一个隐身“来源”注册到该敌人（来源可以是烟雾 DrawNode 或其地址）
+     * 多个来源可共存；只有当来源计数从 0 => 1 时才真正设置颜色/隐身标记
+     */
+    void addStealthSource(void* source);
+    /**
+     * 移除之前注册的隐身来源；当计数归零时取消隐身并恢复颜色（若有毒则恢复毒色）
+     */
+    void removeStealthSource(void* source);
+    /**
+     * 是否当前处于隐身（至少存在一个来源）
+     */
+    bool isStealthed() const { return !_stealthSources.empty(); }
 
     // ==================== 红色标记 / KongKaZi 生成功能 ====================
     /**
@@ -112,6 +128,11 @@ public:
     static constexpr float POISON_TICK_INTERVAL = 0.5f;
     static constexpr float POISON_TICK_RATIO = 0.1f;
     // 每层每次造成源攻击 10%
+
+    // ========== Stealth 源列表（支持多来源） ==========
+    std::vector<void*> _stealthSources;
+    cocos2d::Color3B _stealthOriginalColor;
+    bool _stealthColorSaved;
 
     // ========== 红色标记 ==========
     bool _isRedMarked;

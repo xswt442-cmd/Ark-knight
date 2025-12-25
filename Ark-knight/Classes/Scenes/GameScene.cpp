@@ -12,6 +12,7 @@ int GameScene::s_savedMP = 0;
 #include "Entities/Enemy/Ayao.h"
 #include "Entities/Enemy/XinXing.h"
 #include "Entities/Enemy/Cup.h"
+#include "Entities/Enemy/TangHuang.h"
 #include "ui/CocosGUI.h"
 #include <algorithm>
 #include"Map/Room.h"
@@ -283,23 +284,27 @@ void GameScene::spawnEnemiesInRoom(Room* room)
     
     Rect walk = room->getWalkableArea();
     
-    // 随机生成3-8个怪（Ayao / DeYi / Cup / XinXing）
+    // 随机生成3-8个怪（Ayao / DeYi / TangHuang / Cup / XinXing）
     int enemyCount = RANDOM_INT(3, 8);
 
     for (int i = 0; i < enemyCount; i++)
     {
         Enemy* enemy = nullptr;
         float r = CCRANDOM_0_1();
-        // 概率分配：50% Ayao, 30% DeYi, 10% Cup, 10% XinXing
-        if (r < 0.3f)
+        // 概率分配：Ayao 30%，DeYi 10%，TangHuang 40%，Cup 10%，XinXing 10%
+        if (r < 0.30f)
         {
             enemy = Ayao::create();
         }
-        else if (r < 0.5f)
+        else if (r < 0.40f)
         {
             enemy = DeYi::create();
         }
-        else if (r < 0.9f)
+        else if (r < 0.80f)
+        {
+            enemy = TangHuang::create();
+        }
+        else if (r < 0.90f)
         {
             enemy = Cup::create();
         }
@@ -336,6 +341,7 @@ void GameScene::spawnEnemiesInRoom(Room* room)
         const char* typeName = "Unknown";
         if (dynamic_cast<Ayao*>(enemy)) typeName = "Ayao";
         else if (dynamic_cast<DeYi*>(enemy)) typeName = "DeYi";
+        else if (dynamic_cast<TangHuang*>(enemy)) typeName = "TangHuang";
         else if (dynamic_cast<Cup*>(enemy)) typeName = "Cup";
         else if (dynamic_cast<XinXing*>(enemy)) typeName = "XinXing";
 
@@ -964,7 +970,9 @@ void GameScene::checkCollisions()
         {
             if (enemy != nullptr && !enemy->isDead())
             {
-                // 简单的距离判定
+                // 跳过隐身敌人
+                if (enemy->isStealthed()) continue;
+
                 float dist = _player->getPosition().distance(enemy->getPosition());
                 if (dist < 80.0f)  // 攻击范围
                 {
