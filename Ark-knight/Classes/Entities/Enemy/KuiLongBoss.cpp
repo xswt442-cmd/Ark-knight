@@ -2,6 +2,8 @@
 #include "cocos2d.h"
 #include "Entities/Player/Player.h"
 #include "ui/CocosGUI.h"
+#include "Entities/Enemy/NiLuFire.h" // 新增 include
+#include "Scenes/GameScene.h"       // 为了调用 addEnemy / getPlayer
 
 USING_NS_CC;
 
@@ -23,31 +25,149 @@ KuiLongBoss::KuiLongBoss()
     , _bossHPBar(nullptr)
     , _bossHPLabel(nullptr)
     , _bossBarOffsetY(8.0f)
-    , _skillCooldown(15.0f)
-    , _skillCooldownTimer(_skillCooldown) // 初始允许使用（如果希望首次不可用，把这里设为 0.0f）
-    , _skillRange(220.0f) // 比默认攻击范围大（默认 120），按需调整
-    , _skillDamagePerHit(getAttack() * 4) // 每次高额伤害（基于攻击力的倍数，可调）
+    , _skillCooldown(10.0f)
+    , _skillCooldownTimer(_skillCooldown)
+    , _skillRange(220.0f)
+    , _skillDamagePerHit(getAttack() * 4)
     , _skillPlaying(false)
+    , _roomBounds(Rect::ZERO) // 新增
+    , _niluSpawnTimer(0.0f)
+    , _niluSpawnInterval(10.0f) // 每10秒尝试生成
+    , _niluSpawnPerInterval(2)
+    , _niluMaxPerRoom(12)
+    , _niluMinDistance(50.0f)
 {
 }
 
-KuiLongBoss::~KuiLongBoss()
+void KuiLongBoss::setRoomBounds(const Rect& bounds)
 {
-    if (_animAIdle) { _animAIdle->release(); _animAIdle = nullptr; }
-    if (_animAChangeToB) { _animAChangeToB->release(); _animAChangeToB = nullptr; }
-    if (_animBMove) { _animBMove->release(); _animBMove = nullptr; }
-    if (_animBAttack) { _animBAttack->release(); _animBAttack = nullptr; }
-    if (_animBChangeToC) { _animBChangeToC->release(); _animBChangeToC = nullptr; }
-    if (_animBChengWuJie) { _animBChengWuJie->release(); _animBChengWuJie = nullptr; }
+    _roomBounds = bounds;
+}
 
-    // 移除并释放用于播放技能动画的覆盖精灵（若存在）
-    if (_skillSprite)
+// 在文件顶部（include 之后，namespace 使用处之后），插入如下静态辅助函数（或放在匿名命名空间内）
+static void collectNiLuFiresRecursive(cocos2d::Node* node, std::vector<class NiLuFire*>& out)
+{
+    if (!node) return;
+    // 检查当前节点是否为 NiLuFire
+    NiLuFire* fire = dynamic_cast<NiLuFire*>(node);
+    if (fire)
     {
-        _skillSprite->removeFromParentAndCleanup(true);
-        _skillSprite = nullptr;
+        out.push_back(fire);
+    }
+    // 递归其子节点
+    const auto& children = node->getChildren();
+    for (auto child : children)
+    {
+        collectNiLuFiresRecursive(child, out);
+    }
+}
+
+// 计算当前房间内合法的 NiLuFire 数量（遍历场景中的 ENEMY tag 并 dynamic_cast）
+int KuiLongBoss::countNiLuFiresInRoom() const
+{
+    Scene* running = Director::getInstance()->getRunningScene();
+    if (!running) return 0;
+
+    std::vector<NiLuFire*> found;
+    collectNiLuFiresRecursive(running, found);
+
+    int count = 0;
+    for (auto fire : found)
+    {
+        if (!fire) continue;
+        if (fire->isDead()) continue;
+
+        // 如果 boss 有房间边界，则只统计在该 bounds 内的 NiLu
+        if (!_roomBounds.equals(Rect::ZERO))
+        {
+            if (!_roomBounds.containsPoint(fire->getPosition())) continue;
+        }
+        else
+        {
+            // 若未设置 room bounds，按距离保守计数（兼容旧逻辑）
+            if (fire->getPosition().distance(this->getPosition()) >= 2000.0f) continue;
+        }
+        ++count;
+    }
+    return count;
+}
+
+bool KuiLongBoss::isPositionValidForNiLu(const Vec2& pos) const
+{
+    // 必须在房间 walkable area 内（留 1 像素边距）
+    if (_roomBounds.equals(Rect::ZERO)) return false;
+    if (!(pos.x >= _roomBounds.getMinX() + 1.0f && pos.x <= _roomBounds.getMaxX() - 1.0f &&
+        pos.y >= _roomBounds.getMinY() + 1.0f && pos.y <= _roomBounds.getMaxY() - 1.0f)) return false;
+
+    // 确保与其他 NiLuFire 距离至少 _niluMinDistance
+    Scene* running = Director::getInstance()->getRunningScene();
+    if (!running) return false;
+
+    std::vector<NiLuFire*> found;
+    collectNiLuFiresRecursive(running, found);
+
+    for (auto fire : found)
+    {
+        if (!fire) continue;
+        if (fire->isDead()) continue;
+        // 只考虑同房间内的 NiLu（若 boss 有 bounds）
+        if (!_roomBounds.equals(Rect::ZERO))
+        {
+            if (!_roomBounds.containsPoint(fire->getPosition())) continue;
+        }
+        if (fire->getPosition().distance(pos) < _niluMinDistance) return false;
+    }
+    return true;
+}
+
+void KuiLongBoss::trySpawnNiLuFires()
+{
+    // 计数限制
+    int existing = countNiLuFiresInRoom();
+    if (existing >= _niluMaxPerRoom) return;
+
+    // 每次尝试生成 _niluSpawnPerInterval 个，直到达上限
+    int toSpawn = _niluSpawnPerInterval;
+    if (existing + toSpawn > _niluMaxPerRoom)
+        toSpawn = _niluMaxPerRoom - existing;
+    if (toSpawn <= 0) return;
+
+    Scene* running = Director::getInstance()->getRunningScene();
+    if (!running) return;
+    GameScene* gs = dynamic_cast<GameScene*>(running);
+    if (!gs) return;
+
+    // 随机位置采样（简单重试法）
+    int attempts = 0;
+    int spawned = 0;
+    while (spawned < toSpawn && attempts < 50)
+    {
+        attempts++;
+        float rx = CCRANDOM_0_1() * (_roomBounds.getMaxX() - _roomBounds.getMinX()) + _roomBounds.getMinX();
+        float ry = CCRANDOM_0_1() * (_roomBounds.getMaxY() - _roomBounds.getMinY()) + _roomBounds.getMinY();
+        Vec2 cand(rx, ry);
+
+        if (!isPositionValidForNiLu(cand)) continue;
+
+        // 创建 NiLuFire
+        auto fire = NiLuFire::create();
+        if (!fire) continue;
+        fire->setPosition(cand);
+
+        // 将 NiLu 的攻击力与 KuiLong 保持一致
+        fire->setAttack(this->getAttack()); // 也保留 base attack
+        // 也给内部字段（NiLuFire 有 _attackDamage 字段用于 performAttackImmediate）
+        // 通过 dynamic cast 成功后直接访问私有不是可行；使用 public setAttack 足以（performAttackImmediate 接受 damage 参数）
+        // 注册到场景（GameScene::addEnemy 会调用 setRoomBounds）
+        gs->addEnemy(fire);
+
+        spawned++;
     }
 
-    // UI 子节点由 Node 管理，不需要手动 release
+    if (spawned > 0)
+    {
+        GAME_LOG("%s: spawned %d NiLuFires (existing before=%d)", LOG_TAG, spawned, existing);
+    }
 }
 
 bool KuiLongBoss::init()
@@ -58,8 +178,8 @@ bool KuiLongBoss::init()
     setEnemyType(EnemyType::MELEE);
     setMaxHP(20000);
     setHP(getMaxHP());
-    setMoveSpeed(60.0f);
-    setAttack(80);
+    setMoveSpeed(30.0f); // 原 60.0f -> 30.0f，已降低移速
+    setAttack(1800);
     setSightRange(1000.0f);
     setAttackRange(120.0f);
 
@@ -427,6 +547,17 @@ void KuiLongBoss::update(float dt)
         _skillCooldownTimer += dt;
         if (_skillCooldownTimer > _skillCooldown) _skillCooldownTimer = _skillCooldown;
     }
+
+    // 计时生成 NiLuFire
+    if (_currentState != EntityState::DIE)
+    {
+        _niluSpawnTimer += dt;
+        if (_niluSpawnTimer >= _niluSpawnInterval)
+        {
+            _niluSpawnTimer = 0.0f;
+            trySpawnNiLuFires();
+        }
+    }
 }
 
 void KuiLongBoss::executeAI(Player* player, float dt)
@@ -489,7 +620,7 @@ void KuiLongBoss::attack()
         if (prevWind) _sprite->stopAction(prevWind);
     }
 
-    // 使用 Enemy 提供的 windup 时长来安排“伤害触发时点”并在风挡结束时播放真正的攻击动画。
+    // 使用 Enemy 提供的 windup 時長來安排“傷害触发時點”並在風擋結束時播放真正的攻擊動畫。
     // 关键：不要在 windup 完成时立刻把状态设回 IDLE；而是调用 playAttackAnimation()，
     // 由 playAttackAnimation 在动画播放完毕后再将状态重置为 IDLE（保证动画完整播放）。
     float windup = this->getAttackWindup();
@@ -541,7 +672,7 @@ void KuiLongBoss::playAttackAnimation()
         auto animate = Animate::create(_animBAttack);
         animate->setTag(KUI_LONG_HIT_TAG);
 
-        // 播放完后恢复到移动动画第一帧（初始状态），然后再让 AI/next tick 决定是启动移动循环还是继续攻击
+        // 播放攻击动画并在回调时恢复状态
         auto callback = CallFunc::create([this]() {
             // 恢复到 B 阶段移动动画的第一帧（如果存在）
             if (_animBMove && _sprite)
@@ -552,13 +683,31 @@ void KuiLongBoss::playAttackAnimation()
                     _sprite->setSpriteFrame(frames.front()->getSpriteFrame());
                 }
             }
+
+            // 普通攻击触发时，让附近的 NiLuFire 同步释放一次攻击（伤害等于 KuiLong 的攻击力）
+            Scene* running = Director::getInstance()->getRunningScene();
+            if (running)
+            {
+                std::vector<NiLuFire*> found;
+                collectNiLuFiresRecursive(running, found);
+                for (auto fire : found)
+                {
+                    if (!fire) continue;
+                    if (fire->isDead()) continue;
+                    // 只触发在同一房间内的 NiLu
+                    if (!_roomBounds.equals(Rect::ZERO))
+                    {
+                        if (!_roomBounds.containsPoint(fire->getPosition())) continue;
+                    }
+                    fire->performAttackImmediate(this->getAttack());
+                }
+            }
+
             // 播放结束后把状态重回 IDLE（前提不是死亡）
             if (_currentState != EntityState::DIE)
             {
                 setState(EntityState::IDLE);
             }
-            // 注意：不要立即启动移动循环，这样能保证“先回到第一帧初始状态，再由 AI/移动逻辑决定下一步”。
-            // 如果下一帧 AI 调用 move(...)（因为需要追击），move() 会检测到非 ATTACK 状态并启动移动循环动画。
         });
         auto seq = Sequence::create(animate, callback, nullptr);
         seq->setTag(KUI_LONG_HIT_TAG);
@@ -566,260 +715,6 @@ void KuiLongBoss::playAttackAnimation()
     }
 }
 
-void KuiLongBoss::move(const Vec2& direction, float dt)
-{
-    // 技能或攻击期间禁止移动（技能不可被打断）
-    if (_currentState == EntityState::ATTACK || _currentState == EntityState::SKILL || _currentState == EntityState::DIE)
-    {
-        // 保持位置不变
-        Character::move(Vec2::ZERO, dt);
-        return;
-    }
-
-    // 如果没有移动向量，停止移动动画并保持移动动画第一帧（如果是 B 阶段）
-    if (direction.lengthSquared() <= 1.0f)
-    {
-        // 停止移动动作（如果存在）
-        if (_sprite)
-        {
-            auto act = _sprite->getActionByTag(KUI_LONG_MOVE_TAG);
-            if (act)
-            {
-                _sprite->stopAction(act);
-            }
-
-            // 恢复到移动动画的第一帧（若为 B 阶段），否则若在 A 阶段恢复 AIdle 第一帧
-            if (_phase == PHASE_B && _animBMove)
-            {
-                auto frames = _animBMove->getFrames();
-                if (!frames.empty())
-                {
-                    _sprite->setSpriteFrame(frames.front()->getSpriteFrame());
-                }
-            }
-            else if (_phase == PHASE_A && _animAIdle)
-            {
-                auto frames = _animAIdle->getFrames();
-                if (!frames.empty())
-                {
-                    _sprite->setSpriteFrame(frames.front()->getSpriteFrame());
-                }
-            }
-        }
-
-        Character::move(Vec2::ZERO, dt); // 更新状态为 IDLE
-        _moveAnimPlaying = false;
-        return;
-    }
-
-    // 有移动向量：实际移动实体
-    Vec2 dirNorm = direction.getNormalized();
-    Character::move(dirNorm, dt);
-
-    // 设置翻转（左右朝向）
-    if (_sprite)
-    {
-        _sprite->setFlippedX(dirNorm.x < 0.0f);
-    }
-
-    // 启动 B 阶段的移动循环动画（如果在 B 阶段并且还未在播放）
-    if (_phase == PHASE_B && _animBMove && _sprite)
-    {
-        if (!_sprite->getActionByTag(KUI_LONG_MOVE_TAG))
-        {
-            auto animate = Animate::create(_animBMove);
-            auto repeat = RepeatForever::create(animate);
-            repeat->setTag(KUI_LONG_MOVE_TAG);
-            _sprite->runAction(repeat);
-            _moveAnimPlaying = true;
-        }
-    }
-}
-
-void KuiLongBoss::takeDamage(int damage)
-{
-    // 在阶段 A 或 转场期间完全免疫所有伤害
-    if (_phase == PHASE_A || _phase == TRANSITION_A_TO_B)
-    {
-        GAME_LOG("%s: damage ignored in PhaseA/Transition (incoming=%d)", LOG_TAG, damage);
-        return;
-    }
-
-    // 如果正在释放技能，不改变技能流程（仍允许扣血，但不应触发打断逻辑）
-    if (_skillPlaying)
-    {
-        // 直接调用基类处理生命值/护甲等，但尽量避免触发中断动画/状态（假定基类不会强制 stop skill）
-        Enemy::takeDamage(damage);
-        return;
-    }
-
-    // 否则调用基类实现（包含 Cup 分担逻辑等）
-    Enemy::takeDamage(damage);
-}
-
-int KuiLongBoss::takeDamageReported(int damage)
-{
-    // 在阶段 A 或 转场期间完全免疫所有伤害，返回实际生效值 0
-    if (_phase == PHASE_A || _phase == TRANSITION_A_TO_B)
-    {
-        GAME_LOG("%s: takeDamageReported ignored in PhaseA/Transition (incoming=%d)", LOG_TAG, damage);
-        return 0;
-    }
-
-    // 如果正在释放技能，仍然返回基类计算的实际生效值，但不应触发打断
-    if (_skillPlaying)
-    {
-        return Enemy::takeDamageReported(damage);
-    }
-
-    // 否则调用基类并返回实际生效值
-    return Enemy::takeDamageReported(damage);
-}
-
-void KuiLongBoss::die()
-{
-    // 如果已经进入 DIE 状态则忽略重复调用
-    if (_currentState == EntityState::DIE) return;
-
-    // 标记为死亡状态并停止移动/攻击相关动作
-    setState(EntityState::DIE);
-
-    // 先移除 stealth source（避免悬空指针）
-    this->removeStealthSource((void*)this);
-
-    // 停止 sprite 上的所有行为相关动作，确保转场动画能正确播放
-    if (_sprite)
-    {
-        _sprite->stopActionByTag(KUI_LONG_MOVE_TAG);
-        _sprite->stopActionByTag(KUI_LONG_WINDUP_TAG);
-        _sprite->stopActionByTag(KUI_LONG_HIT_TAG);
-        // 也取消可能在播放的转场动作，避免重复
-        _sprite->stopActionByTag(KUI_LONG_CHANGE_TAG);
-    }
-
-    // 如果处于 B 阶段且存在 B->C 转场动画，则按“第5帧停顿2秒再继续”播放
-    if (_phase == PHASE_B && _animBChangeToC && _sprite)
-    {
-        // 获取原动画帧和单帧间隔
-        auto origFrames = _animBChangeToC->getFrames();
-        float delayPerUnit = 0.1f;
-        // 尝试读取原动画的 delayPerUnit（兼容老版本）
-        // Animation::getDelayPerUnit() 在大多数 cocos2d-x 版本可用
-        // 若不可用则使用默认 0.1f（创建时也是 0.10f）
-#ifdef CC_ANIMATION_GET_DELAY_PER_UNIT
-        delayPerUnit = _animBChangeToC->getDelayPerUnit();
-#else
-        // 如果没有宏支持，尝试直接调用（若不存在此符号会在编译时报错；通常可用）
-        delayPerUnit = _animBChangeToC->getDelayPerUnit();
-#endif
-
-        const ssize_t total = static_cast<ssize_t>(origFrames.size());
-        const ssize_t splitIndex = 5; // 在第5帧处停下（索引为0..4为前5帧）
-        if (total >= splitIndex + 1)
-        {
-            // 构造前半部分（前5帧）
-            Vector<SpriteFrame*> firstFrames;
-            for (ssize_t i = 0; i < splitIndex && i < total; ++i)
-            {
-                firstFrames.pushBack(origFrames.at(i)->getSpriteFrame());
-            }
-            // 构造后半部分（剩余帧）
-            Vector<SpriteFrame*> secondFrames;
-            for (ssize_t i = splitIndex; i < total; ++i)
-            {
-                secondFrames.pushBack(origFrames.at(i)->getSpriteFrame());
-            }
-
-            // 创建两段 Animation（使用与原动画相同的帧间隔）
-            auto anim1 = Animation::createWithSpriteFrames(firstFrames, delayPerUnit);
-            auto anim2 = Animation::createWithSpriteFrames(secondFrames, delayPerUnit);
-            if (anim1) anim1->setRestoreOriginalFrame(false);
-            if (anim2) anim2->setRestoreOriginalFrame(false);
-
-            // 对应的 Animate
-            auto animate1 = anim1 ? Animate::create(anim1) : nullptr;
-            auto animate2 = anim2 ? Animate::create(anim2) : nullptr;
-
-            // 回调：播放完成后调用基类 die 并移除节点
-            auto onFinish = CallFunc::create([this]() {
-                Enemy::die();
-                this->removeFromParentAndCleanup(true);
-            });
-
-            // 组合：前半段 -> 停顿2秒 -> 后半段 -> onFinish
-            Vector<FiniteTimeAction*> seqActs;
-            if (animate1) seqActs.pushBack(animate1);
-            seqActs.pushBack(DelayTime::create(2.0f));
-            if (animate2) seqActs.pushBack(animate2);
-            seqActs.pushBack(onFinish);
-
-            // 将 Vector 转为 Sequence 参数
-            Vector<FiniteTimeAction*> actions = seqActs;
-            // Build sequence
-            Vector<FiniteTimeAction*> tmp;
-            // Create a Sequence through initializer list
-            // Since Sequence::create expects variadic, build via creating array is inconvenient;
-            // Use helper: chain them manually
-            ActionInterval* first = nullptr;
-            CallFunc* lastCallback = nullptr;
-            // We'll build sequence progressively
-            FiniteTimeAction* current = nullptr;
-            if (!actions.empty())
-            {
-                current = actions.at(0);
-                for (ssize_t i = 1; i < static_cast<ssize_t>(actions.size()); ++i)
-                {
-                    current = Sequence::create(static_cast<ActionInterval*>(current), static_cast<FiniteTimeAction*>(actions.at(i)), nullptr);
-                }
-            }
-
-            // 如果 current 是有效 sequence / action，则运行并设置 tag
-            if (current)
-            {
-                auto seq = dynamic_cast<Action*>(current);
-                if (seq)
-                {
-                    seq->setTag(KUI_LONG_CHANGE_TAG);
-                    _sprite->runAction(seq);
-                    return;
-                }
-            }
-
-            // 兜底：若上面构建失败，直接播放整体动画
-        }
-
-        // 如果帧数不足或拆分失败，回退到播放整体动画
-        _animBChangeToC->setRestoreOriginalFrame(false);
-        auto fullAnimate = Animate::create(_animBChangeToC);
-        fullAnimate->setTag(KUI_LONG_CHANGE_TAG);
-        auto onFinishFallback = CallFunc::create([this]() {
-            Enemy::die();
-            this->removeFromParentAndCleanup(true);
-        });
-        auto seqFallback = Sequence::create(fullAnimate, onFinishFallback, nullptr);
-        seqFallback->setTag(KUI_LONG_CHANGE_TAG);
-        _sprite->runAction(seqFallback);
-    }
-    else
-    {
-        // 否则直接立即调用基类死亡处理并移除
-        Enemy::die();
-        this->removeFromParentAndCleanup(true);
-    }
-}
-
-// 新方法实现：技能相关
-bool KuiLongBoss::canUseChengWuJie() const
-{
-    return (_skillCooldownTimer >= _skillCooldown) && !_skillPlaying && (_phase == PHASE_B);
-}
-
-void KuiLongBoss::resetChengWuJieCooldown()
-{
-    _skillCooldownTimer = 0.0f;
-}
-
-// 启动技能（不可被打断）：播放技能动画、按时序触发 5 次伤害（0, 0.5, 1.0, 1.5, 2.5 秒），动画播放完毕后恢复状态
 void KuiLongBoss::startChengWuJie(Player* target)
 {
     if (_phase != PHASE_B) return;
@@ -829,7 +724,7 @@ void KuiLongBoss::startChengWuJie(Player* target)
 
     // 标记技能正在播放并设置状态阻止移动/攻击
     _skillPlaying = true;
-    setState(EntityState::SKILL); // 使用 SKILL 状态阻止移动/攻击，并区分普通 ATTACK
+    setState(EntityState::SKILL);
     resetChengWuJieCooldown();
 
     // 停止移动循环动画
@@ -853,10 +748,7 @@ void KuiLongBoss::startChengWuJie(Player* target)
 
         // 在技能动画结束时恢复状态并清理标志（确保动画播放完毕才恢复）
         auto onSkillFinish = CallFunc::create([this]() {
-            // 动画播完，解除技能占用
             _skillPlaying = false;
-
-            // 如果未死亡，恢复为 IDLE（移动会由下一帧 AI/ move 决定是否启动）
             if (_currentState != EntityState::DIE)
             {
                 setState(EntityState::IDLE);
@@ -869,7 +761,6 @@ void KuiLongBoss::startChengWuJie(Player* target)
     }
     else
     {
-        // 若没有技能动画，也要在技能结束后恢复状态（这里用保守长度）
         auto fallbackDelay = DelayTime::create(2.5f);
         auto onFinish = CallFunc::create([this]() {
             _skillPlaying = false;
@@ -880,41 +771,325 @@ void KuiLongBoss::startChengWuJie(Player* target)
         this->runAction(seq);
     }
 
-    // 在节点上安排 5 次伤害调度（受技能动画与技能状态保护）
+    // 在节点上安排 5 次伤害调度，并在每一次伤害同时让房内 NiLuFire 同步攻击
+    auto applyHitAndNiLu = [this, target](int damage) {
+        if (!target) return;
+        if (_currentState == EntityState::DIE) return;
+        float distSqr = (target->getPosition() - this->getPosition()).lengthSquared();
+        if (distSqr <= (_skillRange * _skillRange)) target->takeDamage(damage);
+
+        // 同步触发房间内 NiLuFire 攻击（伤害等于 KuiLong 的攻击力）
+        Scene* running = Director::getInstance()->getRunningScene();
+        if (!running) return;
+        std::vector<NiLuFire*> found;
+        collectNiLuFiresRecursive(running, found);
+        for (auto fire : found)
+        {
+            if (!fire) continue;
+            if (fire->isDead()) continue;
+            if (!_roomBounds.equals(Rect::ZERO))
+            {
+                if (!_roomBounds.containsPoint(fire->getPosition())) continue;
+            }
+            fire->performAttackImmediate(this->getAttack());
+        }
+    };
+
+    // 生成 sequence：0,0.5,1.0,1.5,2.5 秒分别触发
     auto damageSeq = Sequence::create(
-        DelayTime::create(0.0f), CallFunc::create([this, target]() {
-            if (!target) return;
-            if (_currentState == EntityState::DIE) return;
-            float distSqr = (target->getPosition() - this->getPosition()).lengthSquared();
-            if (distSqr <= (_skillRange * _skillRange)) target->takeDamage(_skillDamagePerHit);
-        }),
-        DelayTime::create(0.5f), CallFunc::create([this, target]() {
-            if (!target) return;
-            if (_currentState == EntityState::DIE) return;
-            float distSqr = (target->getPosition() - this->getPosition()).lengthSquared();
-            if (distSqr <= (_skillRange * _skillRange)) target->takeDamage(_skillDamagePerHit);
-        }),
-        DelayTime::create(0.5f), CallFunc::create([this, target]() {
-            if (!target) return;
-            if (_currentState == EntityState::DIE) return;
-            float distSqr = (target->getPosition() - this->getPosition()).lengthSquared();
-            if (distSqr <= (_skillRange * _skillRange)) target->takeDamage(_skillDamagePerHit);
-        }),
-        DelayTime::create(0.5f), CallFunc::create([this, target]() {
-            if (!target) return;
-            if (_currentState == EntityState::DIE) return;
-            float distSqr = (target->getPosition() - this->getPosition()).lengthSquared();
-            if (distSqr <= (_skillRange * _skillRange)) target->takeDamage(_skillDamagePerHit);
-        }),
-        DelayTime::create(1.0f), CallFunc::create([this, target]() {
-            if (!target) return;
-            if (_currentState == EntityState::DIE) return;
-            float distSqr = (target->getPosition() - this->getPosition()).lengthSquared();
-            if (distSqr <= (_skillRange * _skillRange)) target->takeDamage(_skillDamagePerHit);
-        }),
+        DelayTime::create(0.0f), CallFunc::create([this, applyHitAndNiLu]() { applyHitAndNiLu(this->_skillDamagePerHit); }),
+        DelayTime::create(0.5f), CallFunc::create([this, applyHitAndNiLu]() { applyHitAndNiLu(this->_skillDamagePerHit); }),
+        DelayTime::create(0.5f), CallFunc::create([this, applyHitAndNiLu]() { applyHitAndNiLu(this->_skillDamagePerHit); }),
+        DelayTime::create(0.5f), CallFunc::create([this, applyHitAndNiLu]() { applyHitAndNiLu(this->_skillDamagePerHit); }),
+        DelayTime::create(1.0f), CallFunc::create([this, applyHitAndNiLu]() { applyHitAndNiLu(this->_skillDamagePerHit); }),
         nullptr);
 
-    // 给该动作设置 tag，避免重复调度或误触发
     damageSeq->setTag(KUI_LONG_SKILL_DAMAGE_TAG);
     this->runAction(damageSeq);
+}
+
+void KuiLongBoss::takeDamage(int damage)
+{
+    // 在阶段 A 或 转场期间完全免疫所有伤害
+    if (_phase == PHASE_A || _phase == TRANSITION_A_TO_B)
+    {
+        GAME_LOG("%s: damage ignored in PhaseA/Transition (incoming=%d)", LOG_TAG, damage);
+        return;
+    }
+
+    // 当正在释放技能，不改变技能流程（仍允许扣血，但不应触发打断逻辑）
+    if (_skillPlaying)
+    {
+        // 应用 NiLuFire 带来的伤害减免
+        int count = countNiLuFiresInRoom();
+        float factor = powf(0.85f, static_cast<float>(count));
+        int reduced = static_cast<int>(std::floor(static_cast<float>(damage) * factor + 0.0001f));
+        Enemy::takeDamage(reduced);
+        return;
+    }
+
+    // 否则调用基类实现（包含 Cup 分担逻辑等），但先应用 NiLu 减免
+    int count = countNiLuFiresInRoom();
+    float factor = powf(0.85f, static_cast<float>(count));
+    int reduced = static_cast<int>(std::floor(static_cast<float>(damage) * factor + 0.0001f));
+    Enemy::takeDamage(reduced);
+}
+
+int KuiLongBoss::takeDamageReported(int damage)
+{
+    // 在阶段 A 或 转场期间完全免疫所有伤害，返回实际生效值 0
+    if (_phase == PHASE_A || _phase == TRANSITION_A_TO_B)
+    {
+        GAME_LOG("%s: takeDamageReported ignored in PhaseA/Transition (incoming=%d)", LOG_TAG, damage);
+        return 0;
+    }
+
+    // 计算 NiLuFire 减免
+    int count = countNiLuFiresInRoom();
+    float factor = powf(0.85f, static_cast<float>(count));
+    int reduced = static_cast<int>(std::floor(static_cast<float>(damage) * factor + 0.0001f));
+
+    // 如果正在放技能，仍然允许扣血但不打断
+    if (_skillPlaying)
+    {
+        return Enemy::takeDamageReported(reduced);
+    }
+
+    return Enemy::takeDamageReported(reduced);
+}
+
+void KuiLongBoss::die()
+{
+    // 如果已经进入 DIE 状态则忽略重复调用
+    if (_currentState == EntityState::DIE) return;
+
+    // 标记为死亡状态并停止移动/攻击相关动作
+    setState(EntityState::DIE);
+
+    // 先移除 stealth source（避免悬空指针）
+    this->removeStealthSource((void*)this);
+
+    // 立即移除同房间的所有 NiLuFire（不计入击杀、且不触发自爆/额外效果）
+    Scene* running = Director::getInstance()->getRunningScene();
+    if (running)
+    {
+        std::vector<NiLuFire*> found;
+        collectNiLuFiresRecursive(running, found);
+        for (auto fire : found)
+        {
+            if (!fire) continue;
+            // 只移除在该 Boss 房间范围内的 NiLu（若有 room bounds）
+            if (!_roomBounds.equals(Rect::ZERO))
+            {
+                if (!_roomBounds.containsPoint(fire->getPosition())) continue;
+            }
+            // 停止其所有动作与调度，直接移除，避免触发自爆等副作用
+            fire->stopAllActions();
+            fire->unscheduleAllCallbacks();
+            // 若需要更安全，也可先设置状态为 DIE
+            fire->setState(EntityState::DIE);
+            fire->removeFromParentAndCleanup(true);
+        }
+    }
+
+    // 停止 sprite 上的所有行为相关动作，确保转场动画能正确播放
+    if (_sprite)
+    {
+        _sprite->stopActionByTag(KUI_LONG_MOVE_TAG);
+        _sprite->stopActionByTag(KUI_LONG_WINDUP_TAG);
+        _sprite->stopActionByTag(KUI_LONG_HIT_TAG);
+        // 也取消可能在播放的转场动作，避免重复
+        _sprite->stopActionByTag(KUI_LONG_CHANGE_TAG);
+    }
+
+    // 如果处于 B 阶段且存在 B->C 转场动画，则按“第5帧停顿2秒再继续”播放
+    if (_phase == PHASE_B && _animBChangeToC && _sprite)
+    {
+        // （保持你原有的转场播放逻辑不变）
+        // 获取原动画帧和单帧间隔
+        auto origFrames = _animBChangeToC->getFrames();
+        float delayPerUnit = 0.1f;
+#ifdef CC_ANIMATION_GET_DELAY_PER_UNIT
+        delayPerUnit = _animBChangeToC->getDelayPerUnit();
+#else
+        delayPerUnit = _animBChangeToC->getDelayPerUnit();
+#endif
+
+        const ssize_t total = static_cast<ssize_t>(origFrames.size());
+        const ssize_t splitIndex = 5; // 在第5帧处停下（索引为0..4为前5帧）
+        if (total >= splitIndex + 1)
+        {
+            Vector<SpriteFrame*> firstFrames;
+            for (ssize_t i = 0; i < splitIndex && i < total; ++i)
+            {
+                firstFrames.pushBack(origFrames.at(i)->getSpriteFrame());
+            }
+            Vector<SpriteFrame*> secondFrames;
+            for (ssize_t i = splitIndex; i < total; ++i)
+            {
+                secondFrames.pushBack(origFrames.at(i)->getSpriteFrame());
+            }
+
+            auto anim1 = Animation::createWithSpriteFrames(firstFrames, delayPerUnit);
+            auto anim2 = Animation::createWithSpriteFrames(secondFrames, delayPerUnit);
+            if (anim1) anim1->setRestoreOriginalFrame(false);
+            if (anim2) anim2->setRestoreOriginalFrame(false);
+
+            auto animate1 = anim1 ? Animate::create(anim1) : nullptr;
+            auto animate2 = anim2 ? Animate::create(anim2) : nullptr;
+
+            auto onFinish = CallFunc::create([this]() {
+                Enemy::die();
+                this->removeFromParentAndCleanup(true);
+            });
+
+            Vector<FiniteTimeAction*> seqActs;
+            if (animate1) seqActs.pushBack(animate1);
+            seqActs.pushBack(DelayTime::create(2.0f));
+            if (animate2) seqActs.pushBack(animate2);
+            seqActs.pushBack(onFinish);
+
+            FiniteTimeAction* current = nullptr;
+            if (!seqActs.empty())
+            {
+                current = seqActs.at(0);
+                for (ssize_t i = 1; i < static_cast<ssize_t>(seqActs.size()); ++i)
+                {
+                    current = Sequence::create(static_cast<ActionInterval*>(current), static_cast<FiniteTimeAction*>(seqActs.at(i)), nullptr);
+                }
+            }
+
+            if (current)
+            {
+                auto seq = dynamic_cast<Action*>(current);
+                if (seq)
+                {
+                    seq->setTag(KUI_LONG_CHANGE_TAG);
+                    _sprite->runAction(seq);
+                    return;
+                }
+            }
+        }
+
+        _animBChangeToC->setRestoreOriginalFrame(false);
+        auto fullAnimate = Animate::create(_animBChangeToC);
+        fullAnimate->setTag(KUI_LONG_CHANGE_TAG);
+        auto onFinishFallback = CallFunc::create([this]() {
+            Enemy::die();
+            this->removeFromParentAndCleanup(true);
+        });
+        auto seqFallback = Sequence::create(fullAnimate, onFinishFallback, nullptr);
+        seqFallback->setTag(KUI_LONG_CHANGE_TAG);
+        _sprite->runAction(seqFallback);
+    }
+    else
+    {
+        // 否则直接立即调用基类死亡处理并移除
+        Enemy::die();
+        this->removeFromParentAndCleanup(true);
+    }
+}
+
+void KuiLongBoss::move(const cocos2d::Vec2& direction, float dt)
+{
+    // 阶段/技能/攻击期间禁止移动
+    if (_currentState == EntityState::DIE || _skillPlaying || _currentState == EntityState::ATTACK) return;
+
+    // 若没有实际方向，则停止移动动画
+    if (direction.equals(cocos2d::Vec2::ZERO))
+    {
+        if (_moveAnimPlaying && _sprite)
+        {
+            auto act = _sprite->getActionByTag(KUI_LONG_MOVE_TAG);
+            if (act) _sprite->stopAction(act);
+            _moveAnimPlaying = false;
+        }
+        return;
+    }
+
+    // 若尚未播放移动动画，根据当前阶段尝试播放合适的循环移动动画
+    if (_sprite && !_moveAnimPlaying)
+    {
+        cocos2d::Animation* chosen = nullptr;
+        // 在 B/C 阶段优先使用 B move，否则使用 A idle（尽量保证有动画）
+        if ((_phase == PHASE_B || _phase == PHASE_C) && _animBMove) chosen = _animBMove;
+        else if (_animAIdle) chosen = _animAIdle;
+
+        if (chosen)
+        {
+            auto animate = cocos2d::Animate::create(chosen);
+            auto repeat = cocos2d::RepeatForever::create(animate);
+            repeat->setTag(KUI_LONG_MOVE_TAG);
+            _sprite->runAction(repeat);
+            _moveAnimPlaying = true;
+        }
+    }
+
+    // 简单位置更新（按 direction * dt 平移，避免依赖可能缺失的 getter）
+    this->setPosition(this->getPosition() + direction * dt);
+}
+
+KuiLongBoss::~KuiLongBoss()
+{
+    // 停止所有调度/动作，避免悬挂回调
+    this->stopAllActions();
+    if (_sprite) _sprite->stopAllActions();
+
+    // 移除 stealth source（防止悬空指针）
+    this->removeStealthSource((void*)this);
+
+    // 释放 retain 的 Animation（兼容 Cocos2d-x retain/release 使用）
+    if (_animAIdle)        { _animAIdle->release();        _animAIdle = nullptr; }
+    if (_animAChangeToB)   { _animAChangeToB->release();   _animAChangeToB = nullptr; }
+    if (_animBMove)        { _animBMove->release();        _animBMove = nullptr; }
+    if (_animBAttack)      { _animBAttack->release();      _animBAttack = nullptr; }
+    if (_animBChangeToC)   { _animBChangeToC->release();   _animBChangeToC = nullptr; }
+    if (_animBChengWuJie)  { _animBChengWuJie->release();  _animBChengWuJie = nullptr; }
+
+    // 清理 UI / 精灵引用
+    if (_bossHPBar)    { _bossHPBar->removeFromParentAndCleanup(true); _bossHPBar = nullptr; }
+    if (_bossHPLabel)  { _bossHPLabel->removeFromParentAndCleanup(true); _bossHPLabel = nullptr; }
+    if (_skillSprite)  { _skillSprite->removeFromParentAndCleanup(true); _skillSprite = nullptr; }
+}
+
+// 新增实现：通用逐帧加载、技能可用判断与重置冷却
+
+cocos2d::Animation* KuiLongBoss::loadAnimationFrames(const std::string& folder, const std::string& prefix, int maxFrames, float delayPerUnit)
+{
+    Vector<SpriteFrame*> frames;
+    for (int i = 1; i <= maxFrames; ++i)
+    {
+        char filename[512];
+        sprintf(filename, "%s/%s_%04d.png", folder.c_str(), prefix.c_str(), i);
+        SpriteFrame* frame = nullptr;
+        auto s = Sprite::create(filename);
+        if (s) frame = s->getSpriteFrame();
+        if (!frame)
+        {
+            char basename[256];
+            sprintf(basename, "%s_%04d.png", prefix.c_str(), i);
+            frame = SpriteFrameCache::getInstance()->getSpriteFrameByName(basename);
+        }
+        if (frame) frames.pushBack(frame);
+        else break;
+    }
+
+    if (frames.empty()) return nullptr;
+
+    auto anim = Animation::createWithSpriteFrames(frames, delayPerUnit);
+    return anim; // 返回 autoreleased，调用方可按需 retain()
+}
+
+bool KuiLongBoss::canUseChengWuJie() const
+{
+    // 仅在 PHASE_B 且未在技能/死亡状态且冷却已到时可用
+    if (_phase != PHASE_B) return false;
+    if (_skillPlaying) return false;
+    if (_currentState == EntityState::DIE) return false;
+    return (_skillCooldownTimer >= _skillCooldown);
+}
+
+void KuiLongBoss::resetChengWuJieCooldown()
+{
+    _skillCooldownTimer = 0.0f;
 }
