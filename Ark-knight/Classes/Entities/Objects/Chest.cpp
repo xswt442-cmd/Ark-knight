@@ -1,7 +1,7 @@
 ﻿#include "Chest.h"
 #include "Item.h"
-#include "Actor/Player.h"
-#include "Const/Const.h"
+#include "Entities/Player/Player.h"
+#include "Core/Constants.h"
 #include "cocos2d.h"
 
 using namespace cocos2d;

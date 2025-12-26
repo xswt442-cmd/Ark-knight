@@ -15,6 +15,7 @@ int GameScene::s_savedMP = 0;
 #include "Entities/Enemy/Du.h"
 #include "Entities/Enemy/Cup.h" // 新增：包含 Cup 头文件
 #include "Entities/Enemy/KuiLongBoss.h" // 新增：包含 KuiLongBoss 头文件
+#include "Entities/Objects/Chest.h"
 #include "ui/CocosGUI.h"
 #include <algorithm>
 #include"Map/Room.h"
@@ -841,7 +842,17 @@ void GameScene::updateInteraction(float dt)
     // 显示或隐藏交互提示
     if (canInteractChest)
     {
-        Sprite* chest = _currentRoom->getChest();
+        Chest* chestObj = _currentRoom->getChest();
+        if (!chestObj)
+        {
+            if (_interactionLabel && _interactionLabel->isVisible())
+            {
+                _interactionLabel->setVisible(false);
+            }
+            return;
+        }
+        
+        Sprite* chest = chestObj->getSprite();
         if (!chest)
         {
             if (_interactionLabel && _interactionLabel->isVisible())
