@@ -93,7 +93,7 @@ public:
     void createChest();
     cocos2d::Sprite* getChest() const { return _chest; }
     bool isChestOpened() const { return _chestOpened; }
-    void openChest();
+    void openChest(Player* player = nullptr);
     bool canInteractWithChest(Player* player) const;
     
     // 传送门管理

@@ -468,3 +468,50 @@ void Player::takeDamage(int damage)
         FloatingText::show(this->getParent(), this->getPosition(), std::to_string(damage), Color3B(220,20,20));
     }
 }
+// ==================== 道具增益实现 ====================
+void Player::addDamageReduction(float percent)
+{
+    _damageReductionPct += percent;
+    if (_damageReductionPct > 0.8f) _damageReductionPct = 0.8f; // 上限80%
+}
+
+void Player::multiplyAttack(float factor)
+{
+    _attack = static_cast<int>(_attack * factor);
+}
+
+void Player::multiplyAttackCooldown(float factor)
+{
+    _attackCooldown *= factor;
+    if (_attackCooldown < 0.02f) _attackCooldown = 0.02f;
+}
+
+void Player::multiplyMaxHP(float factor, float healPercent)
+{
+    int oldMax = _maxHP;
+    int newMax = static_cast<int>(_maxHP * factor);
+    if (newMax < 1) newMax = 1;
+    _maxHP = newMax;
+    // 维持同等比例当前血量
+    _hp = static_cast<int>(_hp * (static_cast<float>(_maxHP) / std::max(1, oldMax)));
+    // 额外治疗
+    _hp += static_cast<int>(_maxHP * healPercent);
+    if (_hp > _maxHP) _hp = _maxHP;
+}
+
+void Player::addMPRegenBonus(float bonusPerSec)
+{
+    _mpRegenBonusPerSec += bonusPerSec;
+}
+
+void Player::addHealPowerMultiplier(float delta)
+{
+    _healPowerMultiplier += delta;
+    if (_healPowerMultiplier < 0.0f) _healPowerMultiplier = 0.0f;
+}
+
+void Player::addHPRegenPercent(float delta)
+{
+    _hpRegenPercentPerSec += delta;
+    if (_hpRegenPercentPerSec < 0.0f) _hpRegenPercentPerSec = 0.0f;
+}

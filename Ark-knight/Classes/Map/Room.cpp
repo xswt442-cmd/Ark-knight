@@ -1,6 +1,7 @@
 ﻿#include "Room.h"
 #include "Entities/Enemy/Enemy.h"
 #include "Entities/Player/Player.h"
+#include "Entities/Objects/Item.h"
 
 USING_NS_CC;
 
@@ -890,7 +891,7 @@ bool Room::canInteractWithChest(Player* player) const
     return distance <= interactionDistance;
 }
 
-void Room::openChest()
+void Room::openChest(Player* player)
 {
     if (!_chest || _chestOpened)
     {
@@ -908,9 +909,91 @@ void Room::openChest()
     
     _chest->runAction(sequence);
     
-    GAME_LOG("Chest opened!");
+    // 抽取道具（暂时传空堆叠表，后续可存储在Player中）
+    std::unordered_map<std::string, int> owned;
+    auto itemOpt = ItemLibrary::pickRandom(owned);
     
-    // TODO: 这里之后添加奖励逻辑（武器、道具等）
+    if (!itemOpt.has_value() || !player)
+    {
+        GAME_LOG("Chest opened, no item or player!");
+        return;
+    }
+    
+    ItemDef item = itemOpt.value();
+    GAME_LOG("Chest opened! Got item: %s", item.name.c_str());
+    
+    // 应用道具效果
+    if (item.id == "Knife") {
+        player->multiplyAttack(1.15f);
+    }
+    else if (item.id == "FirstAidKit") {
+        player->multiplyMaxHP(1.2f, 0.2f);
+    }
+    else if (item.id == "Shield") {
+        player->addDamageReduction(0.15f);
+    }
+    else if (item.id == "CoinToy") {
+        player->multiplyAttackCooldown(0.85f);
+    }
+    else if (item.id == "Roses") {
+        player->addHealPowerMultiplier(0.5f);
+    }
+    else if (item.id == "HappyDrink") {
+        player->addMPRegenBonus(1.0f);
+    }
+    else if (item.id == "Revenger") {
+        player->multiplyAttack(1.3f);
+    }
+    else if (item.id == "UnknownInstrument") {
+        player->multiplyMaxHP(1.4f, 0.5f);
+    }
+    else if (item.id == "AncientArmour") {
+        player->addDamageReduction(0.3f);
+    }
+    else if (item.id == "DaydreamPerfume") {
+        player->addMPRegenBonus(3.0f);
+    }
+    else if (item.id == "GoldWine") {
+        player->multiplyAttackCooldown(0.7f);
+    }
+    else if (item.id == "KingsSpear") {
+        player->multiplyAttackCooldown(0.5f);
+    }
+    else if (item.id == "KingsCrown") {
+        player->multiplyAttack(1.5f);
+    }
+    else if (item.id == "KingsHelmet") {
+        player->multiplyMaxHP(1.5f, 0.0f);
+    }
+    else if (item.id == "KingsExtension") {
+        player->addMPRegenBonus(5.0f);
+        player->addHPRegenPercent(0.02f);
+    }
+    
+    // 显示道具UI：在宝箱位置上方创建道具图标和文字
+    auto itemIcon = cocos2d::Sprite::create(item.iconPath);
+    if (itemIcon)
+    {
+        itemIcon->setPosition(_chest->getPosition() + cocos2d::Vec2(0, 100));
+        itemIcon->setScale(2.0f);
+        itemIcon->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL);
+        this->addChild(itemIcon, Constants::ZOrder::UI_GLOBAL);
+        
+        auto itemLabel = cocos2d::Label::createWithTTF(item.name, "fonts/msyh.ttf", 24);
+        itemLabel->setPosition(itemIcon->getPosition() + cocos2d::Vec2(0, 60));
+        itemLabel->setTextColor(cocos2d::Color4B::YELLOW);
+        itemLabel->enableOutline(cocos2d::Color4B::BLACK, 2);
+        itemLabel->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL);
+        this->addChild(itemLabel, Constants::ZOrder::UI_GLOBAL);
+        
+        // 2秒后淡出消失
+        auto delay = cocos2d::DelayTime::create(2.0f);
+        auto fadeOut2 = cocos2d::FadeOut::create(1.0f);
+        auto remove2 = cocos2d::RemoveSelf::create();
+        auto seq = cocos2d::Sequence::create(delay, fadeOut2, remove2, nullptr);
+        itemIcon->runAction(seq->clone());
+        itemLabel->runAction(seq->clone());
+    }
 }
 
 // ==================== 传送门生成 ====================

@@ -1203,7 +1203,7 @@ void GameScene::setupKeyboardListener()
             // 处理交互：宝箱
             else if (_currentRoom && _currentRoom->canInteractWithChest(_player))
             {
-                _currentRoom->openChest();
+                _currentRoom->openChest(_player);
             }
         }
     };

@@ -67,6 +67,8 @@ list(APPEND GAME_SOURCE
      # Entities/Player
      Classes/Entities/Player/Player.cpp
      Classes/Entities/Player/Mage.cpp
+     # Entities/Objects
+     Classes/Entities/Objects/Item.cpp
      # Entities/Enemy
      Classes/Entities/Enemy/Enemy.cpp
      Classes/Entities/Enemy/Ayao.cpp
@@ -108,6 +110,8 @@ list(APPEND GAME_HEADER
      # Entities/Player
      Classes/Entities/Player/Player.h
      Classes/Entities/Player/Mage.h
+     # Entities/Objects
+     Classes/Entities/Objects/Item.h
      # Entities/Enemy
      Classes/Entities/Enemy/Enemy.h
      Classes/Entities/Enemy/Ayao.h
