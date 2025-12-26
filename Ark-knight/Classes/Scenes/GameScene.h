@@ -7,12 +7,12 @@
 #include "Core/GameMacros.h"
 #include "Entities/Player/Player.h"
 #include "Entities/Enemy/Enemy.h"
-#include "Entities/Enemy/Ayao.h"
 #include "Map/MapGenerator.h"
 #include "Map/Room.h"
 #include "UI/MiniMap.h"
 #include "UI/SettingsLayer.h"
 #include "Map/Barriers.h"
+#include "Entities/Objects/Item.h"
 
 USING_NS_CC;
 
@@ -47,6 +47,12 @@ public:
      * 新增：由外部注册新生成的敌人（例如 Enemy::die 生成的 KongKaZi）
      */
     void addEnemy(Enemy* enemy);
+    
+    /**
+     * 添加道具到UI显示
+     * @param itemDef 道具定义
+     */
+    void addItemToUI(const ItemDef* itemDef);
     
 private:
     /**
@@ -196,6 +202,9 @@ private:
     Sprite* _healIcon;                    // 治疗技能图标
     ProgressTimer* _healCDProgress;       // 治疗技能CD进度
     Sprite* _healCDMask;                  // 治疗技能CD变暗遮罩
+    
+    // 道具栏系统
+    std::vector<Sprite*> _itemSlots;      // 道具图标列表
     
     // 状态
     bool _isPaused;

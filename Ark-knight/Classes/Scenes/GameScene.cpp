@@ -1,23 +1,25 @@
 ﻿#include "GameScene.h"
 #include "MainMenuScene.h"
 #include "Entities/Player/Mage.h"
-
-// 静态变量定义
-int GameScene::s_nextLevel = 1;
-int GameScene::s_nextStage = 1;
-int GameScene::s_savedHP = 0;
-int GameScene::s_savedMP = 0;
 #include "Entities/Enemy/KongKaZi.h"
 #include "Entities/Enemy/DeYi.h"
 #include "Entities/Enemy/Ayao.h"
 #include "Entities/Enemy/XinXing.h"
 #include "Entities/Enemy/TangHuang.h"
 #include "Entities/Enemy/Du.h"
-#include "Entities/Enemy/Cup.h" // 新增：包含 Cup 头文件
-#include "Entities/Enemy/KuiLongBoss.h" // 新增：包含 KuiLongBoss 头文件
+#include "Entities/Enemy/Cup.h"
+#include "Entities/Enemy/KuiLongBoss.h"
+#include "Entities/Objects/Chest.h"
+#include "Entities/Objects/ItemDrop.h"
 #include "ui/CocosGUI.h"
 #include <algorithm>
-#include"Map/Room.h"
+#include "Map/Room.h"
+
+// 静态变量定义
+int GameScene::s_nextLevel = 1;
+int GameScene::s_nextStage = 1;
+int GameScene::s_savedHP = 0;
+int GameScene::s_savedMP = 0;
 
 Scene* GameScene::createScene()
 {
@@ -538,6 +540,10 @@ void GameScene::createHUD()
     hintLabel->setTextColor(Color4B::WHITE);
     hintLabel->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL);
     _uiLayer->addChild(hintLabel);
+    
+    // ==================== 道具栏 ====================
+    // 在血条和蓝条下方显示已获得的道具
+    _itemSlots.clear();
 }
 
 void GameScene::update(float dt)
@@ -835,13 +841,72 @@ void GameScene::updateInteraction(float dt)
         }
     }
     
-    // 检测是否可以与宝箱交互
+    // 检测是否可以与宝箱或道具交互
     bool canInteractChest = _currentRoom->canInteractWithChest(_player);
+    bool canInteractItem = _currentRoom->canInteractWithItemDrop(_player);
     
-    // 显示或隐藏交互提示
-    if (canInteractChest)
+    // 显示或隐藏交互提示（道具优先于宝箱）
+    if (canInteractItem)
     {
-        Sprite* chest = _currentRoom->getChest();
+        ItemDrop* itemDrop = _currentRoom->getItemDrop();
+        if (!itemDrop || !itemDrop->getItemDef())
+        {
+            if (_interactionLabel && _interactionLabel->isVisible())
+            {
+                _interactionLabel->setVisible(false);
+            }
+            return;
+        }
+        
+        const ItemDef* itemDef = itemDrop->getItemDef();
+        Sprite* itemSprite = itemDrop->getSprite();
+        if (!itemSprite)
+        {
+            if (_interactionLabel && _interactionLabel->isVisible())
+            {
+                _interactionLabel->setVisible(false);
+            }
+            return;
+        }
+        
+        if (!_interactionLabel)
+        {
+            // 创建交互提示标签
+            _interactionLabel = Label::createWithTTF("", "fonts/msyh.ttf", 20);
+            _interactionLabel->setTextColor(Color4B::YELLOW);
+            _interactionLabel->enableOutline(Color4B::BLACK, 2);
+            _interactionLabel->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL + 5);
+            _uiLayer->addChild(_interactionLabel);
+        }
+        
+        // 设置道具交互文本：[E]获取道具名称：效果描述
+        std::string interactText = std::string(u8"[E]获取") + itemDef->name + u8"：" + itemDef->description;
+        _interactionLabel->setString(interactText);
+        
+        CCLOG("Showing item interaction: %s", interactText.c_str());
+        
+        // 将道具的世界坐标转换为屏幕坐标
+        Vec2 itemWorldPos = itemDrop->getParent()->convertToWorldSpace(itemDrop->getPosition());
+        Vec2 screenPos = _uiLayer->convertToNodeSpace(itemWorldPos);
+        
+        // 显示在道具下方
+        float itemHeight = itemSprite->getContentSize().height * itemSprite->getScale();
+        _interactionLabel->setPosition(Vec2(screenPos.x, screenPos.y - itemHeight * 0.6f));
+        _interactionLabel->setVisible(true);
+    }
+    else if (canInteractChest)
+    {
+        Chest* chestObj = _currentRoom->getChest();
+        if (!chestObj)
+        {
+            if (_interactionLabel && _interactionLabel->isVisible())
+            {
+                _interactionLabel->setVisible(false);
+            }
+            return;
+        }
+        
+        Sprite* chest = chestObj->getSprite();
         if (!chest)
         {
             if (_interactionLabel && _interactionLabel->isVisible())
@@ -854,16 +919,15 @@ void GameScene::updateInteraction(float dt)
         if (!_interactionLabel)
         {
             // 创建交互提示标签
-            _interactionLabel = Label::createWithTTF(u8"[E] 打开宝箱", "fonts/msyh.ttf", 20);
+            _interactionLabel = Label::createWithTTF("", "fonts/msyh.ttf", 20);
             _interactionLabel->setTextColor(Color4B::YELLOW);
             _interactionLabel->enableOutline(Color4B::BLACK, 2);
             _interactionLabel->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL + 5);
             _uiLayer->addChild(_interactionLabel);
         }
-        else
-        {
-            _interactionLabel->setString(u8"[E] 打开宝箱");
-        }
+        
+        // 设置宝箱交互文本
+        _interactionLabel->setString(u8"[E] 打开宝箱");
         
         // 将宝箱的世界坐标转换为屏幕坐标
         Vec2 chestWorldPos = chest->getParent()->convertToWorldSpace(chest->getPosition());
@@ -1200,10 +1264,19 @@ void GameScene::setupKeyboardListener()
             {
                 goToNextLevel();
             }
+            // 处理交互：拾取道具
+            else if (_currentRoom && _currentRoom->canInteractWithItemDrop(_player))
+            {
+                const ItemDef* itemDef = _currentRoom->pickupItemDrop(_player);
+                if (itemDef)
+                {
+                    addItemToUI(itemDef);
+                }
+            }
             // 处理交互：宝箱
             else if (_currentRoom && _currentRoom->canInteractWithChest(_player))
             {
-                _currentRoom->openChest();
+                _currentRoom->openChest(_player);
             }
         }
     };
@@ -1609,4 +1682,50 @@ void GameScene::showSettings()
         _uiLayer->getChildByName("pauseExitBtn")->setVisible(true);
     });
     _uiLayer->addChild(settingsLayer);
+}
+
+void GameScene::addItemToUI(const ItemDef* itemDef)
+{
+    if (!itemDef)
+    {
+        return;
+    }
+    
+    auto visibleSize = Director::getInstance()->getVisibleSize();
+    Vec2 origin = Director::getInstance()->getVisibleOrigin();
+    
+    // 道具栏参数
+    float barStartX = origin.x + 60;
+    float mpBarY = origin.y + visibleSize.height - 70;  // 蓝条位置
+    float itemSlotStartX = barStartX - 10;
+    float itemSlotStartY = mpBarY - 50;  // 蓝条下方50像素
+    float itemSlotSize = 32.0f;          // 道具图标大小
+    float itemSlotSpacing = 5.0f;        // 图标间距
+    int maxItemsPerRow = 5;              // 每行最多5个道具
+    
+    // 计算新道具位置
+    int itemCount = static_cast<int>(_itemSlots.size());
+    int row = itemCount / maxItemsPerRow;
+    int col = itemCount % maxItemsPerRow;
+    
+    float itemX = itemSlotStartX + col * (itemSlotSize + itemSlotSpacing);
+    float itemY = itemSlotStartY - row * (itemSlotSize + itemSlotSpacing);
+    
+    // 创建道具图标
+    auto itemIcon = Sprite::create(itemDef->iconPath);
+    if (!itemIcon)
+    {
+        GAME_LOG("Failed to create item icon: %s", itemDef->iconPath.c_str());
+        return;
+    }
+    
+    itemIcon->setPosition(Vec2(itemX, itemY));
+    itemIcon->setScale(itemSlotSize / itemIcon->getContentSize().width);
+    itemIcon->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL + 5);
+    _uiLayer->addChild(itemIcon);
+    
+    // 添加到列表
+    _itemSlots.push_back(itemIcon);
+    
+    GAME_LOG("Added item to UI: %s at position (%d, %d)", itemDef->name.c_str(), col, row);
 }

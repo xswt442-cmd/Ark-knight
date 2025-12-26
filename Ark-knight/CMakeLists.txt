@@ -67,6 +67,10 @@ list(APPEND GAME_SOURCE
      # Entities/Player
      Classes/Entities/Player/Player.cpp
      Classes/Entities/Player/Mage.cpp
+     # Entities/Objects
+     Classes/Entities/Objects/Item.cpp
+     Classes/Entities/Objects/Chest.cpp
+     Classes/Entities/Objects/ItemDrop.cpp
      # Entities/Enemy
      Classes/Entities/Enemy/Enemy.cpp
      Classes/Entities/Enemy/Ayao.cpp
@@ -74,10 +78,11 @@ list(APPEND GAME_SOURCE
      Classes/Entities/Enemy/XinXing.cpp
      Classes/Entities/Enemy/KongKaZi.cpp
      Classes/Entities/Enemy/IronLance.cpp
-    Classes/Entities/Enemy/Cup.cpp
-    Classes/Entities/Enemy/Du.cpp
-    Classes/Entities/Enemy/IronLightCup.cpp
-    Classes/Entities/Enemy/TangHuang.cpp
+     Classes/Entities/Enemy/Cup.cpp
+     Classes/Entities/Enemy/Du.cpp
+     Classes/Entities/Enemy/IronLightCup.cpp
+     Classes/Entities/Enemy/TangHuang.cpp
+     Classes/Entities/Enemy/KuilongBoss.cpp
      # Scenes
      Classes/Scenes/MainMenuScene.cpp
      Classes/Scenes/GameScene.cpp
@@ -107,6 +112,10 @@ list(APPEND GAME_HEADER
      # Entities/Player
      Classes/Entities/Player/Player.h
      Classes/Entities/Player/Mage.h
+     # Entities/Objects
+     Classes/Entities/Objects/Item.h
+     Classes/Entities/Objects/Chest.h
+     Classes/Entities/Objects/ItemDrop.h
      # Entities/Enemy
      Classes/Entities/Enemy/Enemy.h
      Classes/Entities/Enemy/Ayao.h
@@ -114,10 +123,11 @@ list(APPEND GAME_HEADER
      Classes/Entities/Enemy/XinXing.h
      Classes/Entities/Enemy/KongKaZi.h
      Classes/Entities/Enemy/IronLance.h
-    Classes/Entities/Enemy/Cup.h
-    Classes/Entities/Enemy/Du.h
-    Classes/Entities/Enemy/IronLightCup.h
-    Classes/Entities/Enemy/TangHuang.h
+     Classes/Entities/Enemy/Cup.h
+     Classes/Entities/Enemy/Du.h
+     Classes/Entities/Enemy/IronLightCup.h
+     Classes/Entities/Enemy/TangHuang.h
+     Classes/Entities/Enemy/KuilongBoss.h
      # Scenes
      Classes/Scenes/MainMenuScene.h
      Classes/Scenes/GameScene.h

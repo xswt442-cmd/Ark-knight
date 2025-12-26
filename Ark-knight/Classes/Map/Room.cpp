@@ -1,6 +1,9 @@
 ﻿#include "Room.h"
 #include "Entities/Enemy/Enemy.h"
 #include "Entities/Player/Player.h"
+#include "Entities/Objects/Item.h"
+#include "Entities/Objects/Chest.h"
+#include "Entities/Objects/ItemDrop.h"
 
 USING_NS_CC;
 
@@ -39,7 +42,7 @@ bool Room::init() {
     _enemiesSpawned = false;  // 初始化敌人生成标记
     _floorTextureIndex = (rand() % 5) + 1;  // 随机选择1-5号地板
     _chest = nullptr;  // 初始化宝箱指针
-    _chestOpened = false;  // 初始化宝箱状态
+    _itemDrop = nullptr;  // 初始化道具掉落指针
     _portal = nullptr;  // 初始化传送门指针
     _portalLighting = nullptr;  // 初始化传送门闪电特效指针
     
@@ -844,73 +847,86 @@ void Room::createChest()
         return;
     }
     
-    // 随机选择宝箱类型
-    std::string chestPath;
-    if (cocos2d::RandomHelper::random_int(0, 1) == 0)
-    {
-        chestPath = "Map/Chest/Wooden_chest.png";
-    }
-    else
-    {
-        chestPath = "Map/Chest/Iron_chest.png";
-    }
-    
-    _chest = cocos2d::Sprite::create(chestPath);
+    // 创建宝箱对象（随机类型）
+    _chest = Chest::create(Chest::ChestType::WOODEN, true);
     if (!_chest)
     {
-        GAME_LOG("Failed to create chest sprite");
+        GAME_LOG("Failed to create chest");
         return;
     }
     
     // 放置在房间中央
     _chest->setPosition(cocos2d::Vec2(_centerX, _centerY));
-    
-    // 缩放到合适大小（2倍地板砖大小）
-    float targetSize = Constants::FLOOR_TILE_SIZE * 2.0f;
-    float scale = targetSize / _chest->getContentSize().width;
-    _chest->setScale(scale);
-    
     _chest->setGlobalZOrder(Constants::ZOrder::FLOOR + 2);
     this->addChild(_chest, Constants::ZOrder::FLOOR + 2);
     
     GAME_LOG("Created chest at center of reward room");
 }
 
+bool Room::isChestOpened() const
+{
+    return _chest != nullptr && _chest->isOpened();
+}
+
 bool Room::canInteractWithChest(Player* player) const
 {
-    if (!_chest || _chestOpened || !player)
+    if (!_chest || !player)
     {
         return false;
     }
     
-    // 检测玩家与宝箱的距离
-    float interactionDistance = Constants::FLOOR_TILE_SIZE * 2.0f;  // 2格距离内可交互
-    float distance = _chest->getPosition().distance(player->getPosition());
-    
-    return distance <= interactionDistance;
+    return _chest->canInteract(player);
 }
 
-void Room::openChest()
+void Room::openChest(Player* player)
 {
-    if (!_chest || _chestOpened)
+    if (!_chest || !player)
     {
+        GAME_LOG("Cannot open chest: chest=%p, player=%p", _chest, player);
         return;
     }
     
-    _chestOpened = true;
+    // 使用空的道具计数（后续可以从Player中获取）
+    std::unordered_map<std::string, int> ownedItems;
+    ItemDrop* drop = _chest->open(ownedItems);
     
-    // 播放打开动画：宝箱慢慢消失（淡出+缩小）
-    auto fadeOut = cocos2d::FadeOut::create(0.5f);
-    auto scaleDown = cocos2d::ScaleTo::create(0.5f, 0.0f);
-    auto spawn = cocos2d::Spawn::create(fadeOut, scaleDown, nullptr);
-    auto remove = cocos2d::RemoveSelf::create();
-    auto sequence = cocos2d::Sequence::create(spawn, remove, nullptr);
+    if (drop)
+    {
+        _itemDrop = drop;
+        this->addChild(_itemDrop, Constants::ZOrder::FLOOR + 2);
+        GAME_LOG("ItemDrop created in room at position (%.1f, %.1f)", drop->getPosition().x, drop->getPosition().y);
+    }
+    else
+    {
+        GAME_LOG("Failed to create ItemDrop from chest");
+    }
+}
+
+bool Room::canInteractWithItemDrop(Player* player) const
+{
+    if (!_itemDrop || !player)
+    {
+        return false;
+    }
     
-    _chest->runAction(sequence);
+    bool canPickup = _itemDrop->canPickup(player);
+    if (canPickup)
+    {
+        GAME_LOG("Can pickup item drop!");
+    }
+    return canPickup;
+}
+
+const ItemDef* Room::pickupItemDrop(Player* player)
+{
+    if (!_itemDrop || !player)
+    {
+        return nullptr;
+    }
     
-    GAME_LOG("Chest opened!");
-    
-    // TODO: 这里之后添加奖励逻辑（武器、道具等）
+    const ItemDef* itemDef = _itemDrop->pickup(player);
+    _itemDrop = nullptr;  // 清空引用，对象会自动移除
+    return itemDef;
 }
 
 // ==================== 传送门生成 ====================
