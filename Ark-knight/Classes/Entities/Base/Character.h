@@ -84,6 +84,11 @@ public:
      * 设置攻击冷却时间
      */
     void setAttackCooldown(float cooldown) { _attackCooldown = cooldown; }
+
+    /**
+     * 获取攻击冷却时间
+     */
+    float getAttackCooldown() const { return _attackCooldown; }
     
     // ==================== 法力值管理(可选) ====================
     /**

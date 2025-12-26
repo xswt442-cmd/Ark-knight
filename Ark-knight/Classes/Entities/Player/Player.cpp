@@ -21,6 +21,11 @@ Player::Player()
     , _maxArmor(50)
     , _keyboardListener(nullptr)
     , _mouseListener(nullptr)
+    , _damageReductionPct(0.0f)
+    , _mpRegenBonusPerSec(0.0f)
+    , _healPowerMultiplier(1.0f)
+    , _hpRegenPercentPerSec(0.0f)
+    , _hpRegenAccumulator(0.0f)
 {
 }
 
@@ -60,7 +65,7 @@ void Player::update(float dt)
     // MP自动恢复：每秒回1点（使用累积器避免精度丢失）
     if (_mp < _maxMP)
     {
-        float mpRegenPerSecond = 1.0f;
+        float mpRegenPerSecond = 1.0f + _mpRegenBonusPerSec;
         _mpRegenAccumulator += mpRegenPerSecond * dt;
         
         // 当累积到至少1点时，增加MP
@@ -80,6 +85,27 @@ void Player::update(float dt)
     else
     {
         _mpRegenAccumulator = 0.0f;  // MP已满，清空累积器
+    }
+    
+    // HP被动恢复（按最大生命百分比）
+    if (_hp < _maxHP && _hpRegenPercentPerSec > 0.0f)
+    {
+        _hpRegenAccumulator += _maxHP * _hpRegenPercentPerSec * dt;
+        if (_hpRegenAccumulator >= 1.0f)
+        {
+            int heal = static_cast<int>(_hpRegenAccumulator);
+            _hp += heal;
+            _hpRegenAccumulator -= heal;
+            if (_hp > _maxHP)
+            {
+                _hp = _maxHP;
+                _hpRegenAccumulator = 0.0f;
+            }
+        }
+    }
+    else
+    {
+        _hpRegenAccumulator = 0.0f;
     }
     
     // 更新技能冷却
@@ -277,9 +303,10 @@ void Player::useHeal()
     // 消耗MP
     _mp -= _healMPCost;
     
-    // 回复血量
+    // 回复血量（应用治疗加成）
     int oldHP = _hp;
-    _hp += _healAmount;
+    int healValue = static_cast<int>(_healAmount * _healPowerMultiplier);
+    _hp += healValue;
     if (_hp > _maxHP)
     {
         _hp = _maxHP;
@@ -401,6 +428,14 @@ void Player::takeDamage(int damage)
         damage -= armorDamage;
         
         GAME_LOG("Armor absorbed %d damage, remaining armor: %d", armorDamage, _armor);
+    }
+    
+    // 应用总减伤
+    if (damage > 0)
+    {
+        float factor = 1.0f - _damageReductionPct;
+        if (factor < 0.0f) factor = 0.0f;
+        damage = static_cast<int>(damage * factor);
     }
     
     // 剩余伤害扣血

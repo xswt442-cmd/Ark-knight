@@ -109,6 +109,16 @@ public:
      * 设置护甲值
      */
     void setArmor(int armor) { _armor = armor; }
+
+    // 道具增益接口
+    void addDamageReduction(float percent);
+    void multiplyAttack(float factor);
+    void multiplyAttackCooldown(float factor);
+    void multiplyMaxHP(float factor, float healPercent);
+    void addMPRegenBonus(float bonusPerSec);
+    void addHealPowerMultiplier(float delta);
+    void addHPRegenPercent(float delta);
+    float getAttackCooldownValue() const { return getAttackCooldown(); }
     
     /**
      * 扣血时考虑护甲
@@ -132,6 +142,13 @@ protected:
     float _healCooldownTimer;
     int _healMPCost;
     int _healAmount;
+
+    // 道具相关增益
+    float _damageReductionPct;      // 总减伤百分比 0~1
+    float _mpRegenBonusPerSec;      // 额外MP恢复/秒
+    float _healPowerMultiplier;     // 治疗量乘算
+    float _hpRegenPercentPerSec;    // 每秒按最大生命回复百分比
+    float _hpRegenAccumulator;      // 血量恢复累积器
     
     // MP恢复累积器（避免浮点转int精度丢失）
     float _mpRegenAccumulator;
