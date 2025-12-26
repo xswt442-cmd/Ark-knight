@@ -7,6 +7,7 @@
 
 class Enemy;
 class Player;
+class Chest;
 
 /**
  * 普通战斗房间的地形布局类型
@@ -91,8 +92,8 @@ public:
     
     // 宝箱管理
     void createChest();
-    cocos2d::Sprite* getChest() const { return _chest; }
-    bool isChestOpened() const { return _chestOpened; }
+    Chest* getChest() const { return _chest; }
+    bool isChestOpened() const;
     void openChest(Player* player = nullptr);
     bool canInteractWithChest(Player* player) const;
     
@@ -147,8 +148,7 @@ private:
     cocos2d::Vector<Enemy*> _enemies;
     cocos2d::Vector<Spike*> _spikes;
     cocos2d::Vector<Barrier*> _barriers;  // 所有障碍物(Box和Pillar)
-    cocos2d::Sprite* _chest;  // 奖励房间的宝箱
-    bool _chestOpened;  // 宝箱是否已打开
+    Chest* _chest;  // 奖励房间的宝箱
     cocos2d::Sprite* _portal;  // 传送门主体
     cocos2d::Sprite* _portalLighting;  // 传送门闪电特效
 };

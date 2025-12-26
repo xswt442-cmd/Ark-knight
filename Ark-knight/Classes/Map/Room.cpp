@@ -2,6 +2,7 @@
 #include "Entities/Enemy/Enemy.h"
 #include "Entities/Player/Player.h"
 #include "Entities/Objects/Item.h"
+#include "Entities/Objects/Chest.h"
 
 USING_NS_CC;
 
@@ -40,7 +41,6 @@ bool Room::init() {
     _enemiesSpawned = false;  // 初始化敌人生成标记
     _floorTextureIndex = (rand() % 5) + 1;  // 随机选择1-5号地板
     _chest = nullptr;  // 初始化宝箱指针
-    _chestOpened = false;  // 初始化宝箱状态
     _portal = nullptr;  // 初始化传送门指针
     _portalLighting = nullptr;  // 初始化传送门闪电特效指针
     
@@ -845,169 +845,47 @@ void Room::createChest()
         return;
     }
     
-    // 随机选择宝箱类型
-    std::string chestPath;
-    if (cocos2d::RandomHelper::random_int(0, 1) == 0)
-    {
-        chestPath = "Map/Chest/Wooden_chest.png";
-    }
-    else
-    {
-        chestPath = "Map/Chest/Iron_chest.png";
-    }
-    
-    _chest = cocos2d::Sprite::create(chestPath);
+    // 创建宝箱对象（随机类型）
+    _chest = Chest::create(Chest::ChestType::WOODEN, true);
     if (!_chest)
     {
-        GAME_LOG("Failed to create chest sprite");
+        GAME_LOG("Failed to create chest");
         return;
     }
     
     // 放置在房间中央
     _chest->setPosition(cocos2d::Vec2(_centerX, _centerY));
-    
-    // 缩放到合适大小（2倍地板砖大小）
-    float targetSize = Constants::FLOOR_TILE_SIZE * 2.0f;
-    float scale = targetSize / _chest->getContentSize().width;
-    _chest->setScale(scale);
-    
     _chest->setGlobalZOrder(Constants::ZOrder::FLOOR + 2);
     this->addChild(_chest, Constants::ZOrder::FLOOR + 2);
     
     GAME_LOG("Created chest at center of reward room");
 }
 
+bool Room::isChestOpened() const
+{
+    return _chest != nullptr && _chest->isOpened();
+}
+
 bool Room::canInteractWithChest(Player* player) const
 {
-    if (!_chest || _chestOpened || !player)
+    if (!_chest || !player)
     {
         return false;
     }
     
-    // 检测玩家与宝箱的距离
-    float interactionDistance = Constants::FLOOR_TILE_SIZE * 2.0f;  // 2格距离内可交互
-    float distance = _chest->getPosition().distance(player->getPosition());
-    
-    return distance <= interactionDistance;
+    return _chest->canInteract(player);
 }
 
 void Room::openChest(Player* player)
 {
-    if (!_chest || _chestOpened)
+    if (!_chest || !player)
     {
         return;
     }
     
-    _chestOpened = true;
-    
-    // 播放打开动画：宝箱慢慢消失（淡出+缩小）
-    auto fadeOut = cocos2d::FadeOut::create(0.5f);
-    auto scaleDown = cocos2d::ScaleTo::create(0.5f, 0.0f);
-    auto spawn = cocos2d::Spawn::create(fadeOut, scaleDown, nullptr);
-    auto remove = cocos2d::RemoveSelf::create();
-    auto sequence = cocos2d::Sequence::create(spawn, remove, nullptr);
-    
-    _chest->runAction(sequence);
-    
-    // 抽取道具（暂时传空堆叠表，后续可存储在Player中）
-    std::unordered_map<std::string, int> owned;
-    const ItemDef* item = ItemLibrary::pickRandom(owned);
-    
-    if (!item || !player)
-    {
-        GAME_LOG("Chest opened, no item or player!");
-        return;
-    }
-    
-    GAME_LOG("Chest opened! Got item: %s", item->name.c_str());
-    
-    // 应用道具效果
-    if (item->id == "Knife") {
-        // 锈蚀刀片：攻击+15%
-        player->multiplyAttack(1.15f);
-    }
-    else if (item->id == "FirstAidKit") {
-        // 急救药箱：最大生命+20%，然后回复20%生命
-        player->multiplyMaxHP(1.2f, 0.2f);
-    }
-    else if (item->id == "Shield") {
-        // 坚守盾牌：减伤15%
-        player->addDamageReduction(0.15f);
-    }
-    else if (item->id == "CoinToy") {
-        // 投币玩具：攻击间隔-15%
-        player->multiplyAttackCooldown(0.85f);
-    }
-    else if (item->id == "Roses") {
-        // 活玫瑰：治疗术+50%
-        player->addHealPowerMultiplier(0.5f);
-    }
-    else if (item->id == "HappyDrink") {
-        // 快乐水：MP回复+1/秒
-        player->addMPRegenBonus(1.0f);
-    }
-    else if (item->id == "Revenger") {
-        // 复仇者：攻击+30%
-        player->multiplyAttack(1.3f);
-    }
-    else if (item->id == "UnknownInstrument") {
-        // 未知仪器：最大生命+40%，然后回复50%生命
-        player->multiplyMaxHP(1.4f, 0.5f);
-    }
-    else if (item->id == "AncientArmour") {
-        // 古老的铠甲：减伤30%
-        player->addDamageReduction(0.3f);
-    }
-    else if (item->id == "DaydreamPerfume") {
-        // 迷梦香精：MP回复+3/秒
-        player->addMPRegenBonus(3.0f);
-    }
-    else if (item->id == "GoldWine") {
-        // 金酒之杯：攻击间隔-30%
-        player->multiplyAttackCooldown(0.7f);
-    }
-    else if (item->id == "KingsSpear") {
-        // 国王的新枪：攻击间隔-50%（套装效果暂不实现）
-        player->multiplyAttackCooldown(0.5f);
-    }
-    else if (item->id == "KingsCrown") {
-        // 诸王的冠冕：攻击+50%（套装效果暂不实现）
-        player->multiplyAttack(1.5f);
-    }
-    else if (item->id == "KingsHelmet") {
-        // 国王的铠甲：最大生命+50%（套装效果暂不实现）
-        player->multiplyMaxHP(1.5f, 0.0f);
-    }
-    else if (item->id == "KingsExtension") {
-        // 国王的延伸：MP回复+5/秒，HP回复2%/秒（套装效果暂不实现）
-        player->addMPRegenBonus(5.0f);
-        player->addHPRegenPercent(0.02f);
-    }
-    
-    // 显示道具UI：在宝箱位置上方创建道具图标和文字
-    auto itemIcon = cocos2d::Sprite::create(item->iconPath);
-    if (itemIcon)
-    {
-        itemIcon->setPosition(_chest->getPosition() + cocos2d::Vec2(0, 100));
-        itemIcon->setScale(2.0f);
-        itemIcon->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL);
-        this->addChild(itemIcon, Constants::ZOrder::UI_GLOBAL);
-        
-        auto itemLabel = cocos2d::Label::createWithTTF(item->name, "fonts/msyh.ttf", 24);
-        itemLabel->setPosition(itemIcon->getPosition() + cocos2d::Vec2(0, 60));
-        itemLabel->setTextColor(cocos2d::Color4B::YELLOW);
-        itemLabel->enableOutline(cocos2d::Color4B::BLACK, 2);
-        itemLabel->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL);
-        this->addChild(itemLabel, Constants::ZOrder::UI_GLOBAL);
-        
-        // 2秒后淡出消失
-        auto delay = cocos2d::DelayTime::create(2.0f);
-        auto fadeOut2 = cocos2d::FadeOut::create(1.0f);
-        auto remove2 = cocos2d::RemoveSelf::create();
-        auto seq = cocos2d::Sequence::create(delay, fadeOut2, remove2, nullptr);
-        itemIcon->runAction(seq->clone());
-        itemLabel->runAction(seq->clone());
-    }
+    // 使用空的道具计数（后续可以从Player中获取）
+    std::unordered_map<std::string, int> ownedItems;
+    _chest->open(player, ownedItems);
 }
 
 // ==================== 传送门生成 ====================
