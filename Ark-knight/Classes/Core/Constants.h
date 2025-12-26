@@ -39,9 +39,8 @@ namespace Constants {
     constexpr float FLOOR_TILE_SIZE = 32.0f;   // 地板尺寸
 
     // 房间尺寸（以瓦片数计，偶数）
-    // 增大房间尺寸以扩大战斗空间
-    constexpr int ROOM_TILES_W = 34;           // 原 26 -> 增大
-    constexpr int ROOM_TILES_H = 26;           // 原 18 -> 增大
+    constexpr int ROOM_TILES_W = 28;
+    constexpr int ROOM_TILES_H = 20;    
 
     // 房间中心像素距离：应足够大以避免相邻房间图形重合
     // 推荐值：ROOM_TILES_W * FLOOR_TILE_SIZE + 160（预留走廊/间隙）
@@ -52,9 +51,6 @@ namespace Constants {
     // 障碍生成时距离房间边界的保护区（单位：瓦片）
     // 障碍物（箱子/石柱/地刺）不得在房间边界周围此范围内生成
     constexpr int ROOM_OBSTACLE_MARGIN_TILES = 5;
-
-    // 走廊额外延长的瓦片数（使走廊在视觉/通行上比精确 gap 多出几格）
-    constexpr int HALLWAY_EXTRA_TILES = 2;
 
     // ==================== 方向定义 ====================
     constexpr int DIR_UP = 0;
@@ -135,7 +131,7 @@ namespace Constants {
         NORMAL,     // 普通战斗房间
         BOSS,       // Boss房间
         END,        // 终点房间(下一关传送门)
-        REWARD      // 奖励房间（原武器/道具房间）
+        REWARD      // 奖励房间
     };
 }
 

@@ -97,7 +97,10 @@ void MapGenerator::generateMap() {
 
 // 随机选择普通战斗房间地形布局（概率：空10%，其余各9%）
 TerrainLayout MapGenerator::pickRandomTerrainLayout() const {
-    // 不再返回 NONE（空房间），始终从有障碍的布局中随机选择
+    int r = rand() % 100; // 0..99
+    if (r < 10) {
+        return TerrainLayout::NONE; // 空 10%
+    }
     static const TerrainLayout layouts[10] = {
         TerrainLayout::FIVE_BOXES,
         TerrainLayout::NINE_BOXES,
@@ -110,7 +113,8 @@ TerrainLayout MapGenerator::pickRandomTerrainLayout() const {
         TerrainLayout::FOUR_PILLARS,
         TerrainLayout::RANDOM_MESS
     };
-    int idx = rand() % 10; // 0..9
+    int idx = (r - 10) / 9; // 将剩余90范围均分为10段，每段9%
+    if (idx < 0) idx = 0; if (idx > 9) idx = 9;
     return layouts[idx];
 }
 
@@ -171,7 +175,6 @@ void MapGenerator::expandFromRoom(int x, int y, Room* curRoom, std::queue<Room*>
     
     std::random_shuffle(availableDirections.begin(), availableDirections.end());
     
-    float tileSize = Constants::FLOOR_TILE_SIZE;
     for (int i = 0; i < expandCount && _roomCount < Constants::MAP_MAX_ROOMS; i++) {
         int dir = availableDirections[i];
         int toX = x + DIR_DX[dir];
@@ -182,43 +185,6 @@ void MapGenerator::expandFromRoom(int x, int y, Room* curRoom, std::queue<Room*>
         Vec2 curCenter = curRoom->getCenter();
         float newCenterX = curCenter.x + DIR_DX[dir] * Constants::ROOM_CENTER_DIST;
         float newCenterY = curCenter.y + DIR_DY[dir] * Constants::ROOM_CENTER_DIST;
-        
-        // ----------------- 新增：检查是否与已有任意房间重叠 -----------------
-        // 使用默认房间瓦片尺寸估计拟放置房间的矩形（像素）
-        float halfW_new = (Constants::ROOM_TILES_W * tileSize) / 2.0f;
-        float halfH_new = (Constants::ROOM_TILES_H * tileSize) / 2.0f;
-        float newLeft = newCenterX - halfW_new;
-        float newRight = newCenterX + halfW_new;
-        float newTop = newCenterY + halfH_new;
-        float newBottom = newCenterY - halfH_new;
-        
-        bool intersectsExisting = false;
-        for (int yy = 0; yy < Constants::MAP_GRID_SIZE && !intersectsExisting; yy++) {
-            for (int xx = 0; xx < Constants::MAP_GRID_SIZE; xx++) {
-                Room* ex = _roomMatrix[xx][yy];
-                if (!ex) continue;
-                Vec2 exCenter = ex->getCenter();
-                float halfW_ex = (ex->getTilesWidth() * tileSize) / 2.0f;
-                float halfH_ex = (ex->getTilesHeight() * tileSize) / 2.0f;
-                float exLeft = exCenter.x - halfW_ex;
-                float exRight = exCenter.x + halfW_ex;
-                float exTop = exCenter.y + halfH_ex;
-                float exBottom = exCenter.y - halfH_ex;
-                
-                // 矩形相交检测
-                bool noOverlap = (newRight < exLeft) || (newLeft > exRight) || (newTop < exBottom) || (newBottom > exTop);
-                if (!noOverlap) {
-                    intersectsExisting = true;
-                    break;
-                }
-            }
-        }
-        
-        if (intersectsExisting) {
-            log("Skipped creating room at (%d,%d) due to overlap at proposed center (%.1f,%.1f)", toX, toY, newCenterX, newCenterY);
-            continue; // 跳过这个方向，避免重叠
-        }
-        // --------------------------------------------------------------
         
         Room* newRoom = Room::create();
         newRoom->setGridPosition(toX, toY);
@@ -350,23 +316,16 @@ void MapGenerator::generateHallways() {
                         // 水平走廊：在两个房间的右/左边缘之间
                         float leftRoomRightEdge = roomCenter.x + roomWidth / 2.0f;
                         float rightRoomLeftEdge = rightCenter.x - rightRoomWidth / 2.0f;
+                        float hallwayCenterX = (leftRoomRightEdge + rightRoomLeftEdge) / 2.0f;
+                        float hallwayCenterY = roomCenter.y;
                         float gapSize = rightRoomLeftEdge - leftRoomRightEdge;  // 实际空隙
                         
-                        // 如果 gapSize 太小（<= 一个瓦片），说明房间实际上接触或重叠，跳过生成走廊
-                        if (gapSize <= tileSize * 0.5f) {
-                            log("Skipped RIGHT hallway due to gap too small (gap=%.1f) between (%d,%d) and (%d,%d)", 
-                                gapSize, x, y, toX, toY);
-                        } else {
-                            float hallwayCenterX = (leftRoomRightEdge + rightRoomLeftEdge) / 2.0f;
-                            float hallwayCenterY = roomCenter.y;
-                            
-                            Hallway* hallway = Hallway::create(Constants::DIR_RIGHT);
-                            hallway->setGapSize(gapSize);
-                            hallway->setCenter(hallwayCenterX, hallwayCenterY);
-                            _hallways.push_back(hallway);
-                            log("Generated RIGHT hallway at (%.1f, %.1f) gap=%.1f connecting (%d,%d) -> (%d,%d)",
-                                hallwayCenterX, hallwayCenterY, gapSize, x, y, toX, toY);
-                        }
+                        Hallway* hallway = Hallway::create(Constants::DIR_RIGHT);
+                        hallway->setGapSize(gapSize);
+                        hallway->setCenter(hallwayCenterX, hallwayCenterY);
+                        _hallways.push_back(hallway);
+                        log("Generated RIGHT hallway at (%.1f, %.1f) gap=%.1f connecting (%d,%d) -> (%d,%d)",
+                            hallwayCenterX, hallwayCenterY, gapSize, x, y, toX, toY);
                     }
                 }
             }
@@ -391,23 +350,16 @@ void MapGenerator::generateHallways() {
                         // 垂直走廊：在两个房间的上/下边缘之间
                         float topRoomBottomEdge = roomCenter.y - roomHeight / 2.0f;
                         float bottomRoomTopEdge = downCenter.y + downRoomHeight / 2.0f;
+                        float hallwayCenterY = (topRoomBottomEdge + bottomRoomTopEdge) / 2.0f;
+                        float hallwayCenterX = roomCenter.x;
                         float gapSize = topRoomBottomEdge - bottomRoomTopEdge;  // 实际空隙
                         
-                        // 如果 gapSize 太小（<= 一个瓦片），说明房间实际上接触或重叠，跳过生成走廊
-                        if (gapSize <= tileSize * 0.5f) {
-                            log("Skipped DOWN hallway due to gap too small (gap=%.1f) between (%d,%d) and (%d,%d)",
-                                gapSize, x, y, toX, toY);
-                        } else {
-                            float hallwayCenterY = (topRoomBottomEdge + bottomRoomTopEdge) / 2.0f;
-                            float hallwayCenterX = roomCenter.x;
-                            
-                            Hallway* hallway = Hallway::create(Constants::DIR_DOWN);
-                            hallway->setGapSize(gapSize);
-                            hallway->setCenter(hallwayCenterX, hallwayCenterY);
-                            _hallways.push_back(hallway);
-                            log("Generated DOWN hallway at (%.1f, %.1f) gap=%.1f connecting (%d,%d) -> (%d,%d)",
-                                hallwayCenterX, hallwayCenterY, gapSize, x, y, toX, toY);
-                        }
+                        Hallway* hallway = Hallway::create(Constants::DIR_DOWN);
+                        hallway->setGapSize(gapSize);
+                        hallway->setCenter(hallwayCenterX, hallwayCenterY);
+                        _hallways.push_back(hallway);
+                        log("Generated DOWN hallway at (%.1f, %.1f) gap=%.1f connecting (%d,%d) -> (%d,%d)",
+                            hallwayCenterX, hallwayCenterY, gapSize, x, y, toX, toY);
                     }
                 }
             }

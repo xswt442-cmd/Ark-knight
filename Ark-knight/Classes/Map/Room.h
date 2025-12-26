@@ -123,10 +123,6 @@ protected:
     // 辅助方法：添加指定大小的石柱堆（单堆材质统一）
     void addPillarCluster(int centerTileX, int centerTileY, int width, int height);
     
-    // 确保房间中至少存在指定数量的障碍（Box/Pillar/Spike）
-    // 会在可放置范围内随机尝试补足单格障碍，遵守门口与边界保护区
-    void ensureMinimumObstacles(int minCount);
-    
 private:
     float _centerX;
     float _centerY;

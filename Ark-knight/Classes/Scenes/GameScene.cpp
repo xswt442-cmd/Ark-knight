@@ -11,9 +11,8 @@ int GameScene::s_savedMP = 0;
 #include "Entities/Enemy/DeYi.h"
 #include "Entities/Enemy/Ayao.h"
 #include "Entities/Enemy/XinXing.h"
-#include "Entities/Enemy/Cup.h"
 #include "Entities/Enemy/TangHuang.h"
-#include "Entities/Enemy/Du.h" // 新增：妒 (Du)
+#include "Entities/Enemy/Du.h"
 #include "ui/CocosGUI.h"
 #include <algorithm>
 #include"Map/Room.h"
@@ -283,40 +282,36 @@ void GameScene::spawnEnemiesInRoom(Room* room)
     // 获取房间中心和尺寸（roomCenter 仍可用于日志等）
     Vec2 roomCenter = room->getCenter();
     
+    // 使用房间自身计算的可行走区域（基于墙与玩家半径），确保边界与墙对齐
     Rect walk = room->getWalkableArea();
     
-    // 随机生成3-8个怪（Ayao / DeYi / Du / TangHuang / Cup / XinXing）
+    // 随机生成3-8个怪（普通小怪：Ayao / DeYi，精英怪：XinXing / TangHuang / Du）
     int enemyCount = RANDOM_INT(3, 8);
 
     for (int i = 0; i < enemyCount; i++)
     {
         Enemy* enemy = nullptr;
         float r = CCRANDOM_0_1();
-        // 概率分配（调整为用户要求）:
-        // Ayao 20%, DeYi 10%, Du 40%, TangHuang 5%, XinXing 5%, Cup 20%
-        if (r < 0.20f)
+        // 概率分配：Ayao 30%, DeYi 30%, XinXing 15%, TangHuang 15%, Du 10%
+        if (r < 0.30f)
         {
             enemy = Ayao::create();
         }
-        else if (r < 0.30f)
+        else if (r < 0.60f)
         {
             enemy = DeYi::create();
         }
-        else if (r < 0.70f)
-        {
-            enemy = Du::create();
-        }
         else if (r < 0.75f)
-        {
-            enemy = TangHuang::create();
-        }
-        else if (r < 0.80f)
         {
             enemy = XinXing::create();
         }
+        else if (r < 0.90f)
+        {
+            enemy = TangHuang::create();
+        }
         else
         {
-            enemy = Cup::create(); // 修正：确保剩余 20% 为 Cup
+            enemy = Du::create();
         }
 
         if (!enemy) continue;
@@ -347,9 +342,8 @@ void GameScene::spawnEnemiesInRoom(Room* room)
         const char* typeName = "Unknown";
         if (dynamic_cast<Ayao*>(enemy)) typeName = "Ayao";
         else if (dynamic_cast<DeYi*>(enemy)) typeName = "DeYi";
-        else if (dynamic_cast<TangHuang*>(enemy)) typeName = "TangHuang";
-        else if (dynamic_cast<Cup*>(enemy)) typeName = "Cup";
         else if (dynamic_cast<XinXing*>(enemy)) typeName = "XinXing";
+        else if (dynamic_cast<TangHuang*>(enemy)) typeName = "TangHuang";
         else if (dynamic_cast<Du*>(enemy)) typeName = "Du";
 
         GAME_LOG("Enemy spawned at (%.1f, %.1f) in room - type=%s", spawnPos.x, spawnPos.y, typeName);
@@ -977,9 +971,7 @@ void GameScene::checkCollisions()
         {
             if (enemy != nullptr && !enemy->isDead())
             {
-                // 跳过隐身敌人
-                if (enemy->isStealthed()) continue;
-
+                // 简单的距离判定
                 float dist = _player->getPosition().distance(enemy->getPosition());
                 if (dist < 80.0f)  // 攻击范围
                 {
@@ -1011,6 +1003,7 @@ void GameScene::checkBarrierCollisions()
     {
         Vec2 playerPos = _player->getPosition();
         
+        // 获取玩家碰撞箱（使用精灵大小的40%作为碰撞体积，让玩家更灵活）
         Size playerSize = Size(32, 32); 
         if (_player->getSprite()) {
              playerSize = _player->getSprite()->getBoundingBox().size;
@@ -1030,8 +1023,10 @@ void GameScene::checkBarrierCollisions()
                 continue;
             }
             
+            // 障碍物在Room节点下，Room节点在(0,0)，所以障碍物的getBoundingBox就是世界坐标（相对于GameLayer）
             Rect barrierBox = barrier->getBoundingBox();
             
+            // 缩小障碍物碰撞箱一点点，避免卡住
             float shrink = 2.0f;
             barrierBox.origin.x += shrink;
             barrierBox.origin.y += shrink;
@@ -1040,14 +1035,18 @@ void GameScene::checkBarrierCollisions()
             
             if (playerBox.intersectsRect(barrierBox))
             {
+                // 发生碰撞，计算推出方向
                 Vec2 barrierPos = barrier->getPosition();
                 Vec2 delta = playerPos - barrierPos;
                 
+                // 计算重叠量
                 float overlapX = (playerBox.size.width + barrierBox.size.width) / 2.0f - abs(delta.x);
                 float overlapY = (playerBox.size.height + barrierBox.size.height) / 2.0f - abs(delta.y);
                 
+                // 沿重叠较小的方向推出
                 if (overlapX < overlapY)
                 {
+                    // 水平方向推出
                     if (delta.x > 0)
                     {
                         _player->setPositionX(playerPos.x + overlapX);
@@ -1059,6 +1058,7 @@ void GameScene::checkBarrierCollisions()
                 }
                 else
                 {
+                    // 垂直方向推出
                     if (delta.y > 0)
                     {
                         _player->setPositionY(playerPos.y + overlapY);
@@ -1069,6 +1069,7 @@ void GameScene::checkBarrierCollisions()
                     }
                 }
                 
+                // 更新位置后重新获取
                 playerPos = _player->getPosition();
             }
         }
@@ -1081,15 +1082,10 @@ void GameScene::checkBarrierCollisions()
         {
             continue;
         }
-
-        // 允许 Cup 穿越房间内障碍物：跳过对 Cup 的障碍物碰撞处理
-        if (dynamic_cast<Cup*>(enemy))
-        {
-            continue;
-        }
         
         Vec2 enemyPos = enemy->getPosition();
         
+        // 获取敌人碰撞箱
         Size enemySize = Size(32, 32); 
         if (enemy->getSprite()) {
              enemySize = enemy->getSprite()->getBoundingBox().size;
@@ -1110,6 +1106,7 @@ void GameScene::checkBarrierCollisions()
             }
             
             Rect barrierBox = barrier->getBoundingBox();
+            // 缩小障碍物碰撞箱
             float shrink = 2.0f;
             barrierBox.origin.x += shrink;
             barrierBox.origin.y += shrink;
@@ -1118,14 +1115,18 @@ void GameScene::checkBarrierCollisions()
             
             if (enemyBox.intersectsRect(barrierBox))
             {
+                // 发生碰撞，计算推出方向
                 Vec2 barrierPos = barrier->getPosition();
                 Vec2 delta = enemyPos - barrierPos;
                 
+                // 计算重叠量
                 float overlapX = (enemyBox.size.width + barrierBox.size.width) / 2.0f - abs(delta.x);
                 float overlapY = (enemyBox.size.height + barrierBox.size.height) / 2.0f - abs(delta.y);
                 
+                // 沿重叠较小的方向推出
                 if (overlapX < overlapY)
                 {
+                    // 水平方向推出
                     if (delta.x > 0)
                     {
                         enemy->setPositionX(enemyPos.x + overlapX);
@@ -1137,6 +1138,7 @@ void GameScene::checkBarrierCollisions()
                 }
                 else
                 {
+                    // 垂直方向推出
                     if (delta.y > 0)
                     {
                         enemy->setPositionY(enemyPos.y + overlapY);
@@ -1147,6 +1149,7 @@ void GameScene::checkBarrierCollisions()
                     }
                 }
                 
+                // 更新位置
                 enemyPos = enemy->getPosition();
             }
         }
