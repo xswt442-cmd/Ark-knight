@@ -46,8 +46,8 @@ bool Hallway::initWithDirection(int direction) {
 
 void Hallway::setGapSize(float gapSize) {
     float tileSize = Constants::FLOOR_TILE_SIZE;
-    // 根据实际空隙大小计算瓦片数，+2确保完全覆盖，再加上额外延长瓦片数
-    int tilesNeeded = static_cast<int>(std::ceil(gapSize / tileSize)) + 2 + Constants::HALLWAY_EXTRA_TILES;
+    // 根据实际空隙大小计算瓦片数，恰好填充两个房间之间的间隙
+    int tilesNeeded = static_cast<int>(std::ceil(gapSize / tileSize));
     
     if (tilesNeeded < 1) tilesNeeded = 1;
     
