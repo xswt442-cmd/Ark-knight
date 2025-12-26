@@ -3,6 +3,7 @@
 #include "Entities/Player/Player.h"
 #include "Entities/Objects/Item.h"
 #include "Entities/Objects/Chest.h"
+#include "Entities/Objects/ItemDrop.h"
 
 USING_NS_CC;
 
@@ -41,6 +42,7 @@ bool Room::init() {
     _enemiesSpawned = false;  // 初始化敌人生成标记
     _floorTextureIndex = (rand() % 5) + 1;  // 随机选择1-5号地板
     _chest = nullptr;  // 初始化宝箱指针
+    _itemDrop = nullptr;  // 初始化道具掉落指针
     _portal = nullptr;  // 初始化传送门指针
     _portalLighting = nullptr;  // 初始化传送门闪电特效指针
     
@@ -885,7 +887,35 @@ void Room::openChest(Player* player)
     
     // 使用空的道具计数（后续可以从Player中获取）
     std::unordered_map<std::string, int> ownedItems;
-    _chest->open(player, ownedItems);
+    ItemDrop* drop = _chest->open(ownedItems);
+    
+    if (drop)
+    {
+        _itemDrop = drop;
+        this->addChild(_itemDrop, Constants::ZOrder::FLOOR + 2);
+        GAME_LOG("ItemDrop created in room");
+    }
+}
+
+bool Room::canInteractWithItemDrop(Player* player) const
+{
+    if (!_itemDrop || !player)
+    {
+        return false;
+    }
+    
+    return _itemDrop->canPickup(player);
+}
+
+void Room::pickupItemDrop(Player* player)
+{
+    if (!_itemDrop || !player)
+    {
+        return;
+    }
+    
+    _itemDrop->pickup(player);
+    _itemDrop = nullptr;  // 清空引用，对象会自动移除
 }
 
 // ==================== 传送门生成 ====================

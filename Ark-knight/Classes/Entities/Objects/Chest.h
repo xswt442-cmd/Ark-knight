@@ -36,21 +36,11 @@ public:
     bool canInteract(Player* player, float interactionDistance = 0.0f) const;
     
     /**
-     * 打开宝箱：播放动画、抽取道具、应用效果、显示UI
-     * @param player 玩家指针，用于应用道具效果
+     * 打开宝箱：播放动画、抽取道具、生成掉落物
      * @param ownedItems 玩家已拥有的道具计数（用于堆叠限制）
+     * @return 生成的ItemDrop指针，如果没有可用道具则返回nullptr
      */
-    void open(Player* player, const std::unordered_map<std::string, int>& ownedItems);
-    
-    /**
-     * 应用道具效果到玩家
-     */
-    void applyItemEffect(Player* player, const ItemDef* item);
-    
-    /**
-     * 显示获得道具的UI
-     */
-    void showItemUI(const ItemDef* item, const cocos2d::Vec2& position);
+    class ItemDrop* open(const std::unordered_map<std::string, int>& ownedItems);
     
     // Getter
     bool isOpened() const { return _isOpened; }

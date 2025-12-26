@@ -17,6 +17,7 @@ struct ItemDef {
     ItemRarity rarity;
     std::string iconPath;
     int maxStack;
+    std::string description;  // 效果描述
 };
 
 /**

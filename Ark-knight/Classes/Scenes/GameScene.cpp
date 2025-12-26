@@ -16,6 +16,7 @@ int GameScene::s_savedMP = 0;
 #include "Entities/Enemy/Cup.h" // 新增：包含 Cup 头文件
 #include "Entities/Enemy/KuiLongBoss.h" // 新增：包含 KuiLongBoss 头文件
 #include "Entities/Objects/Chest.h"
+#include "Entities/Objects/ItemDrop.h"
 #include "ui/CocosGUI.h"
 #include <algorithm>
 #include"Map/Room.h"
@@ -836,11 +837,58 @@ void GameScene::updateInteraction(float dt)
         }
     }
     
-    // 检测是否可以与宝箱交互
+    // 检测是否可以与宝箱或道具交互
     bool canInteractChest = _currentRoom->canInteractWithChest(_player);
+    bool canInteractItem = _currentRoom->canInteractWithItemDrop(_player);
     
-    // 显示或隐藏交互提示
-    if (canInteractChest)
+    // 显示或隐藏交互提示（道具优先于宝箱）
+    if (canInteractItem)
+    {
+        ItemDrop* itemDrop = _currentRoom->getItemDrop();
+        if (!itemDrop || !itemDrop->getItemDef())
+        {
+            if (_interactionLabel && _interactionLabel->isVisible())
+            {
+                _interactionLabel->setVisible(false);
+            }
+            return;
+        }
+        
+        const ItemDef* itemDef = itemDrop->getItemDef();
+        Sprite* itemSprite = itemDrop->getSprite();
+        if (!itemSprite)
+        {
+            if (_interactionLabel && _interactionLabel->isVisible())
+            {
+                _interactionLabel->setVisible(false);
+            }
+            return;
+        }
+        
+        if (!_interactionLabel)
+        {
+            // 创建交互提示标签
+            _interactionLabel = Label::createWithTTF("", "fonts/msyh.ttf", 20);
+            _interactionLabel->setTextColor(Color4B::YELLOW);
+            _interactionLabel->enableOutline(Color4B::BLACK, 2);
+            _interactionLabel->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL + 5);
+            _uiLayer->addChild(_interactionLabel);
+        }
+        
+        // 设置道具交互文本：[E]获取道具名称：效果描述
+        std::string interactText = "[E]获取" + itemDef->name + "：" + itemDef->description;
+        _interactionLabel->setString(interactText);
+        
+        // 将道具的世界坐标转换为屏幕坐标
+        Vec2 itemWorldPos = itemDrop->getParent()->convertToWorldSpace(itemDrop->getPosition());
+        Vec2 screenPos = _uiLayer->convertToNodeSpace(itemWorldPos);
+        
+        // 显示在道具下方
+        float itemHeight = itemSprite->getContentSize().height * itemSprite->getScale();
+        _interactionLabel->setPosition(Vec2(screenPos.x, screenPos.y - itemHeight * 0.6f));
+        _interactionLabel->setVisible(true);
+    }
+    else if (canInteractChest)
     {
         Chest* chestObj = _currentRoom->getChest();
         if (!chestObj)
@@ -1210,6 +1258,11 @@ void GameScene::setupKeyboardListener()
             if (_currentRoom && _currentRoom->canInteractWithPortal(_player))
             {
                 goToNextLevel();
+            }
+            // 处理交互：拾取道具
+            else if (_currentRoom && _currentRoom->canInteractWithItemDrop(_player))
+            {
+                _currentRoom->pickupItemDrop(_player);
             }
             // 处理交互：宝箱
             else if (_currentRoom && _currentRoom->canInteractWithChest(_player))

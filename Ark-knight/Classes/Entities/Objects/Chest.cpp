@@ -1,5 +1,6 @@
 ﻿#include "Chest.h"
 #include "Item.h"
+#include "ItemDrop.h"
 #include "Entities/Player/Player.h"
 #include "Core/Constants.h"
 #include "cocos2d.h"
@@ -77,11 +78,11 @@ bool Chest::canInteract(Player* player, float interactionDistance) const
     return distance <= interactionDistance;
 }
 
-void Chest::open(Player* player, const std::unordered_map<std::string, int>& ownedItems)
+ItemDrop* Chest::open(const std::unordered_map<std::string, int>& ownedItems)
 {
-    if (_isOpened || !player)
+    if (_isOpened)
     {
-        return;
+        return nullptr;
     }
     
     _isOpened = true;
@@ -101,113 +102,25 @@ void Chest::open(Player* player, const std::unordered_map<std::string, int>& own
     if (!item)
     {
         GAME_LOG("Chest opened, but no item available!");
-        return;
+        return nullptr;
     }
     
     GAME_LOG("Chest opened! Got item: %s", item->name.c_str());
     
-    // 应用道具效果
-    applyItemEffect(player, item);
+    // 创建掉落物
+    ItemDrop* drop = ItemDrop::create(item);
+    if (!drop)
+    {
+        GAME_LOG("Failed to create item drop!");
+        return nullptr;
+    }
     
-    // 显示道具UI
-    showItemUI(item, this->getPosition());
+    // 放置在宝箱位置
+    drop->setPosition(this->getPosition());
+    drop->setGlobalZOrder(Constants::ZOrder::FLOOR + 2);
+    
+    return drop;
 }
-
-void Chest::applyItemEffect(Player* player, const ItemDef* item)
-{
-    if (!player || !item)
-    {
-        return;
-    }
-    
-    if (item->id == "Knife") {
-        // 锈蚀刀片：攻击+15%
-        player->multiplyAttack(1.15f);
-    }
-    else if (item->id == "FirstAidKit") {
-        // 急救药箱：最大生命+20%，然后回复20%生命
-        player->multiplyMaxHP(1.2f, 0.2f);
-    }
-    else if (item->id == "Shield") {
-        // 坚守盾牌：减伤15%
-        player->addDamageReduction(0.15f);
-    }
-    else if (item->id == "CoinToy") {
-        // 投币玩具：攻击间隔-15%
-        player->multiplyAttackCooldown(0.85f);
-    }
-    else if (item->id == "Roses") {
-        // 活玫瑰：治疗术+50%
-        player->addHealPowerMultiplier(0.5f);
-    }
-    else if (item->id == "HappyDrink") {
-        // 快乐水：MP回复+1/秒
-        player->addMPRegenBonus(1.0f);
-    }
-    else if (item->id == "Revenger") {
-        // 复仇者：攻击+30%
-        player->multiplyAttack(1.3f);
-    }
-    else if (item->id == "UnknownInstrument") {
-        // 未知仪器：最大生命+40%，然后回复50%生命
-        player->multiplyMaxHP(1.4f, 0.5f);
-    }
-    else if (item->id == "AncientArmour") {
-        // 古老的铠甲：减伤30%
-        player->addDamageReduction(0.3f);
-    }
-    else if (item->id == "DaydreamPerfume") {
-        // 迷梦香精：MP回复+3/秒
-        player->addMPRegenBonus(3.0f);
-    }
-    else if (item->id == "GoldWine") {
-        // 金酒之杯：攻击间隔-30%
-        player->multiplyAttackCooldown(0.7f);
-    }
-    else if (item->id == "KingsSpear") {
-        // 国王的新枪：攻击间隔-50%（套装效果暂不实现）
-        player->multiplyAttackCooldown(0.5f);
-    }
-    else if (item->id == "KingsCrown") {
-        // 诸王的冠冕：攻击+50%（套装效果暂不实现）
-        player->multiplyAttack(1.5f);
-    }
-    else if (item->id == "KingsHelmet") {
-        // 国王的铠甲：最大生命+50%（套装效果暂不实现）
-        player->multiplyMaxHP(1.5f, 0.0f);
-    }
-    else if (item->id == "KingsExtension") {
-        // 国王的延伸：MP回复+5/秒，HP回复2%/秒（套装效果暂不实现）
-        player->addMPRegenBonus(5.0f);
-        player->addHPRegenPercent(0.02f);
-    }
-}
-
-void Chest::showItemUI(const ItemDef* item, const cocos2d::Vec2& position)
-{
-    if (!item)
-    {
-        return;
-    }
-    
-    // 创建道具图标
-    auto itemIcon = Sprite::create(item->iconPath);
-    if (!itemIcon)
-    {
-        GAME_LOG("Failed to create item icon: %s", item->iconPath.c_str());
-        return;
-    }
-    
-    itemIcon->setPosition(position + Vec2(0, 100));
-    itemIcon->setScale(2.0f);
-    itemIcon->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL);
-    this->getParent()->addChild(itemIcon, Constants::ZOrder::UI_GLOBAL);
-    
-    // 创建道具名称标签
-    auto itemLabel = Label::createWithTTF(item->name, "fonts/msyh.ttf", 24);
-    itemLabel->setPosition(itemIcon->getPosition() + Vec2(0, 60));
-    itemLabel->setTextColor(Color4B::YELLOW);
-    itemLabel->enableOutline(Color4B::BLACK, 2);
     itemLabel->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL);
     this->getParent()->addChild(itemLabel, Constants::ZOrder::UI_GLOBAL);
     

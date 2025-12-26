@@ -8,6 +8,7 @@
 class Enemy;
 class Player;
 class Chest;
+class ItemDrop;
 
 /**
  * 普通战斗房间的地形布局类型
@@ -97,6 +98,11 @@ public:
     void openChest(Player* player = nullptr);
     bool canInteractWithChest(Player* player) const;
     
+    // 道具掉落管理
+    ItemDrop* getItemDrop() const { return _itemDrop; }
+    bool canInteractWithItemDrop(Player* player) const;
+    void pickupItemDrop(Player* player);
+    
     // 传送门管理
     void createPortal();
     cocos2d::Sprite* getPortal() const { return _portal; }
@@ -149,6 +155,7 @@ private:
     cocos2d::Vector<Spike*> _spikes;
     cocos2d::Vector<Barrier*> _barriers;  // 所有障碍物(Box和Pillar)
     Chest* _chest;  // 奖励房间的宝箱
+    ItemDrop* _itemDrop;  // 房间中的道具掉落物
     cocos2d::Sprite* _portal;  // 传送门主体
     cocos2d::Sprite* _portalLighting;  // 传送门闪电特效
 };
