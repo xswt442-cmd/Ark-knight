@@ -109,6 +109,13 @@ void Enemy::update(float dt)
 // ==================== Nymph 中毒逻辑实现 ====================
 void Enemy::applyNymphPoison(int sourceAttack)
 {
+    // 新增：如果实体不允许被剧毒影响，则忽略（例如 Boss 在阶段 A）
+    if (!isPoisonable())
+    {
+        GAME_LOG("Enemy::applyNymphPoison ignored because entity is not poisonable");
+        return;
+    }
+
     // 保存原始颜色（首次中毒时）
     if (!_poisonColorSaved && _sprite)
     {

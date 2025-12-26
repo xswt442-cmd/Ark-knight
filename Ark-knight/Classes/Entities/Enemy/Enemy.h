@@ -51,6 +51,11 @@ public:
     void applyNymphPoison(int sourceAttack);
     int getPoisonStacks() const { return _poisonStacks; }
 
+    /**
+     * 是否能被剧毒效果（Nymph 毒）影响。默认 true，子类可以覆写以免疫（例如 Boss 在阶段 A）。
+     */
+    virtual bool isPoisonable() const { return true; }
+
     // ==================== Stealth（隐身） 管理 ====================
     /**
      * 将一个隐身“来源”注册到该敌人（来源可以是烟雾 DrawNode 或其地址）

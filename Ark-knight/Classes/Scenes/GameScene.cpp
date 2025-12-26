@@ -14,6 +14,7 @@ int GameScene::s_savedMP = 0;
 #include "Entities/Enemy/TangHuang.h"
 #include "Entities/Enemy/Du.h"
 #include "Entities/Enemy/Cup.h" // 新增：包含 Cup 头文件
+#include "Entities/Enemy/KuiLongBoss.h" // 新增：包含 KuiLongBoss 头文件
 #include "ui/CocosGUI.h"
 #include <algorithm>
 #include"Map/Room.h"
@@ -286,6 +287,19 @@ void GameScene::spawnEnemiesInRoom(Room* room)
     // 使用房间自身计算的可行走区域（基于墙与玩家半径），确保边界与墙对齐
     Rect walk = room->getWalkableArea();
     
+    // --------- 调试：在每个战斗房间必定生成一个 Boss（便于调试） ----------
+    {
+        auto boss = KuiLongBoss::create();
+        if (boss)
+        {
+            boss->setPosition(roomCenter);
+            boss->setRoomBounds(walk);
+            addEnemy(boss);
+            GAME_LOG("Debug: KuiLongBoss spawned at room center (%.1f, %.1f)", roomCenter.x, roomCenter.y);
+        }
+    }
+    // -------------------------------------------------------------------------
+
     // 随机生成3-8个怪（普通小怪：Ayao / DeYi，精英怪：XinXing / TangHuang / Du）
     int enemyCount = RANDOM_INT(3, 8);
 
