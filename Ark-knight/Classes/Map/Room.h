@@ -9,6 +9,7 @@ class Enemy;
 class Player;
 class Chest;
 class ItemDrop;
+struct ItemDef;  // 前置声明ItemDef结构体
 
 /**
  * 普通战斗房间的地形布局类型
@@ -101,7 +102,7 @@ public:
     // 道具掉落管理
     ItemDrop* getItemDrop() const { return _itemDrop; }
     bool canInteractWithItemDrop(Player* player) const;
-    void pickupItemDrop(Player* player);
+    const ItemDef* pickupItemDrop(Player* player);
     
     // 传送门管理
     void createPortal();

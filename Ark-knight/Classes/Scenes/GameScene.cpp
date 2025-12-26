@@ -1,25 +1,25 @@
 ﻿#include "GameScene.h"
 #include "MainMenuScene.h"
 #include "Entities/Player/Mage.h"
-
-// 静态变量定义
-int GameScene::s_nextLevel = 1;
-int GameScene::s_nextStage = 1;
-int GameScene::s_savedHP = 0;
-int GameScene::s_savedMP = 0;
 #include "Entities/Enemy/KongKaZi.h"
 #include "Entities/Enemy/DeYi.h"
 #include "Entities/Enemy/Ayao.h"
 #include "Entities/Enemy/XinXing.h"
 #include "Entities/Enemy/TangHuang.h"
 #include "Entities/Enemy/Du.h"
-#include "Entities/Enemy/Cup.h" // 新增：包含 Cup 头文件
-#include "Entities/Enemy/KuiLongBoss.h" // 新增：包含 KuiLongBoss 头文件
+#include "Entities/Enemy/Cup.h"
+#include "Entities/Enemy/KuiLongBoss.h"
 #include "Entities/Objects/Chest.h"
 #include "Entities/Objects/ItemDrop.h"
 #include "ui/CocosGUI.h"
 #include <algorithm>
-#include"Map/Room.h"
+#include "Map/Room.h"
+
+// 静态变量定义
+int GameScene::s_nextLevel = 1;
+int GameScene::s_nextStage = 1;
+int GameScene::s_savedHP = 0;
+int GameScene::s_savedMP = 0;
 
 Scene* GameScene::createScene()
 {
@@ -540,6 +540,10 @@ void GameScene::createHUD()
     hintLabel->setTextColor(Color4B::WHITE);
     hintLabel->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL);
     _uiLayer->addChild(hintLabel);
+    
+    // ==================== 道具栏 ====================
+    // 在血条和蓝条下方显示已获得的道具
+    _itemSlots.clear();
 }
 
 void GameScene::update(float dt)
@@ -1263,7 +1267,11 @@ void GameScene::setupKeyboardListener()
             // 处理交互：拾取道具
             else if (_currentRoom && _currentRoom->canInteractWithItemDrop(_player))
             {
-                _currentRoom->pickupItemDrop(_player);
+                const ItemDef* itemDef = _currentRoom->pickupItemDrop(_player);
+                if (itemDef)
+                {
+                    addItemToUI(itemDef);
+                }
             }
             // 处理交互：宝箱
             else if (_currentRoom && _currentRoom->canInteractWithChest(_player))
@@ -1674,4 +1682,50 @@ void GameScene::showSettings()
         _uiLayer->getChildByName("pauseExitBtn")->setVisible(true);
     });
     _uiLayer->addChild(settingsLayer);
+}
+
+void GameScene::addItemToUI(const ItemDef* itemDef)
+{
+    if (!itemDef)
+    {
+        return;
+    }
+    
+    auto visibleSize = Director::getInstance()->getVisibleSize();
+    Vec2 origin = Director::getInstance()->getVisibleOrigin();
+    
+    // 道具栏参数
+    float barStartX = origin.x + 60;
+    float mpBarY = origin.y + visibleSize.height - 70;  // 蓝条位置
+    float itemSlotStartX = barStartX - 10;
+    float itemSlotStartY = mpBarY - 50;  // 蓝条下方50像素
+    float itemSlotSize = 32.0f;          // 道具图标大小
+    float itemSlotSpacing = 5.0f;        // 图标间距
+    int maxItemsPerRow = 5;              // 每行最多5个道具
+    
+    // 计算新道具位置
+    int itemCount = static_cast<int>(_itemSlots.size());
+    int row = itemCount / maxItemsPerRow;
+    int col = itemCount % maxItemsPerRow;
+    
+    float itemX = itemSlotStartX + col * (itemSlotSize + itemSlotSpacing);
+    float itemY = itemSlotStartY - row * (itemSlotSize + itemSlotSpacing);
+    
+    // 创建道具图标
+    auto itemIcon = Sprite::create(itemDef->iconPath);
+    if (!itemIcon)
+    {
+        GAME_LOG("Failed to create item icon: %s", itemDef->iconPath.c_str());
+        return;
+    }
+    
+    itemIcon->setPosition(Vec2(itemX, itemY));
+    itemIcon->setScale(itemSlotSize / itemIcon->getContentSize().width);
+    itemIcon->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL + 5);
+    _uiLayer->addChild(itemIcon);
+    
+    // 添加到列表
+    _itemSlots.push_back(itemIcon);
+    
+    GAME_LOG("Added item to UI: %s at position (%d, %d)", itemDef->name.c_str(), col, row);
 }

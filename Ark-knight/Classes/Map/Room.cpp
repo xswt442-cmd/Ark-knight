@@ -917,15 +917,16 @@ bool Room::canInteractWithItemDrop(Player* player) const
     return canPickup;
 }
 
-void Room::pickupItemDrop(Player* player)
+const ItemDef* Room::pickupItemDrop(Player* player)
 {
     if (!_itemDrop || !player)
     {
-        return;
+        return nullptr;
     }
     
-    _itemDrop->pickup(player);
+    const ItemDef* itemDef = _itemDrop->pickup(player);
     _itemDrop = nullptr;  // 清空引用，对象会自动移除
+    return itemDef;
 }
 
 // ==================== 传送门生成 ====================

@@ -69,11 +69,11 @@ bool ItemDrop::canPickup(Player* player, float interactionDistance) const
     return distance <= interactionDistance;
 }
 
-void ItemDrop::pickup(Player* player)
+const ItemDef* ItemDrop::pickup(Player* player)
 {
     if (_isPickedUp || !player)
     {
-        return;
+        return nullptr;
     }
     
     _isPickedUp = true;
@@ -91,6 +91,8 @@ void ItemDrop::pickup(Player* player)
     auto sequence = Sequence::create(spawn, remove, nullptr);
     
     this->runAction(sequence);
+    
+    return _itemDef;
 }
 
 void ItemDrop::applyEffect(Player* player)

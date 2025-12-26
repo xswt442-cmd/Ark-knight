@@ -30,8 +30,9 @@ public:
     /**
      * 拾取道具：应用效果并移除自身
      * @param player 玩家指针
+     * @return 返回道具定义，用于在UI显示
      */
-    void pickup(Player* player);
+    const ItemDef* pickup(Player* player);
     
     /**
      * 应用道具效果到玩家
