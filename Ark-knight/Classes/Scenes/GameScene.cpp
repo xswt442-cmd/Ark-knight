@@ -876,7 +876,7 @@ void GameScene::updateInteraction(float dt)
         }
         
         // 设置道具交互文本：[E]获取道具名称：效果描述
-        std::string interactText = "[E]获取" + itemDef->name + "：" + itemDef->description;
+        std::string interactText = std::string(u8"[E]获取") + itemDef->name + u8"：" + itemDef->description;
         _interactionLabel->setString(interactText);
         
         CCLOG("Showing item interaction: %s", interactText.c_str());
