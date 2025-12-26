@@ -605,16 +605,16 @@ void Room::addPillarCluster(int centerTileX, int centerTileY, int width, int hei
 
 void Room::layoutFiveBoxes()
 {
-    // 离墙最近的两圈是禁止放置区，所以有效范围是 [2, _tilesWidth-3] x [2, _tilesHeight-3]
+    // 离墙最近的两圈是禁止放置区[1,2]和[height-3,height-2]，可放置区是[3, _tilesWidth-4] x [3, _tilesHeight-4]
     
     int centerX = _tilesWidth / 2;
     int centerY = _tilesHeight / 2;
     
-    // 角落堆紧挨禁止放置区，3x3堆的中心在(3,3)使得最角落方块在(2,2)
-    int leftX = 3;
-    int rightX = _tilesWidth - 4;
-    int topY = _tilesHeight - 4;
-    int bottomY = 3;
+    // 角落堆紧挨禁止放置区，3x3堆的中心在(4,4)使得最角落方块在(3,3)
+    int leftX = 4;
+    int rightX = _tilesWidth - 5;
+    int topY = _tilesHeight - 5;
+    int bottomY = 4;
     
     // 角落堆：3x3
     // 左上
@@ -634,11 +634,11 @@ void Room::layoutNineBoxes()
     // 先放四角的4堆
     int centerX = _tilesWidth / 2;
     int centerY = _tilesHeight / 2;
-    // 角落堆紧挨禁止放置区
-    int leftX = 3;
-    int rightX = _tilesWidth - 4;
-    int topY = _tilesHeight - 4;
-    int bottomY = 3;
+    // 角落堆紧挨禁止放置区，3x3堆中心在(4,4)使最角落方块在(3,3)
+    int leftX = 4;
+    int rightX = _tilesWidth - 5;
+    int topY = _tilesHeight - 5;
+    int bottomY = 4;
     
     // 角落堆：3x3
     // 左上
@@ -663,11 +663,11 @@ void Room::layoutNineBoxes()
 void Room::layoutUpDownSpikes()
 {
     // 矩形围城：左右木箱，上下地刺，四角木箱
-    // 在有效范围内创建一个小矩形，紧挨禁止放置区
-    int innerLeft = 3;
-    int innerRight = _tilesWidth - 4;
-    int innerTop = _tilesHeight - 4;
-    int innerBottom = 3;
+    // 在可放置区内创建小矩形，紧挨禁止区边界
+    int innerLeft = 4;
+    int innerRight = _tilesWidth - 5;
+    int innerTop = _tilesHeight - 5;
+    int innerBottom = 4;
     
     // 左右木箱（宽度1）
     for (int y = innerBottom; y <= innerTop; y++)
@@ -687,10 +687,10 @@ void Room::layoutUpDownSpikes()
 void Room::layoutLeftRightSpikes()
 {
     // 矩形围城：上下木箱，左右地刺，四角木箱
-    int innerLeft = 3;
-    int innerRight = _tilesWidth - 4;
-    int innerTop = _tilesHeight - 4;
-    int innerBottom = 3;
+    int innerLeft = 4;
+    int innerRight = _tilesWidth - 5;
+    int innerTop = _tilesHeight - 5;
+    int innerBottom = 4;
     
     // 上下木箱（宽度1）
     for (int x = innerLeft; x <= innerRight; x++)
@@ -710,10 +710,10 @@ void Room::layoutLeftRightSpikes()
 void Room::layoutAllSpikes()
 {
     // 一圈地刺，四角也是地刺
-    int innerLeft = 3;
-    int innerRight = _tilesWidth - 4;
-    int innerTop = _tilesHeight - 4;
-    int innerBottom = 3;
+    int innerLeft = 4;
+    int innerRight = _tilesWidth - 5;
+    int innerTop = _tilesHeight - 5;
+    int innerBottom = 4;
     
     // 上下地刺
     for (int x = innerLeft; x <= innerRight; x++)
@@ -732,11 +732,11 @@ void Room::layoutAllSpikes()
 
 void Room::layoutUpDownBoxes()
 {
-    // 上下各一排木箱，紧挨禁止放置区
-    int wallY_top = _tilesHeight - 3;
-    int wallY_bottom = 2;
+    // 上下各一排木箱，距离墙2格（紧挨禁止区外侧）
+    int wallY_top = _tilesHeight - 4;
+    int wallY_bottom = 3;
     
-    for (int x = 2; x < _tilesWidth - 2; x++)
+    for (int x = 3; x < _tilesWidth - 3; x++)
     {
         addBoxAtTile(x, wallY_top, Box::BoxType::NORMAL);
         addBoxAtTile(x, wallY_bottom, Box::BoxType::NORMAL);
@@ -745,11 +745,11 @@ void Room::layoutUpDownBoxes()
 
 void Room::layoutLeftRightBoxes()
 {
-    // 左右各一排木箱，紧挨禁止放置区
-    int wallX_left = 2;
-    int wallX_right = _tilesWidth - 3;
+    // 左右各一排木箱，距离墙2格（紧挨禁止区外侧）
+    int wallX_left = 3;
+    int wallX_right = _tilesWidth - 4;
     
-    for (int y = 2; y < _tilesHeight - 2; y++)
+    for (int y = 3; y < _tilesHeight - 3; y++)
     {
         addBoxAtTile(wallX_left, y, Box::BoxType::NORMAL);
         addBoxAtTile(wallX_right, y, Box::BoxType::NORMAL);
@@ -786,13 +786,13 @@ void Room::layoutFourPillars()
 void Room::layoutRandomMess()
 {
     // 在禁止放置区之外随机放置15个石柱和15个木箱
-    // 有效范围：[2, _tilesWidth-3] x [2, _tilesHeight-3]
+    // 可放置区：[3, _tilesWidth-4] x [3, _tilesHeight-4]
     
     // 放置15个石柱
     for (int i = 0; i < 15; i++)
     {
-        int x = cocos2d::RandomHelper::random_int(2, _tilesWidth - 3);
-        int y = cocos2d::RandomHelper::random_int(2, _tilesHeight - 3);
+        int x = cocos2d::RandomHelper::random_int(3, _tilesWidth - 4);
+        int y = cocos2d::RandomHelper::random_int(3, _tilesHeight - 4);
         
         // 随机选择石柱类型
         int typeIndex = cocos2d::RandomHelper::random_int(0, 2);
@@ -811,8 +811,8 @@ void Room::layoutRandomMess()
     // 放置15个木箱
     for (int i = 0; i < 15; i++)
     {
-        int x = cocos2d::RandomHelper::random_int(2, _tilesWidth - 3);
-        int y = cocos2d::RandomHelper::random_int(2, _tilesHeight - 3);
+        int x = cocos2d::RandomHelper::random_int(3, _tilesWidth - 4);
+        int y = cocos2d::RandomHelper::random_int(3, _tilesHeight - 4);
         
         // 随机选择木箱类型
         int typeIndex = cocos2d::RandomHelper::random_int(0, 2);
