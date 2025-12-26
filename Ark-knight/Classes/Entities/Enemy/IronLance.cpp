@@ -270,9 +270,23 @@ void IronLance::takeDamage(int damage)
 {
     if (!_isAlive || damage <= 0) return;
 
-    // 不論傳入 damage 為多少，每次命中固定扣 1
-    // 直接調用基類（GameEntity / Character）的傷害方法以維持浮動顯示等邏輯
-    GameEntity::takeDamage(1);
+    // 强制每次只算 1 点伤害。
+    // 直接调用 GameEntity::takeDamageReported 绕过 Enemy::takeDamageReported 中的 Cup 分担逻辑，
+    // 确保 IronLance 自身确实减少 HP（期望 45 次后死亡）。
+    GameEntity::takeDamageReported(1);
+}
+
+int IronLance::takeDamageReported(int damage)
+{
+    // 坚持“所有伤害都只算 1 点”的设计
+    // 保留受击无敌与基类闪烁/死亡逻辑，同时绕过 Enemy::takeDamageReported 的 Cup 分担逻辑
+    if (!_isAlive || damage <= 0) return 0;
+
+    // 与 GameEntity::takeDamageReported 一致的短暂无敌检测（避免在无敌期间重复受击）
+    if (_hitInvulTimer > 0.0f) return 0;
+
+    // 强制只造成 1 点实际伤害（调用 GameEntity 的实现以获得闪烁/无敌/死亡处理）
+    return GameEntity::takeDamageReported(1);
 }
 
 void IronLance::die()

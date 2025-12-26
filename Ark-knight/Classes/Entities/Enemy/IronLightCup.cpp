@@ -201,8 +201,21 @@ void IronLightCup::takeDamage(int damage)
 {
     if (isDead()) return;
 
-    // 无论传入 damage，均只造成 1 点实际伤害（即需要 35 次命中）
-    Enemy::takeDamage(1);
+    // 每次固定计 1 点伤害。
+    // 直接调用基类的 takeDamageReported，避免被附近 Cup 吸收（Enemy::takeDamageReported 的分担逻辑）。
+    GameEntity::takeDamageReported(1);
+}
+
+int IronLightCup::takeDamageReported(int damage)
+{
+    // 强制所有来源的伤害对 IronLightCup 只造成 1 点
+    if (!_isAlive || damage <= 0) return 0;
+
+    // 保持受击无敌判断，避免短时间重复受击
+    if (_hitInvulTimer > 0.0f) return 0;
+
+    // 直接走 GameEntity 的处理，造成 1 点并触发闪烁 / 无敌 / 死亡处理
+    return GameEntity::takeDamageReported(1);
 }
 
 void IronLightCup::die()

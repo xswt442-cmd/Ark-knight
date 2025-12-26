@@ -63,18 +63,26 @@ void GameEntity::bindSprite(Sprite* sprite, int zOrder)
 
 void GameEntity::takeDamage(int damage)
 {
-    // 过滤负值、0、或已死亡
+    // 向后兼容：原来的无返回值接口仍可使用
+    takeDamageReported(damage);
+}
+
+int GameEntity::takeDamageReported(int damage)
+{
+    // 返回“实际对实体造成的 HP 减少”
     if (!_isAlive || damage <= 0)
     {
-        return;
+        return 0;
     }
 
     // 如果处于短时间受击无敌期，则忽略本次伤害（避免多帧重复命中）
     if (_hitInvulTimer > 0.0f)
     {
-        return;
+        return 0;
     }
     
+    int oldHP = _hp;
+
     _hp -= damage;
     if (_hp < 0)
     {
@@ -84,7 +92,8 @@ void GameEntity::takeDamage(int damage)
     // 设置短暂无敌窗口，防止短时间重复受击
     _hitInvulTimer = HIT_INVUL_DURATION;
     
-    GAME_LOG("Entity takes %d damage, HP: %d/%d", damage, _hp, _maxHP);
+    int applied = oldHP - _hp;
+    GAME_LOG("Entity takes %d damage, HP: %d/%d", applied, _hp, _maxHP);
     
     // 检查是否死亡
     if (_hp <= 0)
@@ -92,7 +101,7 @@ void GameEntity::takeDamage(int damage)
         // 立即标记为死亡，避免后续再触发受击/动作
         _isAlive = false;
         die();
-        return;  // 死亡后不播放受击效果
+        return applied;  // 死亡后不播放受击效果，但返回实际值
     }
     
     // 受击效果 - 闪烁
@@ -108,6 +117,8 @@ void GameEntity::takeDamage(int damage)
         sequence->setTag(100);  // 设置标签用于停止
         _sprite->runAction(sequence);
     }
+
+    return applied;
 }
 
 void GameEntity::heal(int healAmount)

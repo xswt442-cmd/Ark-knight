@@ -534,10 +534,10 @@ void Mage::shootBullet()
         // 碰撞检测
         bullet->schedule([bullet, parent, bulletDamage, this](float dt) {
             if (!bullet->getParent() || bullet->getUserData() != nullptr) return;
-            
+
             Vec2 bulletPos = bullet->getPosition();
             float wallCollisionRadius = Constants::FLOOR_TILE_SIZE * 1.0f;
-            
+
             // 检测与墙的碰撞
             for (auto child : parent->getChildren())
             {
@@ -547,7 +547,7 @@ void Mage::shootBullet()
                     {
                         Vec2 wallWorldPos = child->convertToWorldSpace(subChild->getPosition());
                         Vec2 wallPos = parent->convertToNodeSpace(wallWorldPos);
-                        
+
                         float dist = bulletPos.distance(wallPos);
                         if (dist < wallCollisionRadius)
                         {
@@ -558,14 +558,14 @@ void Mage::shootBullet()
                             return;
                         }
                     }
-                    
+
                     for (auto deepChild : subChild->getChildren())
                     {
                         if (deepChild->getTag() == Constants::Tag::WALL)
                         {
                             Vec2 wallWorldPos = subChild->convertToWorldSpace(deepChild->getPosition());
                             Vec2 wallPos = parent->convertToNodeSpace(wallWorldPos);
-                            
+
                             float dist = bulletPos.distance(wallPos);
                             if (dist < wallCollisionRadius)
                             {
@@ -594,13 +594,16 @@ void Mage::shootBullet()
                             // 跳过隐身敌人（隐身不被我方子弹命中）
                             if (enemy->isStealthed()) continue;
 
-                            // 命中基础伤害
-                            enemy->takeDamage(bulletDamage);
-
-                            // 显示基础伤害（红色）
-                            FloatingText::show(parent, enemy->getPosition(), std::to_string(bulletDamage), Color3B(220,20,20));
-
-                            GAME_LOG("Bullet hits enemy for %d damage!", bulletDamage);
+                            // 变更点：不要直接调用 takeDamageReported（会绕过子类的 takeDamage 覆写）
+                            // 先记录命中前的 HP，然后调用虚拟的 takeDamage，最后通过差值得到实际生效值用于浮字显示
+                            int oldHP = enemy->getHP();
+                            enemy->takeDamage(bulletDamage); // 虚函数调用，子类可以控制实际生效的数值
+                            int applied = oldHP - enemy->getHP();
+                            if (applied > 0)
+                            {
+                                FloatingText::show(parent, enemy->getPosition(), std::to_string(applied), Color3B(220,20,20));
+                            }
+                            GAME_LOG("Bullet hits enemy for %d (applied=%d) damage!", bulletDamage, applied);
 
                             // 如果处于强化（开大），额外造成 当前毒层数 * 自身攻击 * 10% 的伤害
                             if (this->_isEnhanced)
@@ -612,10 +615,15 @@ void Mage::shootBullet()
                                     int extraDmg = static_cast<int>(std::round(extraF));
                                     if (extraDmg > 0)
                                     {
+                                        int oldHP2 = enemy->getHP();
                                         enemy->takeDamage(extraDmg);
-                                        // 显示额外伤害（红色）
-                                        FloatingText::show(parent, enemy->getPosition(), std::to_string(extraDmg), Color3B(220,20,20));
-                                        GAME_LOG("Enhanced extra damage: %d (stacks=%d)", extraDmg, stacksBefore);
+                                        int appliedExtra = oldHP2 - enemy->getHP();
+                                        if (appliedExtra > 0)
+                                        {
+                                            // 显示额外伤害
+                                            FloatingText::show(parent, enemy->getPosition(), std::to_string(appliedExtra), Color3B(220,20,20));
+                                        }
+                                        GAME_LOG("Enhanced extra damage: %d (stacks=%d, applied=%d)", extraDmg, stacksBefore, appliedExtra);
                                     }
                                 }
                             }

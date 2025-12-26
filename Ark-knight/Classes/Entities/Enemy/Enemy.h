@@ -90,6 +90,11 @@ public:
     virtual void takeDamage(int damage) override;
 
     /**
+     * 与 takeDamage 对应的“有返回值”的版本：返回实际对该敌人造成的 HP 减少值（可用于精确显示浮动伤害）
+     */
+    virtual int takeDamageReported(int damage);
+
+    /**
      * 设置房间边界（默认空实现），子类可覆写以接收房间边界
      */
     virtual void setRoomBounds(const cocos2d::Rect& bounds);

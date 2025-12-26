@@ -23,6 +23,10 @@ public:
     // 每次只计作 1 次伤害，需要 35 次击中才死亡
     virtual void takeDamage(int damage) override;
 
+    // ---------- 新增：确保 takeDamageReported 也只造成 1 点 ----------
+    virtual int takeDamageReported(int damage) override;
+    // -----------------------------------------------------------------
+
     virtual void die() override;
 
     virtual void setRoomBounds(const cocos2d::Rect& bounds) override { _roomBounds = bounds; _hasRoomBounds = true; }

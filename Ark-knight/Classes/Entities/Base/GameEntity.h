@@ -55,10 +55,17 @@ public:
     void setMaxHP(int maxHP) { _maxHP = maxHP; }
     
     /**
-     * 扣除生命值
+     * 扣除生命值（向后兼容，旧接口）
      * @param damage 伤害值
      */
     virtual void takeDamage(int damage);
+
+    /**
+     * 扣血并返回“实际对该实体造成的 HP 减少值”
+     * 用于需要显示“实际生效伤害”的调用点（例如浮动文字）
+     * 默认实现包含原有的扣血/闪烁/死亡逻辑并返回实际减少量
+     */
+    virtual int takeDamageReported(int damage);
     
     /**
      * 治疗

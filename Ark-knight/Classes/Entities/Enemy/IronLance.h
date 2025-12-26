@@ -24,6 +24,10 @@ public:
     // 任意一次受伤仅扣 1 点
     virtual void takeDamage(int damage) override;
 
+    // ---------- 新增：确保直接调用 takeDamageReported 也只造成 1 点伤害 ----------
+    virtual int takeDamageReported(int damage) override;
+    // ---------------------------------------------------------------------------
+
     // 覆写 die()，确保死亡时执行视觉播放 + 清理
     virtual void die() override;
 

@@ -54,7 +54,7 @@ void Enemy::update(float dt)
 {
     Character::update(dt);
 
-    // 处理毒伤逻辑（保持原逻辑）
+    // 处理毒伤逻辑（保持原逻辑，但浮字显示改为实际生效伤害）
     if (_poisonStacks > 0)
     {
         _poisonTimer -= dt;
@@ -70,14 +70,14 @@ void Enemy::update(float dt)
                 int dmg = static_cast<int>(std::round(dmgF));
                 if (dmg > 0)
                 {
-                    this->takeDamage(dmg);
+                    int applied = this->takeDamageReported(dmg);
                     Scene* running = Director::getInstance()->getRunningScene();
-                    if (running)
+                    if (running && applied > 0)
                     {
                         Vec2 worldPos = this->convertToWorldSpace(Vec2::ZERO);
-                        FloatingText::show(running, worldPos, std::to_string(dmg), Color3B(180,100,200));
+                        FloatingText::show(running, worldPos, std::to_string(applied), Color3B(180,100,200));
                     }
-                    GAME_LOG("Poison tick: %d damage applied to enemy (stacks=%d, srcAtk=%d)", dmg, _poisonStacks, _poisonSourceAttack);
+                    GAME_LOG("Poison tick: %d damage applied to enemy (stacks=%d, srcAtk=%d, shown=%d)", dmg, _poisonStacks, _poisonSourceAttack, applied);
                 }
             }
         }
@@ -482,27 +482,36 @@ void Enemy::die()
 
 /**
  * Enemy::takeDamage - 覆写以支持 Cup 的伤害分担逻辑
+ * 旧的无返回值接口仍保留（向后兼容），其实现现在委托给 takeDamageReported
  */
 void Enemy::takeDamage(int damage)
+{
+    // 向后兼容：调用有返回值的实现，忽略返回值
+    takeDamageReported(damage);
+}
+
+/**
+ * Enemy::takeDamageReported - 新实现，返回“实际对该敌人 HP 造成的减少值”
+ */
+int Enemy::takeDamageReported(int damage)
 {
     // 复用GameEntity的基本过滤逻辑，但在分担场景下拆分伤害
     if (!_isAlive || damage <= 0)
     {
-        return;
+        return 0;
     }
 
     // 处于短暂无敌时忽略（与 GameEntity::takeDamage 一致）
     if (_hitInvulTimer > 0.0f)
     {
-        return;
+        return 0;
     }
 
     // 如果自身就是 Cup，则不再做分担检测，直接调用基类处理（遵循默认流程）
     Cup* selfCup = dynamic_cast<Cup*>(this);
     if (selfCup)
     {
-        GameEntity::takeDamage(damage);
-        return;
+        return GameEntity::takeDamageReported(damage);
     }
 
     // 查找任意一个在范围内且未死亡的 Cup（以第一个为准）
@@ -528,15 +537,16 @@ void Enemy::takeDamage(int damage)
         int remain = damage - share;
         if (remain < 0) remain = 0;
 
+        int appliedToSelf = 0;
+
         // 先对受击者应用剩余伤害（保持 GameEntity 的受击显示与死亡逻辑）
         if (remain > 0)
         {
-            GameEntity::takeDamage(remain);
+            appliedToSelf = GameEntity::takeDamageReported(remain);
         }
         else
         {
             // remain == 0 则我们仍然应该触发闪烁与 invul（保持最小的 visual feedback）
-            // 这里我们通过调用 GameEntity::takeDamage(0) 无效果，因此手动设置短暂无敌并闪烁
             _hitInvulTimer = GameEntity::HIT_INVUL_DURATION;
             if (_sprite)
             {
@@ -547,20 +557,23 @@ void Enemy::takeDamage(int damage)
                 seq->setTag(100);
                 _sprite->runAction(seq);
             }
+            appliedToSelf = 0;
         }
 
         // 将分担的伤害给 Cup（Cup::absorbDamage 会直接减少 HP 并处理死亡）
         chosenCup->absorbDamage(share);
 
-        GAME_LOG("Enemy::takeDamage redirected %d->Cup, remain %d to self (pos self=[%.1f,%.1f], cup=[%.1f,%.1f])",
-                 share, remain,
+        GAME_LOG("Enemy::takeDamage redirected %d->Cup, remain %d to self (applied=%d) (pos self=[%.1f,%.1f], cup=[%.1f,%.1f])",
+                 share, remain, appliedToSelf,
                  this->getPosition().x, this->getPosition().y,
                  chosenCup->getPosition().x, chosenCup->getPosition().y);
+
+        return appliedToSelf;
     }
     else
     {
         // 未找到 Cup，默认行为
-        GameEntity::takeDamage(damage);
+        return GameEntity::takeDamageReported(damage);
     }
 }
 

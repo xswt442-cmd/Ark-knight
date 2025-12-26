@@ -13,6 +13,7 @@ int GameScene::s_savedMP = 0;
 #include "Entities/Enemy/XinXing.h"
 #include "Entities/Enemy/TangHuang.h"
 #include "Entities/Enemy/Du.h"
+#include "Entities/Enemy/Cup.h" // 新增：包含 Cup 头文件
 #include "ui/CocosGUI.h"
 #include <algorithm>
 #include"Map/Room.h"
@@ -292,26 +293,30 @@ void GameScene::spawnEnemiesInRoom(Room* room)
     {
         Enemy* enemy = nullptr;
         float r = CCRANDOM_0_1();
-        // 概率分配：Ayao 30%, DeYi 30%, XinXing 15%, TangHuang 15%, Du 10%
+        // 目标：Cup + Du 合计 30%，其余 70% 平均给 Ayao/DeYi/XinXing/TangHuang（每个 17.5%）
         if (r < 0.30f)
         {
-            enemy = Ayao::create();
-        }
-        else if (r < 0.60f)
-        {
-            enemy = DeYi::create();
-        }
-        else if (r < 0.75f)
-        {
-            enemy = XinXing::create();
-        }
-        else if (r < 0.90f)
-        {
-            enemy = TangHuang::create();
+            // 在 30% 区间内等概率选择 Cup 或 Du（各 ~15%）
+            float r2 = CCRANDOM_0_1();
+            if (r2 < 0.5f) {
+                enemy = Cup::create();
+            } else {
+                enemy = Du::create();
+            }
         }
         else
         {
-            enemy = Du::create();
+            // 将剩余区间归一化为 0..1，平均分 4 份
+            float r2 = (r - 0.30f) / 0.70f; // 0..1
+            if (r2 < 0.25f) {
+                enemy = Ayao::create();
+            } else if (r2 < 0.50f) {
+                enemy = DeYi::create();
+            } else if (r2 < 0.75f) {
+                enemy = XinXing::create();
+            } else {
+                enemy = TangHuang::create();
+            }
         }
 
         if (!enemy) continue;
@@ -345,6 +350,7 @@ void GameScene::spawnEnemiesInRoom(Room* room)
         else if (dynamic_cast<XinXing*>(enemy)) typeName = "XinXing";
         else if (dynamic_cast<TangHuang*>(enemy)) typeName = "TangHuang";
         else if (dynamic_cast<Du*>(enemy)) typeName = "Du";
+        else if (dynamic_cast<Cup*>(enemy)) typeName = "Cup"; // 新增：Cup 的类型名
 
         GAME_LOG("Enemy spawned at (%.1f, %.1f) in room - type=%s", spawnPos.x, spawnPos.y, typeName);
     }
