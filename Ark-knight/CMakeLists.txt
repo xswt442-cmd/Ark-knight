@@ -82,7 +82,8 @@ list(APPEND GAME_SOURCE
      Classes/Entities/Enemy/Du.cpp
      Classes/Entities/Enemy/IronLightCup.cpp
      Classes/Entities/Enemy/TangHuang.cpp
-     Classes/Entities/Enemy/KuilongBoss.cpp
+     Classes/Entities/Enemy/NiLuFire.cpp
+     Classes/Entities/Enemy/KuiLongBoss.cpp
      # Scenes
      Classes/Scenes/MainMenuScene.cpp
      Classes/Scenes/GameScene.cpp
@@ -91,10 +92,13 @@ list(APPEND GAME_SOURCE
      Classes/Map/MapGenerator.cpp
      Classes/Map/Hallway.cpp
      Classes/Map/Barriers.cpp
+     Classes/Map/TerrainLayouts.cpp
      # UI
      Classes/UI/MiniMap.cpp
      Classes/UI/SettingsLayer.cpp
      Classes/UI/FloatingText.cpp
+     Classes/UI/GameHUD.cpp
+     Classes/UI/GameMenus.cpp
      # Managers
      Classes/Managers/GameManager.cpp
      Classes/Managers/SoundManager.cpp
@@ -127,18 +131,23 @@ list(APPEND GAME_HEADER
      Classes/Entities/Enemy/Du.h
      Classes/Entities/Enemy/IronLightCup.h
      Classes/Entities/Enemy/TangHuang.h
-     Classes/Entities/Enemy/KuilongBoss.h
+     Classes/Entities/Enemy/NiLuFire.h
+     Classes/Entities/Enemy/KuiLongBoss.h
      # Scenes
      Classes/Scenes/MainMenuScene.h
      Classes/Scenes/GameScene.h
      # Map
      Classes/Map/Room.h
      Classes/Map/MapGenerator.h
+     Classes/Map/Hallway.h
      Classes/Map/Barriers.h
+     Classes/Map/TerrainLayouts.h
      # UI
      Classes/UI/MiniMap.h
      Classes/UI/SettingsLayer.h
      Classes/UI/FloatingText.h
+     Classes/UI/GameHUD.h
+     Classes/UI/GameMenus.h
      # Managers
      Classes/Managers/GameManager.h
      Classes/Managers/SoundManager.h

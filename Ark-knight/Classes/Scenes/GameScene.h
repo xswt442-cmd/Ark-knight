@@ -11,6 +11,8 @@
 #include "Map/Room.h"
 #include "UI/MiniMap.h"
 #include "UI/SettingsLayer.h"
+#include "UI/GameHUD.h"
+#include "UI/GameMenus.h"
 #include "Map/Barriers.h"
 #include "Entities/Objects/Item.h"
 
@@ -102,6 +104,11 @@ private:
     void createHUD();
     
     /**
+     * 创建菜单系统
+     */
+    void createMenus();
+    
+    /**
      * 更新玩家
      */
     void updatePlayer(float dt);
@@ -182,29 +189,9 @@ private:
     // 相机系统
     Camera* _camera;
     
-    // HUD元素
-    cocos2d::ui::LoadingBar* _hpBar;     // 血条
-    cocos2d::ui::LoadingBar* _mpBar;     // 蓝条
-    Sprite* _hpIcon;                      // 爱心图标
-    Sprite* _mpIcon;                      // 闪电图标
-    Label* _hpLabel;                      // 血量数值
-    Label* _mpLabel;                      // 蓝量数值
-    Label* _debugLabel;
-    Label* _skillLabel;
-    Label* _interactionLabel;             // 交互提示标签
-    
-    // 技能图标系统
-    Sprite* _skillIcon;                   // 角色技能图标
-    ProgressTimer* _skillCDProgress;      // 角色技能CD进度
-    Sprite* _skillCDMask;                 // 角色技能CD变暗遮罩
-    
-    // 治疗技能图标系统
-    Sprite* _healIcon;                    // 治疗技能图标
-    ProgressTimer* _healCDProgress;       // 治疗技能CD进度
-    Sprite* _healCDMask;                  // 治疗技能CD变暗遮罩
-    
-    // 道具栏系统
-    std::vector<Sprite*> _itemSlots;      // 道具图标列表
+    // HUD和菜单系统
+    GameHUD* _gameHUD;
+    GameMenus* _gameMenus;
     
     // 状态
     bool _isPaused;

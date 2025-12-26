@@ -4,15 +4,15 @@
 Classes/
 ├── Core/               # ✅ 核心入口与全局定义
 ├── Scenes/             # ✅ 场景管理（高层逻辑）
-├── Entities/           # 🔄 游戏实体（核心 OOP 继承体系）
-│   ├── Base/           # 基类
-│   ├── Player/         # ✅ 玩家相关
-│   ├── Enemy/          # 🔄 敌人与 AI
+├── Entities/           # ✅ 游戏实体（核心 OOP 继承体系）
+│   ├── Base/           # ✅ 基类 (GameEntity, Character)
+│   ├── Player/         # ✅ 玩家相关 (Player, Mage, Nymph, Wisdael, Mudrock)
+│   ├── Enemy/          # ✅ 敌人与 AI (11种敌人 + 1个Boss)
 │   └── Objects/        # ✅ 投射物、道具、武器
 ├── Map/                # ✅ 地图生成与管理
-├── UI/                 # 用户界面与 HUD
-├── Managers/           # 单例管理器（全局控制）
-└── Utils/              # 工具类与辅助函数
+├── UI/                 # 🔄 用户界面与 HUD（已在GameScene中实现）
+├── Managers/           # ⚪ 单例管理器（全局控制）
+└── Utils/              # ⚪ 工具类与辅助函数
 ```
 
 **图例：** ✅ 已实现 | 🔄 部分实现 | ⚪ 待实现
@@ -51,18 +51,33 @@ Classes/
 
 这里是游戏对象的核心，利用**继承**和**多态**。
 
-- **Base/**
-  - **⚪ GameEntity.h/cpp**: 所有游戏对象的基类（继承 cocos2d::Sprite 或 Node），包含 HP、位置、碰撞体积。
-  - **⚪ Character.h/cpp**: 继承自 GameEntity，增加移动、状态机、武器持有等属性。
+- **Base/** ✅
+  - **✅ GameEntity.h/cpp**: 所有游戏对象的基类（继承 cocos2d::Sprite 或 Node），包含 HP、位置、碰撞体积。
+  - **✅ Character.h/cpp**: 继承自 GameEntity，增加移动、状态机、攻击冷却、法力值等属性。
   
 - **Player/** ✅
   - **✅ Player.h/cpp**: 玩家控制逻辑（输入处理、移动、碰撞半径16px）。
-  - **⚪ Mage.h/cpp, Warrior.h/cpp**: 具体职业，实现 useSkill() 虚函数。
+  - **✅ Mage.h/cpp**: 法师职业实现。
+  - **🔄 Nymph**: 妮芙 - 远程攻击，粉色子弹，被动毒伤叠加，主动攻击+300%。
+  - **🔄 Wisdael**: 维什戴尔 - 远程AOE，10%眩晕，20%闪避，范围爆炸。
+  - **🔄 Mudrock**: 泥岩 - 近战范围，攻击5次获得护盾，最多9层。
   
-- **Enemy/** 🔄
-  - **✅ Enemy.h/cpp**: 敌人基类（已有基础实现）。
-  - **⚪ MeleeEnemy.h/cpp, RangedEnemy.h/cpp**: 近战/远程敌人。
-  - **⚪ Specific enemies**: KongKaZi, DeYi, Ayao 等8种具体敌人。
+- **Enemy/** ✅
+  - **✅ Enemy.h/cpp**: 敌人基类，包含AI系统、毒伤系统、隐身系统、红标系统。
+  - **✅ Ayao.h/cpp**: 阿咬 - 基础近战小怪，巡逻+追击。
+  - **✅ KongKaZi.h/cpp**: 恐卡兹 - 红标敌人死亡后生成的定时炸弹。
+  - **✅ Cup.h/cpp**: 魂灵圣杯 - 飞行辅助怪，分摊周围敌人90%伤害。
+  - **✅ DeYi.h/cpp**: 得意 - 接近后爆炸的自爆怪。
+  - **✅ Du.h/cpp**: 妒 - 远程精英怪，发射高伤子弹。
+  - **✅ TangHuang.h/cpp**: 堂皇 - 精英怪，给周围怪物隐身/回血，死后生成铁灯盘。
+  - **✅ IronLightCup.h/cpp**: 铁灯盘 - 需35次伤害击杀，阻挡子弹。
+  - **✅ XinXing.h/cpp**: 新硎 - 近战精英怪，高伤害，死后生成3个铁矛头。
+  - **✅ IronLance.h/cpp**: 铁矛头 - 需45次伤害击杀，阻挡子弹。
+  - **✅ NiLuFire.h/cpp**: 尼卢火 - Boss召唤物，配合Boss技能造成伤害。
+  - **🔄 KuiLongBoss.h/cpp**: 奎隆Boss - 三阶段Boss战
+    - 阶段A(入定): 无敌，召唤尼卢火，【清火执】十字伤害
+    - 阶段B(自在): 可移动，【惩五戒】5连击，【承三身】召唤托生莲座
+    - 阶段C(无忧觉): 伤害翻倍，切换地图，玩家生命取决于阶段B损失的上限
 
 - **Objects/** ✅
   - **✅ Item.h/cpp**: 道具定义系统，包含15种道具配置
@@ -109,19 +124,29 @@ Classes/
   - 实时追踪玩家位置（蓝色方块）
   - 显示已访问/未访问房间状态
 
-#### 5. UI (界面层) ⚪
+#### 5. UI (界面层) ✅
 
 存放纯 UI 逻辑，与游戏实体逻辑解耦。
 
-- **⚪ HUDLayer.h/cpp**: 战斗界面（左上角血条、蓝条、技能冷却图标）。
-- **⚪ PauseMenu.h/cpp**: 暂停弹窗。
-- **⚪ DamageNumber.h/cpp**: 飘血效果（受到伤害时冒出的数字）。
-- **⚪ VirtualJoystick.h/cpp**: (如果做手游操作) 虚拟摇杆。
-
-**注**: 目前UI功能已在GameScene中实现：
-- **✅ HUD系统**: 血条、蓝条、技能CD显示
-- **✅ 道具栏**: 血条蓝条下方显示已获得道具（32px图标，每行5个）
-- **✅ 交互提示**: 动态显示"[E]获取{道具名}：{效果描述}"
+- **✅ GameHUD.h/cpp**: 游戏HUD管理系统
+  - 血条、蓝条显示与更新
+  - 技能图标和冷却进度显示
+  - 道具栏管理（血条蓝条下方，32px图标，每行5个）
+  - 交互提示系统（动态显示"[E]获取{道具名}：{效果描述}"）
+  - Debug信息显示
+  - 操作说明面板
+  
+- **✅ GameMenus.h/cpp**: 游戏菜单管理系统
+  - 暂停菜单（继续游戏、设置、返回主菜单、退出）
+  - 游戏结束界面（R键重新开始、Q键返回主菜单）
+  - 胜利界面（通关成功提示）
+  - 半透明遮罩层管理
+  - 键盘监听和回调处理
+  
+- **⚪ SettingsLayer.h/cpp**: 设置界面（音量调节、画面设置等）
+- **⚪ MiniMap.h/cpp**: 小地图显示
+- **⚪ FloatingText.h/cpp**: 飘血效果
+- **⚪ VirtualJoystick.h/cpp**: (如果做手游操作) 虚拟摇杆
 
 #### 6. Managers (管理器层) ⚪
 
@@ -171,20 +196,24 @@ startX = centerX - tileSize * (width/2 - 0.5)  // 第0列中心
 
 ### 下一步开发重点
 
-1. **摄像机系统** (camera 分支)
-   - 相机跟随玩家移动
-   - 房间切换时平滑过渡
-   - 边界限制
+1. **玩家角色完善**
+   - Nymph（妮芙）：毒伤叠加系统、技能实现
+   - Wisdael（维什戴尔）：范围爆炸子弹、眩晕/闪避被动
+   - Mudrock（泥岩）：近战护盾机制
 
-2. **敌人系统** (enemy 分支)
-   - AI 寻路（A*或简单追踪）
-   - 8种敌人的具体实现
-   - 动画播放系统
+2. **Boss系统完善** (KuiLongBoss)
+   - 阶段C（无忧觉）完整实现
+   - 托生莲座（Boat）召唤逻辑
+   - 地图切换机制
 
-3. **战斗系统** (combat 分支)
-   - 子弹/投射物
-   - 伤害计算
-   - 技能系统
+3. **UI/场景系统**
+   - MainMenuScene（开始菜单）
+   - 暂停菜单
+   - 死亡结算界面
+
+4. **音效系统**
+   - SoundManager 单例
+   - 背景音乐、战斗音效
 
 ---
 
@@ -196,6 +225,28 @@ startX = centerX - tileSize * (width/2 - 0.5)  // 第0列中心
 - **Item.h/cpp**: 15种道具配置（低阶6种60%，高阶5种30%，国王4种10%）
 - **ItemDrop.h/cpp**: 地上道具掉落、拾取交互、效果应用系统
 - **Chest.h/cpp**: 宝箱系统重构，支持随机道具生成和掉落
+
+**敌人系统完整实现:** (11种敌人 + 1个Boss)
+| 类型 | 敌人 | 特点 |
+|------|------|------|
+| 小怪 | Ayao(阿咬) | 近战，巡逻+追击 |
+| 小怪 | KongKaZi(恐卡兹) | 红标敌人死亡生成，定时炸弹 |
+| 小怪 | DeYi(得意) | 接近后自爆 |
+| 精英 | Cup(魂灵圣杯) | 飞行，分摊90%伤害 |
+| 精英 | Du(妒) | 远程高伤子弹 |
+| 精英 | TangHuang(堂皇) | 隐身/回血光环，死后生成铁灯盘 |
+| 精英 | XinXing(新硎) | 近战高伤，死后生成3个铁矛头 |
+| 衍生 | IronLightCup(铁灯盘) | 35次伤害击杀，阻挡子弹 |
+| 衍生 | IronLance(铁矛头) | 45次伤害击杀，阻挡子弹 |
+| Boss召唤 | NiLuFire(尼卢火) | 配合Boss【清火执】技能 |
+| Boss召唤 | Boat(托生莲座) | 碰撞扣生命上限，无敌2秒 |
+| **Boss** | KuiLongBoss(奎隆) | 三阶段：入定→自在→无忧觉 |
+
+**Enemy基类高级特性:**
+- **毒伤系统**: `applyNymphPoison()` 支持Nymph的毒层叠加
+- **隐身系统**: `Stealth` 多来源管理，支持TangHuang的隐身光环
+- **红标系统**: `tryApplyRedMark()` 概率标记，死后生成KongKaZi
+- **伤害分担**: Cup的 `absorbDamage()` 机制
 
 **交互系统:**
 - E键交互优先级：传送门 > 道具拾取 > 宝箱开启
@@ -224,31 +275,54 @@ startX = centerX - tileSize * (width/2 - 0.5)  // 第0列中心
 - **数据驱动**: 道具配置、稀有度权重可配置
 - **事件驱动**: 交互检测、UI更新响应式设计
 - **模块化**: Chest、ItemDrop、Room各司其职
-- **MapGenerator.h/cpp**: 核心算法类，负责生成房间坐标、连接路径（DFS/随机游走算法）。
-- **Room.h/cpp**: 单个房间的数据结构（门的位置、刷怪点、是否已通关）。
-- **TileHelper.h/cpp**: 辅助类，用于处理瓦片地图（TMXTiledMap）的坐标转换。
+- **完整继承体系**: `GameEntity → Character → Enemy/Player → 具体实现`
+- **多态应用**: 虚函数 `attack()`, `die()`, `executeAI()`, `isPoisonable()` 等
 
-#### 5. UI (界面层)
+---
 
-存放纯 UI 逻辑，与游戏实体逻辑解耦。
+## 资源文件结构
 
-- **HUDLayer.h/cpp**: 战斗界面（左上角血条、蓝条、技能冷却图标）。
-- **PauseMenu.h/cpp**: 暂停弹窗。
-- **DamageNumber.h/cpp**: 飘血效果（受到伤害时冒出的数字）。
-- **VirtualJoystick.h/cpp**: (如果做手游操作) 虚拟摇杆。
+```
+Resources/
+├── Enemy/                    # 敌人动画资源
+│   ├── AYao/                 # 阿咬 (Attack/Die/Move)
+│   ├── Cup/                  # 魂灵圣杯 (Die/Idle)
+│   ├── KongKaZi/             # 恐卡兹 (Attack/Die/Move)
+│   ├── DeYi/                 # 得意 (Die/Move)
+│   ├── Du/                   # 妒 (Attack/Bullet/Die/Move)
+│   ├── TangHuang&&Iron LightCup/  # 堂皇+铁灯盘
+│   ├── XinXing&&Iron Lance/  # 新硎+铁矛头
+│   ├── NiLu Fire/            # 尼卢火 (Attack/Burning)
+│   ├── Boat/                 # 托生莲座 (Die/Idle/Move)
+│   └── _BOSS_kuiLong/        # 奎隆Boss (多阶段动画)
+├── Player/                   # 玩家角色动画
+│   ├── Nymph/                # 妮芙 (Attack/Bullet/Die/Idle/Move/Skill_*)
+│   ├── Wisdael/              # 维什戴尔 (Attack/Bullet/Die/Idle/Move/Skill_*)
+│   └── Mudrock/              # 泥岩 (Attack/Die/Idle/Move/Skill_*)
+├── Map/                      # 地图素材
+│   ├── Floor/Wall/Door/      # 基础地形
+│   ├── Barrier/              # 障碍物（木箱等）
+│   ├── Chest/                # 宝箱
+│   ├── Portal/               # 传送门
+│   └── Fire Generator/       # 火焰地块
+├── Property/                 # 道具图标
+│   ├── LowLevel/             # 低阶藏品 (6种)
+│   └── HighLevel/            # 高阶藏品 (5种) + 国王藏品 (4种)
+└── UIs/                      # UI素材
+    ├── Skills/               # 技能图标
+    └── StatusBars/           # 血条蓝条素材
+```
 
-#### 6. Managers (管理器层)
+---
 
-存放**单例模式 (Singleton)** 类，用于跨场景管理数据。
+## C++ 特性使用统计
 
-- **GameManager.h/cpp**: 管理全局状态（当前分数、当前关卡层数、玩家选择的角色）。
-- **SoundManager.h/cpp**: 封装 CocosDenshion 或 AudioEngine，统一管理背景音乐和音效播放。
-- **CollisionManager.h/cpp**: (可选) 如果不用物理引擎，可在此处统一处理碰撞检测。
-
-#### 7. Utils (工具层)
-
-存放通用的静态函数或工具类。
-
-- **MathUtils.h/cpp**: 额外的数学计算（如计算两个节点间的角度、向量运算）。
-- **AnimUtils.h/cpp**: 快捷创建序列帧动画（Animation）的辅助函数。
-- **CSVReader.h/cpp**: (可选) 如果怪物数值存在 CSV 表里，用这个读取。
+| 特性 | 使用位置 | 说明 |
+|------|----------|------|
+| **STL容器** | `std::vector`, `std::map`, `std::set` | 敌人列表、道具配置、隐身来源管理 |
+| **迭代器** | Enemy遍历、道具列表 | 范围for循环、标准迭代器 |
+| **类与多态** | Entity继承体系 | `GameEntity→Character→Enemy/Player` |
+| **模板** | Cocos2d-x CREATE_FUNC | 工厂模式宏 |
+| **异常处理** | 资源加载 | try-catch保护 |
+| **函数重载** | `takeDamage()` | 多版本伤害处理 |
+| **C++11+** | `override`, `nullptr`, lambda, auto | 现代C++特性 |

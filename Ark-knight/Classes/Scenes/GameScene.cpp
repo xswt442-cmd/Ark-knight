@@ -39,7 +39,8 @@ bool GameScene::init()
     _mapGenerator = nullptr;
     _miniMap = nullptr;
     _currentRoom = nullptr;
-    _interactionLabel = nullptr;
+    _gameHUD = nullptr;
+    _gameMenus = nullptr;
     
     // 初始化关卡系统（从静态变量读取）
     _currentLevel = s_nextLevel;
@@ -62,6 +63,7 @@ bool GameScene::init()
     initCamera();       // 初始化相机
     // createTestEnemies();  // 敌人由房间生成，不再单独创建
     createHUD();
+    createMenus();
     setupKeyboardListener();
     
     // 开启update
@@ -374,176 +376,39 @@ void GameScene::spawnEnemiesInRoom(Room* room)
 
 void GameScene::createHUD()
 {
-    auto visibleSize = Director::getInstance()->getVisibleSize();
-    Vec2 origin = Director::getInstance()->getVisibleOrigin();
+    _gameHUD = GameHUD::create();
+    _gameHUD->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL);
+    _uiLayer->addChild(_gameHUD);
     
-    float barStartX = origin.x + 60;
-    float barStartY = origin.y + visibleSize.height - 35;
+    GAME_LOG("GameHUD created");
+}
+
+void GameScene::createMenus()
+{
+    _gameMenus = GameMenus::create();
+    _gameMenus->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL + 10);
+    _uiLayer->addChild(_gameMenus);
     
-    // ==================== 血条 ====================
-    float barWidth = 120.0f;  // 血条宽度
-    float barHeight = 12.0f;  // 血条高度
+    // 设置回调
+    _gameMenus->setResumeCallback([this]() {
+        resumeGame();
+    });
     
-    // 爱心图标
-    _hpIcon = Sprite::create("UIs/StatusBars/Bars/Heart.png");
-    _hpIcon->setPosition(Vec2(barStartX, barStartY));
-    _hpIcon->setScale(0.12f);
-    _hpIcon->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL);
-    _uiLayer->addChild(_hpIcon);
+    _gameMenus->setSettingsCallback([this]() {
+        showSettings();
+    });
     
-    // 血条背景
-    auto hpBarBg = Sprite::create("UIs/StatusBars/Bars/EmplyBar.png");
-    hpBarBg->setPosition(Vec2(barStartX + 25, barStartY));
-    hpBarBg->setAnchorPoint(Vec2(0, 0.5f));
-    hpBarBg->setScaleX(barWidth / hpBarBg->getContentSize().width);
-    hpBarBg->setScaleY(barHeight / hpBarBg->getContentSize().height);
-    hpBarBg->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL);
-    _uiLayer->addChild(hpBarBg);
+    _gameMenus->setRestartCallback([this]() {
+        auto newScene = GameScene::createScene();
+        Director::getInstance()->replaceScene(TransitionFade::create(0.5f, newScene));
+    });
     
-    // 血条填充
-    _hpBar = cocos2d::ui::LoadingBar::create("UIs/StatusBars/Bars/HealthFill.png");
-    _hpBar->setPercent(100.0f);
-    _hpBar->setPosition(Vec2(barStartX + 25, barStartY));
-    _hpBar->setAnchorPoint(Vec2(0, 0.5f));
-    _hpBar->setScaleX(barWidth / _hpBar->getContentSize().width);
-    _hpBar->setScaleY(barHeight / _hpBar->getContentSize().height);
-    _hpBar->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL + 5);
-    _uiLayer->addChild(_hpBar);
+    _gameMenus->setMainMenuCallback([this]() {
+        auto menuScene = MainMenuScene::createScene();
+        Director::getInstance()->replaceScene(TransitionFade::create(0.5f, menuScene));
+    });
     
-    // 血量数值
-    _hpLabel = Label::createWithSystemFont("100/100", "Arial", 16);
-    _hpLabel->setPosition(Vec2(barStartX + 75, barStartY));
-    _hpLabel->setTextColor(Color4B::WHITE);
-    _hpLabel->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL + 10);
-    _uiLayer->addChild(_hpLabel);
-    
-    // ==================== 蓝条 ====================
-    float mpBarY = barStartY - 35;
-    
-    // 闪电图标
-    _mpIcon = Sprite::create("UIs/StatusBars/Bars/Lighting bolt.png");
-    _mpIcon->setPosition(Vec2(barStartX, mpBarY));
-    _mpIcon->setScale(0.12f);
-    _mpIcon->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL);
-    _uiLayer->addChild(_mpIcon);
-    
-    // 蓝条背景
-    auto mpBarBg = Sprite::create("UIs/StatusBars/Bars/EmplyBar.png");
-    mpBarBg->setPosition(Vec2(barStartX + 25, mpBarY));
-    mpBarBg->setAnchorPoint(Vec2(0, 0.5f));
-    mpBarBg->setScaleX(barWidth / mpBarBg->getContentSize().width);
-    mpBarBg->setScaleY(barHeight / mpBarBg->getContentSize().height);
-    mpBarBg->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL);
-    _uiLayer->addChild(mpBarBg);
-    
-    // 蓝条填充
-    _mpBar = cocos2d::ui::LoadingBar::create("UIs/StatusBars/Bars/EnrgyFill.png");
-    _mpBar->setPercent(100.0f);
-    _mpBar->setPosition(Vec2(barStartX + 25, mpBarY));
-    _mpBar->setAnchorPoint(Vec2(0, 0.5f));
-    _mpBar->setScaleX(barWidth / _mpBar->getContentSize().width);
-    _mpBar->setScaleY(barHeight / _mpBar->getContentSize().height);
-    _mpBar->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL + 5);
-    _uiLayer->addChild(_mpBar);
-    
-    // 蓝量数值
-    _mpLabel = Label::createWithSystemFont("100/100", "Arial", 16);
-    _mpLabel->setPosition(Vec2(barStartX + 75, mpBarY));
-    _mpLabel->setTextColor(Color4B::WHITE);
-    _mpLabel->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL + 10);
-    _uiLayer->addChild(_mpLabel);
-    
-    // ==================== 技能图标CD系统 ====================
-    float skillIconSize = 64.0f;
-    float skillIconX = origin.x + visibleSize.width - skillIconSize / 2 - 40;
-    float skillIconY = origin.y + skillIconSize / 2 + 40;  // 下方治疗技能位置
-    float skillIconY2 = skillIconY + skillIconSize + 10;    // 上方角色技能位置
-    
-    // ====== 上方：角色特殊技能（K键） ======
-    _skillIcon = Sprite::create("UIs/Skills/Mage/Nymph_skillicon.png");
-    _skillIcon->setPosition(Vec2(skillIconX, skillIconY2));
-    _skillIcon->setScale(skillIconSize / _skillIcon->getContentSize().width);
-    _skillIcon->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL);
-    _uiLayer->addChild(_skillIcon);
-    
-    // CD变暗遮罩
-    _skillCDMask = Sprite::create("UIs/Skills/Mage/Nymph_skillicon.png");
-    _skillCDMask->setPosition(Vec2(skillIconX, skillIconY2));
-    _skillCDMask->setScale(skillIconSize / _skillCDMask->getContentSize().width);
-    _skillCDMask->setColor(Color3B::BLACK);
-    _skillCDMask->setOpacity(100);
-    _skillCDMask->setVisible(false);
-    _skillCDMask->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL + 1);
-    _uiLayer->addChild(_skillCDMask);
-    
-    // CD进度条
-    auto progressSprite = Sprite::create("UIs/Skills/Mage/Nymph_skillicon.png");
-    _skillCDProgress = ProgressTimer::create(progressSprite);
-    _skillCDProgress->setType(ProgressTimer::Type::RADIAL);
-    _skillCDProgress->setReverseDirection(false);
-    _skillCDProgress->setMidpoint(Vec2(0.5f, 0.5f));
-    _skillCDProgress->setBarChangeRate(Vec2(1, 1));
-    _skillCDProgress->setPosition(Vec2(skillIconX, skillIconY2));
-    _skillCDProgress->setScale(skillIconSize / progressSprite->getContentSize().width);
-    _skillCDProgress->setPercentage(0.0f);
-    _skillCDProgress->setColor(Color3B(100, 100, 100));
-    _skillCDProgress->setOpacity(150);
-    _skillCDProgress->setVisible(false);
-    _skillCDProgress->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL + 2);
-    _uiLayer->addChild(_skillCDProgress);
-    
-    // ====== 下方：治疗技能（L键） ======
-    _healIcon = Sprite::create("UIs/Skills/Healing.png");
-    _healIcon->setPosition(Vec2(skillIconX, skillIconY));
-    _healIcon->setScale(skillIconSize / _healIcon->getContentSize().width);
-    _healIcon->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL);
-    _uiLayer->addChild(_healIcon);
-    
-    // 治疗CD变暗遮罩
-    _healCDMask = Sprite::create("UIs/Skills/Healing.png");
-    _healCDMask->setPosition(Vec2(skillIconX, skillIconY));
-    _healCDMask->setScale(skillIconSize / _healCDMask->getContentSize().width);
-    _healCDMask->setColor(Color3B::BLACK);
-    _healCDMask->setOpacity(100);
-    _healCDMask->setVisible(false);
-    _healCDMask->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL + 1);
-    _uiLayer->addChild(_healCDMask);
-    
-    // 治疗CD进度条
-    auto healProgressSprite = Sprite::create("UIs/Skills/Healing.png");
-    _healCDProgress = ProgressTimer::create(healProgressSprite);
-    _healCDProgress->setType(ProgressTimer::Type::RADIAL);
-    _healCDProgress->setReverseDirection(false);
-    _healCDProgress->setMidpoint(Vec2(0.5f, 0.5f));
-    _healCDProgress->setBarChangeRate(Vec2(1, 1));
-    _healCDProgress->setPosition(Vec2(skillIconX, skillIconY));
-    _healCDProgress->setScale(skillIconSize / healProgressSprite->getContentSize().width);
-    _healCDProgress->setPercentage(0.0f);
-    _healCDProgress->setColor(Color3B(100, 100, 100));
-    _healCDProgress->setOpacity(150);
-    _healCDProgress->setVisible(false);
-    _healCDProgress->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL + 2);
-    _uiLayer->addChild(_healCDProgress);
-    
-    // Debug信息
-    _debugLabel = Label::createWithSystemFont("", "Arial", 18);
-    _debugLabel->setPosition(Vec2(origin.x + visibleSize.width - 150, origin.y + visibleSize.height - 30));
-    _debugLabel->setTextColor(Color4B::YELLOW);
-    _debugLabel->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL);
-    _uiLayer->addChild(_debugLabel);
-    
-    // 操作提示
-    auto hintLabel = Label::createWithTTF(
-        u8"操作说明：\nWASD - 移动\nJ - 攻击\nK - 技能\nL - 治疗\n空格 - 冲刺\nESC - 暂停",
-        "fonts/msyh.ttf", 18);
-    hintLabel->setPosition(Vec2(origin.x + 120, origin.y + 120));
-    hintLabel->setTextColor(Color4B::WHITE);
-    hintLabel->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL);
-    _uiLayer->addChild(hintLabel);
-    
-    // ==================== 道具栏 ====================
-    // 在血条和蓝条下方显示已获得的道具
-    _itemSlots.clear();
+    GAME_LOG("GameMenus created");
 }
 
 void GameScene::update(float dt)
@@ -799,11 +664,10 @@ void GameScene::updateSpikes(float dt)
 
 void GameScene::updateInteraction(float dt)
 {
-    if (!_player || !_currentRoom)
+    if (!_player || !_currentRoom || !_gameHUD)
     {
-        if (_interactionLabel && _interactionLabel->isVisible())
-        {
-            _interactionLabel->setVisible(false);
+        if (_gameHUD) {
+            _gameHUD->hideInteractionHint();
         }
         return;
     }
@@ -815,28 +679,9 @@ void GameScene::updateInteraction(float dt)
         Sprite* portal = _currentRoom->getPortal();
         if (portal)
         {
-            if (!_interactionLabel)
-            {
-                // 创建交互提示标签
-                _interactionLabel = Label::createWithTTF(u8"[E] 进入传送门", "fonts/msyh.ttf", 20);
-                _interactionLabel->setTextColor(Color4B::YELLOW);
-                _interactionLabel->enableOutline(Color4B::BLACK, 2);
-                _interactionLabel->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL + 5);
-                _uiLayer->addChild(_interactionLabel);
-            }
-            else
-            {
-                _interactionLabel->setString(u8"[E] 进入传送门");
-            }
-            
-            // 将传送门的世界坐标转换为屏幕坐标
             Vec2 portalWorldPos = portal->getParent()->convertToWorldSpace(portal->getPosition());
-            Vec2 screenPos = _uiLayer->convertToNodeSpace(portalWorldPos);
-            
-            // 显示在传送门下方
             float portalHeight = portal->getContentSize().height * portal->getScale();
-            _interactionLabel->setPosition(Vec2(screenPos.x, screenPos.y - portalHeight * 0.6f));
-            _interactionLabel->setVisible(true);
+            _gameHUD->showInteractionHint(u8"[E] 进入传送门", portalWorldPos, portalHeight * 0.6f);
             return;
         }
     }
@@ -851,10 +696,7 @@ void GameScene::updateInteraction(float dt)
         ItemDrop* itemDrop = _currentRoom->getItemDrop();
         if (!itemDrop || !itemDrop->getItemDef())
         {
-            if (_interactionLabel && _interactionLabel->isVisible())
-            {
-                _interactionLabel->setVisible(false);
-            }
+            _gameHUD->hideInteractionHint();
             return;
         }
         
@@ -862,183 +704,52 @@ void GameScene::updateInteraction(float dt)
         Sprite* itemSprite = itemDrop->getSprite();
         if (!itemSprite)
         {
-            if (_interactionLabel && _interactionLabel->isVisible())
-            {
-                _interactionLabel->setVisible(false);
-            }
+            _gameHUD->hideInteractionHint();
             return;
         }
         
-        if (!_interactionLabel)
-        {
-            // 创建交互提示标签
-            _interactionLabel = Label::createWithTTF("", "fonts/msyh.ttf", 20);
-            _interactionLabel->setTextColor(Color4B::YELLOW);
-            _interactionLabel->enableOutline(Color4B::BLACK, 2);
-            _interactionLabel->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL + 5);
-            _uiLayer->addChild(_interactionLabel);
-        }
-        
-        // 设置道具交互文本：[E]获取道具名称：效果描述
         std::string interactText = std::string(u8"[E]获取") + itemDef->name + u8"：" + itemDef->description;
-        _interactionLabel->setString(interactText);
-        
         CCLOG("Showing item interaction: %s", interactText.c_str());
         
-        // 将道具的世界坐标转换为屏幕坐标
         Vec2 itemWorldPos = itemDrop->getParent()->convertToWorldSpace(itemDrop->getPosition());
-        Vec2 screenPos = _uiLayer->convertToNodeSpace(itemWorldPos);
-        
-        // 显示在道具下方
         float itemHeight = itemSprite->getContentSize().height * itemSprite->getScale();
-        _interactionLabel->setPosition(Vec2(screenPos.x, screenPos.y - itemHeight * 0.6f));
-        _interactionLabel->setVisible(true);
+        _gameHUD->showInteractionHint(interactText, itemWorldPos, itemHeight * 0.6f);
     }
     else if (canInteractChest)
     {
         Chest* chestObj = _currentRoom->getChest();
         if (!chestObj)
         {
-            if (_interactionLabel && _interactionLabel->isVisible())
-            {
-                _interactionLabel->setVisible(false);
-            }
+            _gameHUD->hideInteractionHint();
             return;
         }
         
         Sprite* chest = chestObj->getSprite();
         if (!chest)
         {
-            if (_interactionLabel && _interactionLabel->isVisible())
-            {
-                _interactionLabel->setVisible(false);
-            }
+            _gameHUD->hideInteractionHint();
             return;
         }
         
-        if (!_interactionLabel)
-        {
-            // 创建交互提示标签
-            _interactionLabel = Label::createWithTTF("", "fonts/msyh.ttf", 20);
-            _interactionLabel->setTextColor(Color4B::YELLOW);
-            _interactionLabel->enableOutline(Color4B::BLACK, 2);
-            _interactionLabel->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL + 5);
-            _uiLayer->addChild(_interactionLabel);
-        }
-        
-        // 设置宝箱交互文本
-        _interactionLabel->setString(u8"[E] 打开宝箱");
-        
-        // 将宝箱的世界坐标转换为屏幕坐标
         Vec2 chestWorldPos = chest->getParent()->convertToWorldSpace(chest->getPosition());
-        Vec2 screenPos = _uiLayer->convertToNodeSpace(chestWorldPos);
-        
-        // 显示在宝箱下方
         float chestHeight = chest->getContentSize().height * chest->getScale();
-        _interactionLabel->setPosition(Vec2(screenPos.x, screenPos.y - chestHeight * 0.6f));
-        _interactionLabel->setVisible(true);
+        _gameHUD->showInteractionHint(u8"[E] 打开宝箱", chestWorldPos, chestHeight * 0.6f);
     }
     else
     {
-        if (_interactionLabel && _interactionLabel->isVisible())
-        {
-            _interactionLabel->setVisible(false);
-        }
+        _gameHUD->hideInteractionHint();
     }
 }
 
 void GameScene::updateHUD(float dt)
 {
-    if (_player == nullptr)
+    if (_player == nullptr || _gameHUD == nullptr)
     {
         return;
     }
     
-    // 玩家死亡时显示HP为0
-    int currentHP = _player->isDead() ? 0 : _player->getHP();
-    int maxHP = _player->getMaxHP();
-    float hpPercent = (maxHP > 0) ? (currentHP * 100.0f / maxHP) : 0.0f;
-    _hpBar->setPercent(hpPercent);
-    
-    char hpText[32];
-    sprintf(hpText, "%d/%d", currentHP, maxHP);
-    _hpLabel->setString(hpText);
-        
-        // 更新MP蓝条
-        int currentMP = _player->getMP();
-        int maxMP = _player->getMaxMP();
-        float mpPercent = (maxMP > 0) ? (currentMP * 100.0f / maxMP) : 0.0f;
-        _mpBar->setPercent(mpPercent);
-        
-        char mpText[32];
-        sprintf(mpText, "%d/%d", currentMP, maxMP);
-        _mpLabel->setString(mpText);
-        
-        // 更新技能冷却
-        float remain = _player->getSkillCooldownRemaining();
-        float totalCD = _player->getSkillCooldown();
-        
-        if (remain <= 0.0f)
-        {
-            // 技能可用：正常显示，隐藏遮罩和进度
-            _skillIcon->setOpacity(255);
-            _skillCDMask->setVisible(false);
-            _skillCDProgress->setVisible(false);
-        }
-        else
-        {
-            // 技能CD中：图标轻微变暗，显示转圈进度
-            _skillIcon->setOpacity(200);
-            _skillCDMask->setVisible(true);
-            _skillCDProgress->setVisible(true);
-            
-            // 计算CD进度（从100%到0%，顺时针消失）
-            float cdPercent = (totalCD > 0) ? ((totalCD - remain) / totalCD * 100.0f) : 0.0f;
-            _skillCDProgress->setPercentage(100.0f - cdPercent);
-        }
-        
-        // 更新治疗技能冷却
-        float healRemain = _player->getHealCooldownRemaining();
-        float healTotalCD = _player->getHealCooldown();
-        
-        if (healRemain <= 0.0f)
-        {
-            // 治疗可用：正常显示，隐藏遮罩和进度
-            _healIcon->setOpacity(255);
-            _healCDMask->setVisible(false);
-            _healCDProgress->setVisible(false);
-        }
-        else
-        {
-            // 治疗CD中：图标轻微变暗，显示转圈进度
-            _healIcon->setOpacity(200);
-            _healCDMask->setVisible(true);
-            _healCDProgress->setVisible(true);
-            
-            // 计算CD进度
-            float healCdPercent = (healTotalCD > 0) ? ((healTotalCD - healRemain) / healTotalCD * 100.0f) : 0.0f;
-            _healCDProgress->setPercentage(100.0f - healCdPercent);
-        }
-        
-        // 更新Debug信息
-        char debugText[128];
-        const char* roomTypeStr = "Unknown";
-        if (_currentRoom) {
-            switch (_currentRoom->getRoomType()) {
-                case Constants::RoomType::BEGIN: roomTypeStr = "Start"; break;
-                case Constants::RoomType::NORMAL: roomTypeStr = "Normal"; break;
-                case Constants::RoomType::BOSS: roomTypeStr = "Boss"; break;
-                case Constants::RoomType::END: roomTypeStr = "End"; break;
-                case Constants::RoomType::REWARD: roomTypeStr = "Reward"; break;
-                default: break;
-            }
-        }
-        sprintf(debugText, "Room: %s\nRooms: %d\nPos: (%.0f, %.0f)", 
-                roomTypeStr,
-                _mapGenerator ? _mapGenerator->getRoomCount() : 0,
-                _player->getPositionX(),
-                _player->getPositionY());
-        _debugLabel->setString(debugText);
+    int roomCount = _mapGenerator ? _mapGenerator->getRoomCount() : 0;
+    _gameHUD->update(_player, _currentRoom, roomCount);
 }
 
 void GameScene::checkCollisions()
@@ -1311,73 +1022,10 @@ void GameScene::pauseGame()
     // 暂停游戏层更新（包括相机等）
     _gameLayer->pause();
     
-    // 添加半透明遮罩
-    auto mask = LayerColor::create(Color4B(0, 0, 0, 180));
-    mask->setName("pauseMask");
-    mask->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL);
-    _uiLayer->addChild(mask);
-    
-    // 创建暂停菜单UI - 直接添加到_uiLayer，使用绝对位置
-    // 标题
-    auto titleLabel = Label::createWithTTF(u8"游戏已暂停", "fonts/msyh.ttf", 56);
-    titleLabel->setPosition(Vec2(SCREEN_CENTER.x, SCREEN_CENTER.y + 120));
-    titleLabel->setTextColor(Color4B::WHITE);
-    titleLabel->setName("pauseTitle");
-    titleLabel->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL + 1);
-    _uiLayer->addChild(titleLabel);
-    
-    // 继续游戏按钮
-    auto resumeButton = ui::Button::create();
-    resumeButton->setTitleText(u8"继续游戏");
-    resumeButton->setTitleFontName("fonts/msyh.ttf");
-    resumeButton->setTitleFontSize(32);
-    resumeButton->setPosition(Vec2(SCREEN_CENTER.x, SCREEN_CENTER.y + 60));
-    resumeButton->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL + 1);
-    resumeButton->setName("pauseResumeBtn");
-    resumeButton->addClickEventListener([this](Ref* sender) {
-        resumeGame();
-    });
-    _uiLayer->addChild(resumeButton);
-    
-    // 设置按钮
-    auto settingsButton = ui::Button::create();
-    settingsButton->setTitleText(u8"设置");
-    settingsButton->setTitleFontName("fonts/msyh.ttf");
-    settingsButton->setTitleFontSize(32);
-    settingsButton->setPosition(Vec2(SCREEN_CENTER.x, SCREEN_CENTER.y - 10));
-    settingsButton->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL + 1);
-    settingsButton->setName("pauseSettingsBtn");
-    settingsButton->addClickEventListener([this](Ref* sender) {
-        showSettings();
-    });
-    _uiLayer->addChild(settingsButton);
-    
-    // 返回主菜单按钮
-    auto menuButton = ui::Button::create();
-    menuButton->setTitleText(u8"返回主菜单");
-    menuButton->setTitleFontName("fonts/msyh.ttf");
-    menuButton->setTitleFontSize(32);
-    menuButton->setPosition(Vec2(SCREEN_CENTER.x, SCREEN_CENTER.y - 80));
-    menuButton->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL + 1);
-    menuButton->setName("pauseMenuBtn");
-    menuButton->addClickEventListener([](Ref* sender) {
-        auto menuScene = MainMenuScene::createScene();
-        Director::getInstance()->replaceScene(TransitionFade::create(0.5f, menuScene));
-    });
-    _uiLayer->addChild(menuButton);
-    
-    // 退出游戏按钮
-    auto exitButton = ui::Button::create();
-    exitButton->setTitleText(u8"退出游戏");
-    exitButton->setTitleFontName("fonts/msyh.ttf");
-    exitButton->setTitleFontSize(32);
-    exitButton->setPosition(Vec2(SCREEN_CENTER.x, SCREEN_CENTER.y - 150));
-    exitButton->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL + 1);
-    exitButton->setName("pauseExitBtn");
-    exitButton->addClickEventListener([](Ref* sender) {
-        Director::getInstance()->end();
-    });
-    _uiLayer->addChild(exitButton);
+    // 显示暂停菜单
+    if (_gameMenus) {
+        _gameMenus->showPauseMenu();
+    }
     
     GAME_LOG("Game paused");
 }
@@ -1402,13 +1050,10 @@ void GameScene::resumeGame()
     // 恢复游戏层更新
     _gameLayer->resume();
     
-    // 移除暂停菜单UI元素
-    _uiLayer->removeChildByName("pauseTitle");
-    _uiLayer->removeChildByName("pauseResumeBtn");
-    _uiLayer->removeChildByName("pauseSettingsBtn");
-    _uiLayer->removeChildByName("pauseMenuBtn");
-    _uiLayer->removeChildByName("pauseExitBtn");
-    _uiLayer->removeChildByName("pauseMask");
+    // 隐藏暂停菜单
+    if (_gameMenus) {
+        _gameMenus->hidePauseMenu();
+    }
     
     GAME_LOG("Game resumed");
 }
@@ -1437,46 +1082,10 @@ void GameScene::showGameOver()
         }
     }
     
-    // 添加半透明遮罩
-    auto mask = LayerColor::create(Color4B(0, 0, 0, 180));
-    mask->setName("gameOverMask");
-    mask->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL);
-    _uiLayer->addChild(mask);
-    
-    // 显示游戏结束文字
-    auto gameOverLabel = Label::createWithTTF(u8"游戏结束", "fonts/msyh.ttf", 64);
-    gameOverLabel->setPosition(Vec2(SCREEN_CENTER.x, SCREEN_CENTER.y + 50));
-    gameOverLabel->setTextColor(Color4B::RED);
-    gameOverLabel->setName("gameOverLabel");
-    gameOverLabel->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL + 1);
-    _uiLayer->addChild(gameOverLabel);
-    
-    // 显示重新开始提示
-    auto hintLabel = Label::createWithTTF(u8"按 R 重新开始\n按 Q 退出到主菜单", "fonts/msyh.ttf", 32);
-    hintLabel->setPosition(Vec2(SCREEN_CENTER.x, SCREEN_CENTER.y - 50));
-    hintLabel->setTextColor(Color4B::WHITE);
-    hintLabel->setName("gameOverHint");
-    hintLabel->setAlignment(TextHAlignment::CENTER);
-    hintLabel->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL + 1);
-    _uiLayer->addChild(hintLabel);
-    
-    // 添加重新开始的键盘监听 - 使用this捕获
-    auto listener = EventListenerKeyboard::create();
-    listener->onKeyPressed = [this](EventKeyboard::KeyCode keyCode, Event* event) {
-        if (keyCode == EventKeyboard::KeyCode::KEY_R)
-        {
-            // 重新开始
-            auto newScene = GameScene::createScene();
-            Director::getInstance()->replaceScene(TransitionFade::create(0.5f, newScene));
-        }
-        else if (keyCode == EventKeyboard::KeyCode::KEY_Q)
-        {
-            // 返回主菜单
-            auto menuScene = MainMenuScene::createScene();
-            Director::getInstance()->replaceScene(TransitionFade::create(0.5f, menuScene));
-        }
-    };
-    _eventDispatcher->addEventListenerWithSceneGraphPriority(listener, this);
+    // 显示游戏结束界面
+    if (_gameMenus) {
+        _gameMenus->showGameOver();
+    }
 }
 
 void GameScene::showVictory()
@@ -1503,46 +1112,10 @@ void GameScene::showVictory()
         }
     }
     
-    // 添加半透明遮罩
-    auto mask = LayerColor::create(Color4B(0, 0, 0, 180));
-    mask->setName("victoryMask");
-    mask->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL);
-    _uiLayer->addChild(mask);
-    
-    // 显示胜利文字
-    auto victoryLabel = Label::createWithTTF(u8"通关成功！", "fonts/msyh.ttf", 64);
-    victoryLabel->setPosition(Vec2(SCREEN_CENTER.x, SCREEN_CENTER.y + 50));
-    victoryLabel->setTextColor(Color4B::YELLOW);
-    victoryLabel->setName("victoryLabel");
-    victoryLabel->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL + 1);
-    _uiLayer->addChild(victoryLabel);
-    
-    // 显示提示
-    auto hintLabel = Label::createWithTTF(u8"按 R 重新开始\n按 Q 退出到主菜单", "fonts/msyh.ttf", 32);
-    hintLabel->setPosition(Vec2(SCREEN_CENTER.x, SCREEN_CENTER.y - 50));
-    hintLabel->setTextColor(Color4B::WHITE);
-    hintLabel->setName("victoryHint");
-    hintLabel->setAlignment(TextHAlignment::CENTER);
-    hintLabel->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL + 1);
-    _uiLayer->addChild(hintLabel);
-    
-    // 添加键盘监听
-    auto listener = EventListenerKeyboard::create();
-    listener->onKeyPressed = [this](EventKeyboard::KeyCode keyCode, Event* event) {
-        if (keyCode == EventKeyboard::KeyCode::KEY_R)
-        {
-            // 重新开始
-            auto newScene = GameScene::createScene();
-            Director::getInstance()->replaceScene(TransitionFade::create(0.5f, newScene));
-        }
-        else if (keyCode == EventKeyboard::KeyCode::KEY_Q)
-        {
-            // 返回主菜单
-            auto menuScene = MainMenuScene::createScene();
-            Director::getInstance()->replaceScene(TransitionFade::create(0.5f, menuScene));
-        }
-    };
-    _eventDispatcher->addEventListenerWithSceneGraphPriority(listener, this);
+    // 显示胜利界面
+    if (_gameMenus) {
+        _gameMenus->showVictory();
+    }
 }
 
 void GameScene::goToNextLevel()
@@ -1665,67 +1238,27 @@ void GameScene::showSettings()
     GAME_LOG("Opening settings menu");
     
     // 隐藏暂停菜单
-    _uiLayer->getChildByName("pauseTitle")->setVisible(false);
-    _uiLayer->getChildByName("pauseResumeBtn")->setVisible(false);
-    _uiLayer->getChildByName("pauseSettingsBtn")->setVisible(false);
-    _uiLayer->getChildByName("pauseMenuBtn")->setVisible(false);
-    _uiLayer->getChildByName("pauseExitBtn")->setVisible(false);
+    if (_gameMenus) {
+        _gameMenus->setPauseMenuVisible(false);
+    }
     
     // 创建设置层
     auto settingsLayer = SettingsLayer::create();
     settingsLayer->setCloseCallback([this]() {
         // 恢复显示暂停菜单
-        _uiLayer->getChildByName("pauseTitle")->setVisible(true);
-        _uiLayer->getChildByName("pauseResumeBtn")->setVisible(true);
-        _uiLayer->getChildByName("pauseSettingsBtn")->setVisible(true);
-        _uiLayer->getChildByName("pauseMenuBtn")->setVisible(true);
-        _uiLayer->getChildByName("pauseExitBtn")->setVisible(true);
+        if (_gameMenus) {
+            _gameMenus->setPauseMenuVisible(true);
+        }
     });
     _uiLayer->addChild(settingsLayer);
 }
 
 void GameScene::addItemToUI(const ItemDef* itemDef)
 {
-    if (!itemDef)
+    if (!itemDef || !_gameHUD)
     {
         return;
     }
     
-    auto visibleSize = Director::getInstance()->getVisibleSize();
-    Vec2 origin = Director::getInstance()->getVisibleOrigin();
-    
-    // 道具栏参数
-    float barStartX = origin.x + 60;
-    float mpBarY = origin.y + visibleSize.height - 70;  // 蓝条位置
-    float itemSlotStartX = barStartX - 10;
-    float itemSlotStartY = mpBarY - 50;  // 蓝条下方50像素
-    float itemSlotSize = 32.0f;          // 道具图标大小
-    float itemSlotSpacing = 5.0f;        // 图标间距
-    int maxItemsPerRow = 5;              // 每行最多5个道具
-    
-    // 计算新道具位置
-    int itemCount = static_cast<int>(_itemSlots.size());
-    int row = itemCount / maxItemsPerRow;
-    int col = itemCount % maxItemsPerRow;
-    
-    float itemX = itemSlotStartX + col * (itemSlotSize + itemSlotSpacing);
-    float itemY = itemSlotStartY - row * (itemSlotSize + itemSlotSpacing);
-    
-    // 创建道具图标
-    auto itemIcon = Sprite::create(itemDef->iconPath);
-    if (!itemIcon)
-    {
-        GAME_LOG("Failed to create item icon: %s", itemDef->iconPath.c_str());
-        return;
-    }
-    
-    itemIcon->setPosition(Vec2(itemX, itemY));
-    itemIcon->setScale(itemSlotSize / itemIcon->getContentSize().width);
-    itemIcon->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL + 5);
-    _uiLayer->addChild(itemIcon);
-    
-    // 添加到列表
-    _itemSlots.push_back(itemIcon);
-    
-    GAME_LOG("Added item to UI: %s at position (%d, %d)", itemDef->name.c_str(), col, row);
+    _gameHUD->addItemIcon(itemDef);
 }

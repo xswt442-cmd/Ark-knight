@@ -4,6 +4,7 @@
 #include "cocos2d.h"
 #include "Core/Constants.h"
 #include "Map/Barriers.h"
+#include "Map/TerrainLayouts.h"  // 地形布局系统
 
 class Enemy;
 class Player;
@@ -11,22 +12,7 @@ class Chest;
 class ItemDrop;
 struct ItemDef;  // 前置声明ItemDef结构体
 
-/**
- * 普通战斗房间的地形布局类型
- */
-enum class TerrainLayout {
-    NONE = 0,           // 无特殊地形
-    FIVE_BOXES,         // 5堆木箱（左上、左下、右上、右下、中间各3x3）
-    NINE_BOXES,         // 9堆木箱（在FIVE_BOXES基础上加左中、上中、右中、下中）
-    UPDOWN_SPIKES,      // 矩形围城-上下地刺（左右木箱，上下地刺，四角木箱）
-    LEFTRIGHT_SPIKES,   // 矩形围城-左右地刺（上下木箱，左右地刺，四角木箱）
-    ALL_SPIKES,         // 矩形围城-一圈地刺（四周地刺，四角也是地刺）
-    UPDOWN_BOXES,       // 上下木箱（上下各一排木箱）
-    LEFTRIGHT_BOXES,    // 左右木箱（左右各一排木箱）
-    CENTER_PILLAR,      // 中心石柱（中间2x2石柱）
-    FOUR_PILLARS,       // 4堆石柱（四个角各2x2石柱）
-    RANDOM_MESS         // 乱七八糟（随机放置10个石柱+10个木箱）
-};
+// TerrainLayout 枚举已在 TerrainLayouts.h 中定义
 
 /**
  * Room - 游戏房间类
@@ -113,23 +99,6 @@ protected:
     void generateFloor(float x, float y);
     void generateWall(float x, float y, int zOrder);
     void generateDoor(float x, float y, int direction);
-    
-    // 地形布局辅助方法
-    void layoutFiveBoxes();
-    void layoutNineBoxes();
-    void layoutUpDownSpikes();
-    void layoutLeftRightSpikes();
-    void layoutAllSpikes();
-    void layoutUpDownBoxes();
-    void layoutLeftRightBoxes();
-    void layoutCenterPillar();
-    void layoutFourPillars();
-    void layoutRandomMess();
-    
-    // 辅助方法：添加指定大小的木箱堆（单堆材质统一）
-    void addBoxCluster(int centerTileX, int centerTileY, int width, int height);
-    // 辅助方法：添加指定大小的石柱堆（单堆材质统一）
-    void addPillarCluster(int centerTileX, int centerTileY, int width, int height);
     
 private:
     float _centerX;
