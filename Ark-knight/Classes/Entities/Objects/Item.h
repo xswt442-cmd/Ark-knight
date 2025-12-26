@@ -4,7 +4,6 @@
 #include <string>
 #include <vector>
 #include <unordered_map>
-#include <optional>
 
 enum class ItemRarity {
     LOW,
@@ -29,8 +28,9 @@ public:
 
     /**
      * 按稀有度概率抽取道具（低阶60%，高阶30%，国王10%），同时考虑堆叠上限
+     * @return 返回道具指针，如果没有可用道具则返回nullptr
      */
-    static std::optional<ItemDef> pickRandom(const std::unordered_map<std::string, int>& ownedCounts);
+    static const ItemDef* pickRandom(const std::unordered_map<std::string, int>& ownedCounts);
 };
 
 #endif // __ITEM_H__

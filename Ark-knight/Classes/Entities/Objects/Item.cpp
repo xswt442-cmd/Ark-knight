@@ -47,7 +47,7 @@ static std::vector<const ItemDef*> filterByRarity(ItemRarity rarity, const std::
     return result;
 }
 
-std::optional<ItemDef> ItemLibrary::pickRandom(const std::unordered_map<std::string, int>& ownedCounts) {
+const ItemDef* ItemLibrary::pickRandom(const std::unordered_map<std::string, int>& ownedCounts) {
     ensureItems();
 
     // 先按堆叠限制过滤可用道具
@@ -66,11 +66,11 @@ std::optional<ItemDef> ItemLibrary::pickRandom(const std::unordered_map<std::str
             int have = (it != ownedCounts.end()) ? it->second : 0;
             if (have < def.maxStack) fallback.push_back(&def);
         }
-        if (fallback.empty()) return std::nullopt;
-        int idx = RandomHelper::random_int(0, static_cast<int>(fallback.size()) - 1);
-        return *fallback[idx];
+        if (fallback.empty()) return nullptr;
+        int idx = cocos2d::RandomHelper::random_int(0, static_cast<int>(fallback.size()) - 1);
+        return fallback[idx];
     }
 
-    int idx = RandomHelper::random_int(0, static_cast<int>(candidate.size()) - 1);
-    return *candidate[idx];
+    int idx = cocos2d::RandomHelper::random_int(0, static_cast<int>(candidate.size()) - 1);
+    return candidate[idx];
 }
