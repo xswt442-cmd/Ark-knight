@@ -20,6 +20,9 @@ public:
     virtual void attack() override;
     virtual void playAttackAnimation() override;
 
+    // 覆写移动以控制移动动画（防止攻击期间移动/恢复移动动画）
+    virtual void move(const cocos2d::Vec2& direction, float dt) override;
+
     // 伤害与死亡
     virtual void takeDamage(int damage) override;
     virtual int takeDamageReported(int damage) override;
@@ -51,15 +54,20 @@ protected:
     cocos2d::Animation* _animAIdle;         // A 阶段 Idle 循环动画
     cocos2d::Animation* _animAChangeToB;    // A -> B 转场动画
     cocos2d::Animation* _animBMove;         // B 阶段移动循环动画
-    cocos2d::Animation* _animBAttack;       // B 阶段攻击动画（单次）
+    cocos2d::Animation* _animBAttack;       // B 阶段攻击动画（单次，用于前摇与命中）
     cocos2d::Animation* _animBChangeToC;    // B -> C（死亡/终结）动画
 
+    // 新增：ChengWuJie 技能动画
+    cocos2d::Animation* _animBChengWuJie;   // B 阶段技能 ChengWuJie（23 帧）
+
     // ========== 动作 Tag（用于 runAction/stopActionByTag） ==========
-    static const int KUI_LONG_MOVE_TAG = 0x7F01;    // 移动/循环动画 tag
-    static const int KUI_LONG_WINDUP_TAG = 0x7F02;  // 攻击前摇动画 tag（在 sprite 上）
-    static const int KUI_LONG_HIT_TAG = 0x7F03;     // 命中/攻击播放动画 tag（在 sprite 上）
-    static const int KUI_LONG_CHANGE_TAG = 0x7F04;  // 转场动画 tag
-    static const int KUI_LONG_DIE_TAG = 0x7F05;     // 死亡动画 tag
+    static const int KUI_LONG_MOVE_TAG = 0x7F01;    // 移动/循环动画 tag（sprite）
+    static const int KUI_LONG_WINDUP_TAG = 0x7F02;  // 攻击前摇动画 tag（sprite）
+    static const int KUI_LONG_HIT_TAG = 0x7F03;     // 命中/攻击播放动画 tag（sprite）
+    static const int KUI_LONG_CHANGE_TAG = 0x7F04;  // 转场动画 tag（sprite）
+    static const int KUI_LONG_DIE_TAG = 0x7F05;     // 死亡动画 tag（sprite）
+    static const int KUI_LONG_SKILL_TAG = 0x7F06;   // 技能动画 tag（sprite）
+    static const int KUI_LONG_SKILL_DAMAGE_TAG = 0x7F07; // 技能伤害调度 tag（node）
 
     bool _moveAnimPlaying;   // 当前是否正在播放 move 循环动画（用于避免重复启动）
 
@@ -68,14 +76,20 @@ protected:
     cocos2d::Label* _bossHPLabel;        // 血量文本（例如 "1500/20000"）
     float _bossBarOffsetY;               // 血条垂直偏移（相对于精灵底部）
 
-    // 说明：
-    // - Boss 的攻击间隔（冷却）通过 Character/Enemy 提供的接口管理：
-    //     - 使用 setAttackCooldown(float seconds) 设置攻击间隔（秒）
-    //     - canAttack(), resetAttackCooldown() 在 Character 中实现
-    // - 在本 Boss 的 init() 中将攻击间隔设为 2.0 秒（即每 2s 可发起一次攻击）
-    // - 阶段控制：
-    //     * 在 PHASE_A 或 TRANSITION_A_TO_B 阶段，Boss 隐身且 immune（不可被玩家子弹识别/命中），并且不能被剧毒影响。
-    //     * 当转场动画播放完毕会立即把 _phase 设置为 PHASE_B，从而允许立刻被识别/受伤/攻击/移动。
+    // ========== ChengWuJie 技能参数 ==========
+    float _skillCooldown;        // 冷却时长（秒）
+    float _skillCooldownTimer;   // 冷却计时（秒）
+    float _skillRange;           // 触发条件：近战范围（比普通攻击范围大）
+    int   _skillDamagePerHit;    // 每次命中伤害
+    bool  _skillPlaying;         // 是否正在播放技能（不可被打断）
+
+    // 用于在 sprite 层播放额外技能覆盖图层（与 _sprite 不同，需在析构中清理）
+    cocos2d::Sprite* _skillSprite;
+
+    // 启动与判断技能
+    bool canUseChengWuJie() const;
+    void startChengWuJie(Player* target);
+    void resetChengWuJieCooldown();
 };
 
 #endif // __KUILONGBOSS_H__
