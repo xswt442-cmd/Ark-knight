@@ -593,12 +593,17 @@ void Room::addPillarCluster(int centerTileX, int centerTileY, int width, int hei
     default: type = Pillar::PillarType::CLEAR; break;
     }
     
-    // 放置2x2的石柱（中心点偏移0.5，确保2x2居中）
-    for (int dy = 0; dy <= 1; dy++)
+    // 根据width和height放置石柱堆（以centerTileX, centerTileY为中心）
+    int halfW = width / 2;
+    int halfH = height / 2;
+    int startX = centerTileX - halfW + (width % 2 == 0 ? 0 : 0);
+    int startY = centerTileY - halfH + (height % 2 == 0 ? 0 : 0);
+    
+    for (int dy = 0; dy < height; dy++)
     {
-        for (int dx = 0; dx <= 1; dx++)
+        for (int dx = 0; dx < width; dx++)
         {
-            addPillarAtTile(centerTileX + dx, centerTileY + dy, type);
+            addPillarAtTile(startX + dx, startY + dy, type);
         }
     }
 }
