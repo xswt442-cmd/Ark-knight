@@ -11,6 +11,8 @@ int GameScene::s_savedMP = 0;
 #include "Entities/Enemy/DeYi.h"
 #include "Entities/Enemy/Ayao.h"
 #include "Entities/Enemy/XinXing.h"
+#include "Entities/Enemy/TangHuang.h"
+#include "Entities/Enemy/Du.h"
 #include "ui/CocosGUI.h"
 #include <algorithm>
 #include"Map/Room.h"
@@ -283,25 +285,33 @@ void GameScene::spawnEnemiesInRoom(Room* room)
     // 使用房间自身计算的可行走区域（基于墙与玩家半径），确保边界与墙对齐
     Rect walk = room->getWalkableArea();
     
-    // 随机生成3-8个怪（Ayao / DeYi / XinXing）
+    // 随机生成3-8个怪（普通小怪：Ayao / DeYi，精英怪：XinXing / TangHuang / Du）
     int enemyCount = RANDOM_INT(3, 8);
 
     for (int i = 0; i < enemyCount; i++)
     {
         Enemy* enemy = nullptr;
         float r = CCRANDOM_0_1();
-        // 概率分配：40% Ayao, 50% DeYi, 10% XinXing (精英)
-        if (r < 0.3f)
+        // 概率分配：Ayao 30%, DeYi 30%, XinXing 15%, TangHuang 15%, Du 10%
+        if (r < 0.30f)
         {
             enemy = Ayao::create();
         }
-        else if (r < 0.9f)
+        else if (r < 0.60f)
         {
             enemy = DeYi::create();
         }
-        else
+        else if (r < 0.75f)
         {
             enemy = XinXing::create();
+        }
+        else if (r < 0.90f)
+        {
+            enemy = TangHuang::create();
+        }
+        else
+        {
+            enemy = Du::create();
         }
 
         if (!enemy) continue;
@@ -333,6 +343,8 @@ void GameScene::spawnEnemiesInRoom(Room* room)
         if (dynamic_cast<Ayao*>(enemy)) typeName = "Ayao";
         else if (dynamic_cast<DeYi*>(enemy)) typeName = "DeYi";
         else if (dynamic_cast<XinXing*>(enemy)) typeName = "XinXing";
+        else if (dynamic_cast<TangHuang*>(enemy)) typeName = "TangHuang";
+        else if (dynamic_cast<Du*>(enemy)) typeName = "Du";
 
         GAME_LOG("Enemy spawned at (%.1f, %.1f) in room - type=%s", spawnPos.x, spawnPos.y, typeName);
     }

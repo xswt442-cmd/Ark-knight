@@ -39,9 +39,8 @@ namespace Constants {
     constexpr float FLOOR_TILE_SIZE = 32.0f;   // 地板尺寸
 
     // 房间尺寸（以瓦片数计，偶数）
-    // 增大房间尺寸以扩大战斗空间
-    constexpr int ROOM_TILES_W = 30;
-    constexpr int ROOM_TILES_H = 22;    
+    constexpr int ROOM_TILES_W = 28;
+    constexpr int ROOM_TILES_H = 20;    
 
     // 房间中心像素距离：应足够大以避免相邻房间图形重合
     // 推荐值：ROOM_TILES_W * FLOOR_TILE_SIZE + 160（预留走廊/间隙）
