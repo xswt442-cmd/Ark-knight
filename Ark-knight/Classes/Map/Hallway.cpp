@@ -32,13 +32,13 @@ bool Hallway::initWithDirection(int direction) {
     
     // 默认瓦片数，会在setGapSize中根据实际空隙重新计算
     if (_direction == Constants::DIR_UP || _direction == Constants::DIR_DOWN) {
-        // 垂直走廊：宽度 = 门宽 + 2（左右墙各1格）
-        _tilesWidth = Constants::DOOR_WIDTH + 2;
+        // 垂直走廊：宽度 = 门宽（不含墙，与房间地板无缝衔接）
+        _tilesWidth = Constants::DOOR_WIDTH;
         _tilesHeight = 12;  // 默认值，会被覆盖
     } else {
-        // 水平走廊：高度 = 门宽 + 2（上下墙各1格）
+        // 水平走廊：高度 = 门宽（不含墙，与房间地板无缝衔接）
         _tilesWidth = 6;  // 默认值，会被覆盖
-        _tilesHeight = Constants::DOOR_WIDTH + 2;
+        _tilesHeight = Constants::DOOR_WIDTH;
     }
     
     return true;
@@ -69,57 +69,30 @@ void Hallway::createMap() {
     float startX = _centerX - tileSize * (_tilesWidth / 2.0f - 0.5f);
     float startY = _centerY + tileSize * (_tilesHeight / 2.0f - 0.5f);
     
-    // 生成地板和墙壁
+    // 生成走廊地板（不生成墙体，与房间地板无缝衔接）
     for (int h = 0; h < _tilesHeight; h++) {
         for (int w = 0; w < _tilesWidth; w++) {
             float x = startX + w * tileSize;
             float y = startY - h * tileSize;
             
-            bool isWall = false;
-            int zOrder = Constants::ZOrder::WALL_ABOVE;
-            
-            if (_direction == Constants::DIR_LEFT || _direction == Constants::DIR_RIGHT) {
-                // 水平走廊：上下两侧是墙
-                if (h == 0) {
-                    isWall = true;
-                    zOrder = Constants::ZOrder::WALL_BELOW;
-                } else if (h == _tilesHeight - 1) {
-                    isWall = true;
-                    zOrder = Constants::ZOrder::WALL_ABOVE;
-                }
-            } else {
-                // 垂直走廊：左右两侧是墙
-                if (w == 0 || w == _tilesWidth - 1) {
-                    isWall = true;
-                    zOrder = Constants::ZOrder::WALL_ABOVE;
-                }
-            }
-            
-            if (isWall) {
-                generateWall(x, y, zOrder);
-            } else {
-                generateFloor(x, y);
-            }
+            // 走廊全部使用地板，不生成墙体
+            generateFloor(x, y);
         }
     }
     
-    // 更新实际可行走边界（考虑玩家半径，边界往内缩）
+    // 更新实际可行走边界（走廊全为地板，边界即为走廊范围）
     float playerHalfSize = 15.0f;  // 玩家半径约15像素
     
     if (_direction == Constants::DIR_LEFT || _direction == Constants::DIR_RIGHT) {
-        // 水平走廊：纵向排除上下墙，并考虑玩家尺寸
+        // 水平走廊：全为地板，上下边界为地板边缘
         _leftX = startX;
         _rightX = startX + tileSize * (_tilesWidth - 1);
-        // 上墙在h=0，其下边缘在 startY - tileSize/2，再往下缩playerHalfSize
-        _topY = startY - tileSize / 2 - playerHalfSize;
-        // 下墙在h=_tilesHeight-1，其上边缘在 startY - (_tilesHeight-1)*tileSize + tileSize/2，再往上缩
-        _bottomY = startY - (_tilesHeight - 1) * tileSize + tileSize / 2 + playerHalfSize;
+        _topY = startY + tileSize / 2 - playerHalfSize;
+        _bottomY = startY - (_tilesHeight - 1) * tileSize - tileSize / 2 + playerHalfSize;
     } else {
-        // 垂直走廊：横向排除左右墙，并考虑玩家尺寸
-        // 左墙在w=0，其右边缘在 startX + tileSize/2，再往右缩playerHalfSize
-        _leftX = startX + tileSize / 2 + playerHalfSize;
-        // 右墙在w=_tilesWidth-1，其左边缘在 startX + (_tilesWidth-1)*tileSize - tileSize/2，再往左缩
-        _rightX = startX + (_tilesWidth - 1) * tileSize - tileSize / 2 - playerHalfSize;
+        // 垂直走廊：全为地板，左右边界为地板边缘
+        _leftX = startX - tileSize / 2 + playerHalfSize;
+        _rightX = startX + (_tilesWidth - 1) * tileSize + tileSize / 2 - playerHalfSize;
         _topY = startY;
         _bottomY = startY - tileSize * (_tilesHeight - 1);
     }

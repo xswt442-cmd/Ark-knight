@@ -40,8 +40,8 @@ namespace Constants {
 
     // 房间尺寸（以瓦片数计，偶数）
     // 增大房间尺寸以扩大战斗空间
-    constexpr int ROOM_TILES_W = 34;           // 原 26 -> 增大
-    constexpr int ROOM_TILES_H = 26;           // 原 18 -> 增大
+    constexpr int ROOM_TILES_W = 30;           // 原 26 -> 增大
+    constexpr int ROOM_TILES_H = 22;           // 原 18 -> 增大
 
     // 房间中心像素距离：应足够大以避免相邻房间图形重合
     // 推荐值：ROOM_TILES_W * FLOOR_TILE_SIZE + 160（预留走廊/间隙）
@@ -135,7 +135,7 @@ namespace Constants {
         NORMAL,     // 普通战斗房间
         BOSS,       // Boss房间
         END,        // 终点房间(下一关传送门)
-        REWARD      // 奖励房间（原武器/道具房间）
+        REWARD      // 奖励房间
     };
 }
 
