@@ -97,6 +97,8 @@ list(APPEND GAME_SOURCE
      Classes/UI/MiniMap.cpp
      Classes/UI/SettingsLayer.cpp
      Classes/UI/FloatingText.cpp
+     Classes/UI/GameHUD.cpp
+     Classes/UI/GameMenus.cpp
      # Managers
      Classes/Managers/GameManager.cpp
      Classes/Managers/SoundManager.cpp
@@ -144,6 +146,8 @@ list(APPEND GAME_HEADER
      Classes/UI/MiniMap.h
      Classes/UI/SettingsLayer.h
      Classes/UI/FloatingText.h
+     Classes/UI/GameHUD.h
+     Classes/UI/GameMenus.h
      # Managers
      Classes/Managers/GameManager.h
      Classes/Managers/SoundManager.h
