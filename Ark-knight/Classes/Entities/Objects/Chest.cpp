@@ -121,15 +121,3 @@ ItemDrop* Chest::open(const std::unordered_map<std::string, int>& ownedItems)
     
     return drop;
 }
-    itemLabel->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL);
-    this->getParent()->addChild(itemLabel, Constants::ZOrder::UI_GLOBAL);
-    
-    // 2秒后淡出消失
-    auto delay = DelayTime::create(2.0f);
-    auto fadeOut = FadeOut::create(1.0f);
-    auto remove = RemoveSelf::create();
-    auto seq = Sequence::create(delay, fadeOut, remove, nullptr);
-    
-    itemIcon->runAction(seq->clone());
-    itemLabel->runAction(seq->clone());
-}

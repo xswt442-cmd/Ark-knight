@@ -882,6 +882,7 @@ void Room::openChest(Player* player)
 {
     if (!_chest || !player)
     {
+        GAME_LOG("Cannot open chest: chest=%p, player=%p", _chest, player);
         return;
     }
     
@@ -893,7 +894,11 @@ void Room::openChest(Player* player)
     {
         _itemDrop = drop;
         this->addChild(_itemDrop, Constants::ZOrder::FLOOR + 2);
-        GAME_LOG("ItemDrop created in room");
+        GAME_LOG("ItemDrop created in room at position (%.1f, %.1f)", drop->getPosition().x, drop->getPosition().y);
+    }
+    else
+    {
+        GAME_LOG("Failed to create ItemDrop from chest");
     }
 }
 
@@ -904,7 +909,12 @@ bool Room::canInteractWithItemDrop(Player* player) const
         return false;
     }
     
-    return _itemDrop->canPickup(player);
+    bool canPickup = _itemDrop->canPickup(player);
+    if (canPickup)
+    {
+        GAME_LOG("Can pickup item drop!");
+    }
+    return canPickup;
 }
 
 void Room::pickupItemDrop(Player* player)

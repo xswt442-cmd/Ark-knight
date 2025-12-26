@@ -879,6 +879,8 @@ void GameScene::updateInteraction(float dt)
         std::string interactText = "[E]获取" + itemDef->name + "：" + itemDef->description;
         _interactionLabel->setString(interactText);
         
+        CCLOG("Showing item interaction: %s", interactText.c_str());
+        
         // 将道具的世界坐标转换为屏幕坐标
         Vec2 itemWorldPos = itemDrop->getParent()->convertToWorldSpace(itemDrop->getPosition());
         Vec2 screenPos = _uiLayer->convertToNodeSpace(itemWorldPos);
@@ -913,16 +915,15 @@ void GameScene::updateInteraction(float dt)
         if (!_interactionLabel)
         {
             // 创建交互提示标签
-            _interactionLabel = Label::createWithTTF(u8"[E] 打开宝箱", "fonts/msyh.ttf", 20);
+            _interactionLabel = Label::createWithTTF("", "fonts/msyh.ttf", 20);
             _interactionLabel->setTextColor(Color4B::YELLOW);
             _interactionLabel->enableOutline(Color4B::BLACK, 2);
             _interactionLabel->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL + 5);
             _uiLayer->addChild(_interactionLabel);
         }
-        else
-        {
-            _interactionLabel->setString(u8"[E] 打开宝箱");
-        }
+        
+        // 设置宝箱交互文本
+        _interactionLabel->setString(u8"[E] 打开宝箱");
         
         // 将宝箱的世界坐标转换为屏幕坐标
         Vec2 chestWorldPos = chest->getParent()->convertToWorldSpace(chest->getPosition());
