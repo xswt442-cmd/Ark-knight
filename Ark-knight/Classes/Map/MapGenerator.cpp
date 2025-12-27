@@ -1,4 +1,5 @@
 ﻿#include "MapGenerator.h"
+#include "BossFloor.h"
 #include "Entities/Player/Player.h"
 #include "Hallway.h"
 #include <algorithm>
@@ -481,151 +482,13 @@ void MapGenerator::clearMap() {
 /**
  * 生成Boss层地图
  * 
- * Boss层结构说明：
- * - 只有2个房间：起始房间(左) + Boss房间(右)
- * - Boss房间大小为普通房间的2倍 (56x40 瓦片)
- * - Boss房间会随机生成30个火焰地板
- * - Boss房间中心会生成Boss敌人 (KuiLongBoss)
+ * 使用 BossFloor 类生成Boss层
+ * 详细实现请查看 BossFloor.cpp
  * 
- * 修改Boss房间布局请编辑此方法
- * 修改Boss敌人生成请编辑 GameScene::spawnEnemiesInRoom()
- * 
- * @see Room::generateBossFloorTiles() - Boss房间地板生成
- * @see GameScene::spawnEnemiesInRoom() - Boss敌人生成
+ * @see BossFloor - Boss层生成器类
  */
 void MapGenerator::generateBossFloor() {
-    Size visibleSize = Director::getInstance()->getVisibleSize();
-    int startX = Constants::MAP_GRID_SIZE / 2;
-    int startY = 2; // 固定在中间位置
-    
-    // ========== 创建起始房间 ==========
-    Room* startRoom = Room::create();
-    startRoom->setGridPosition(startX, startY);
-    startRoom->setCenter(visibleSize.width / 2, visibleSize.height / 2);
-    _roomMatrix[startX][startY] = startRoom;
-    _beginRoom = startRoom;
-    _roomCount = 1;
-    
-    // ========== 创建Boss房间 ==========
-    // Boss房间位于起始房间右侧
-    int bossX = startX + 1;
-    int bossY = startY;
-    Room* bossRoom = Room::create();
-    bossRoom->setGridPosition(bossX, bossY);
-    
-    // Boss房间中心位置计算
-    // 注意：Boss房间是2倍大小，需要考虑房间边缘对齐
-    float startRoomRightEdge = visibleSize.width / 2 + Constants::ROOM_TILES_W * Constants::FLOOR_TILE_SIZE / 2;
-    float bossRoomHalfWidth = Constants::ROOM_TILES_W * 2 * Constants::FLOOR_TILE_SIZE / 2;
-    float bossRoomCenterX = startRoomRightEdge + bossRoomHalfWidth;
-    bossRoom->setCenter(bossRoomCenterX, visibleSize.height / 2);
-    
-    _roomMatrix[bossX][bossY] = bossRoom;
-    _endRoom = bossRoom;
-    _roomCount = 2;
-    
-    // ========== 设置房间类型 ==========
-    startRoom->setRoomType(Constants::RoomType::BEGIN);
-    startRoom->setVisited(true);
-    bossRoom->setRoomType(Constants::RoomType::BOSS);
-    
-    // ========== 连接两个房间的门 ==========
-    startRoom->setDoorOpen(Constants::DIR_RIGHT, true);
-    bossRoom->setDoorOpen(Constants::DIR_LEFT, true);
-    
-    // ========== 创建房间地图 ==========
-    startRoom->createMap();
-    bossRoom->createMap();
-    
-    this->addChild(startRoom);
-    this->addChild(bossRoom);
-    
-    // ========== 在Boss房间生成火焰地板装饰 ==========
-    // 直接添加到MapGenerator，确保可见
-    Vec2 bossCenter = bossRoom->getCenter();
-    int bossRoomTilesW = bossRoom->getTilesWidth();
-    int bossRoomTilesH = bossRoom->getTilesHeight();
-    float tileSize = Constants::FLOOR_TILE_SIZE;
-    
-    // 与createMap相同的坐标计算
-    float baseX = bossCenter.x - tileSize * (bossRoomTilesW / 2.0f - 0.5f);
-    float baseY = bossCenter.y + tileSize * (bossRoomTilesH / 2.0f - 0.5f);
-    
-    // 收集可用位置（排除边缘和中心Boss区域）
-    std::vector<std::pair<int, int>> firePositions;
-    int centerTileX = bossRoomTilesW / 2;
-    int centerTileY = bossRoomTilesH / 2;
-    int exclusionRadius = 6;
-    
-    for (int y = 3; y < bossRoomTilesH - 3; ++y) {
-        for (int x = 3; x < bossRoomTilesW - 3; ++x) {
-            int dx = x - centerTileX;
-            int dy = y - centerTileY;
-            if (dx * dx + dy * dy <= exclusionRadius * exclusionRadius) {
-                continue;
-            }
-            firePositions.push_back({x, y});
-        }
-    }
-    
-    // 随机打乱
-    for (size_t i = firePositions.size() - 1; i > 0; --i) {
-        size_t j = rand() % (i + 1);
-        std::swap(firePositions[i], firePositions[j]);
-    }
-    
-    // 生成50个火焰地板
-    int fireCount = std::min(50, (int)firePositions.size());
-    for (int i = 0; i < fireCount; ++i) {
-        int tileX = firePositions[i].first;
-        int tileY = firePositions[i].second;
-        
-        float posX = baseX + tileX * tileSize;
-        float posY = baseY - tileY * tileSize;
-        
-        auto fireFloor = Sprite::create("Map/Floor/Floor_fire.png");
-        if (fireFloor) {
-            fireFloor->setPosition(posX, posY);
-            // 使用GlobalZOrder确保在地板之上可见（与barrier相同的方式）
-            fireFloor->setGlobalZOrder(Constants::ZOrder::FLOOR + 2);
-            this->addChild(fireFloor, Constants::ZOrder::FLOOR + 2);
-            
-            // 添加缩放动画
-            auto scaleUp = ScaleTo::create(0.8f + (rand() % 100) / 200.0f, 1.08f);
-            auto scaleDown = ScaleTo::create(0.8f + (rand() % 100) / 200.0f, 0.92f);
-            auto seq = Sequence::create(scaleUp, scaleDown, nullptr);
-            fireFloor->runAction(RepeatForever::create(seq));
-        }
-    }
-    log("Generated %d fire floor decorations in boss room at center (%.1f, %.1f)", 
-        fireCount, bossCenter.x, bossCenter.y);
-    
-    // ========== 生成连接走廊 ==========
-    // Boss层使用水平走廊连接两个房间
-    float startRoomWidth = Constants::ROOM_TILES_W * tileSize;
-    float bossRoomWidth = Constants::ROOM_TILES_W * 2 * tileSize;
-    
-    Vec2 startCenter = startRoom->getCenter();
-    
-    // 走廊起点：起始房间右边缘
-    float hallwayStartX = startCenter.x + startRoomWidth / 2;
-    // 走廊终点：Boss房间左边缘
-    float hallwayEndX = bossCenter.x - bossRoomWidth / 2;
-    float gapSize = hallwayEndX - hallwayStartX;
-    
-    // 只有当两个房间之间有间隙时才生成走廊
-    if (gapSize > 0) {
-        float hallwayCenterX = (hallwayStartX + hallwayEndX) / 2.0f;
-        float hallwayCenterY = startCenter.y;
-        
-        Hallway* hallway = Hallway::create(Constants::DIR_RIGHT);
-        hallway->setGapSize(gapSize);
-        hallway->setCenter(hallwayCenterX, hallwayCenterY);
-        hallway->createMap();
-        _hallways.push_back(hallway);
-        this->addChild(hallway, Constants::ZOrder::FLOOR);
-    }
-    
-    log("Boss floor generated: Start room at (%d,%d), Boss room at (%d,%d)", 
-        startX, startY, bossX, bossY);
+    auto bossFloor = BossFloor::create();
+    bossFloor->generate(_roomMatrix, _hallways, _beginRoom, _endRoom, _roomCount);
+    this->addChild(bossFloor);
 }

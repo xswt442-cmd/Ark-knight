@@ -94,6 +94,7 @@ list(APPEND GAME_SOURCE
      Classes/Map/Hallway.cpp
      Classes/Map/Barriers.cpp
      Classes/Map/TerrainLayouts.cpp
+     Classes/Map/BossFloor.cpp
      # UI
      Classes/UI/MiniMap.cpp
      Classes/UI/SettingsLayer.cpp
