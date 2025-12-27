@@ -67,6 +67,8 @@ list(APPEND GAME_SOURCE
      # Entities/Player
      Classes/Entities/Player/Player.cpp
      Classes/Entities/Player/Mage.cpp
+     Classes/Entities/Player/Gunner.cpp
+     Classes/Entities/Player/Warrior.cpp
      # Entities/Objects
      Classes/Entities/Objects/Item.cpp
      Classes/Entities/Objects/Chest.cpp
@@ -101,6 +103,7 @@ list(APPEND GAME_SOURCE
      Classes/UI/FloatingText.cpp
      Classes/UI/GameHUD.cpp
      Classes/UI/GameMenus.cpp
+     Classes/UI/CharacterSelectLayer.cpp
      # Managers
      Classes/Managers/GameManager.cpp
      Classes/Managers/SoundManager.cpp
@@ -118,6 +121,8 @@ list(APPEND GAME_HEADER
      # Entities/Player
      Classes/Entities/Player/Player.h
      Classes/Entities/Player/Mage.h
+     Classes/Entities/Player/Gunner.h
+     Classes/Entities/Player/Warrior.h
      # Entities/Objects
      Classes/Entities/Objects/Item.h
      Classes/Entities/Objects/Chest.h
@@ -151,6 +156,7 @@ list(APPEND GAME_HEADER
      Classes/UI/FloatingText.h
      Classes/UI/GameHUD.h
      Classes/UI/GameMenus.h
+     Classes/UI/CharacterSelectLayer.h
      # Managers
      Classes/Managers/GameManager.h
      Classes/Managers/SoundManager.h

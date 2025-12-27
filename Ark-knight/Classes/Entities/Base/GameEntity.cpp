@@ -108,16 +108,19 @@ int GameEntity::takeDamageReported(int damage)
     if (_sprite != nullptr)
     {
         _sprite->stopActionByTag(100);
-        _sprite->setColor(Color3B::WHITE);  // 重置颜色，防止卡在红色状态
+        _sprite->setColor(Color3B::WHITE);  // 立即重置颜色
         _sprite->setVisible(true);
         _sprite->setOpacity(255);
         
-        // 使用红色高亮闪烁代替隐藏式Blink
-        auto tintRed = TintTo::create(0.05f, 255, 100, 100);
-        auto tintNormal = TintTo::create(0.05f, 255, 255, 255);
-        auto tintRed2 = TintTo::create(0.05f, 255, 100, 100);
-        auto tintNormal2 = TintTo::create(0.05f, 255, 255, 255);
-        auto sequence = Sequence::create(tintRed, tintNormal, tintRed2, tintNormal2, nullptr);
+        // 使用CallFunc+setColor瞬时设置颜色，避免TintTo渐变被中断导致的颜色卡住
+        auto setRed = CallFunc::create([this]() { _sprite->setColor(Color3B(255, 100, 100)); });
+        auto setWhite = CallFunc::create([this]() { _sprite->setColor(Color3B::WHITE); });
+        auto sequence = Sequence::create(
+            setRed, DelayTime::create(0.05f),
+            setWhite, DelayTime::create(0.05f),
+            setRed->clone(), DelayTime::create(0.05f),
+            setWhite->clone(),
+            nullptr);
         sequence->setTag(100);
         _sprite->runAction(sequence);
     }

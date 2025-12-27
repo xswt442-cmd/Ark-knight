@@ -467,13 +467,18 @@ void Player::takeDamage(int damage)
             // 只有冷却结束时才播放受击特效
             if (_blinkCooldownTimer <= 0.0f)
             {
-                _sprite->stopActionByTag(100);                _sprite->setColor(Color3B::WHITE);  // 重置颜色，防止卡在红色状态                
-                // 使用红色高亮闪烁代替隐藏式Blink
-                auto tintRed = TintTo::create(0.05f, 255, 100, 100);
-                auto tintNormal = TintTo::create(0.05f, 255, 255, 255);
-                auto tintRed2 = TintTo::create(0.05f, 255, 100, 100);
-                auto tintNormal2 = TintTo::create(0.05f, 255, 255, 255);
-                auto seq = Sequence::create(tintRed, tintNormal, tintRed2, tintNormal2, nullptr);
+                _sprite->stopActionByTag(100);
+                _sprite->setColor(Color3B::WHITE);  // 立即重置颜色
+                
+                // 使用CallFunc+setColor瞬时设置颜色，避免TintTo渐变被中断导致的颜色卡住
+                auto setRed = CallFunc::create([this]() { _sprite->setColor(Color3B(255, 100, 100)); });
+                auto setWhite = CallFunc::create([this]() { _sprite->setColor(Color3B::WHITE); });
+                auto seq = Sequence::create(
+                    setRed, DelayTime::create(0.05f),
+                    setWhite, DelayTime::create(0.05f),
+                    setRed->clone(), DelayTime::create(0.05f),
+                    setWhite->clone(),
+                    nullptr);
                 seq->setTag(100);
                 _sprite->runAction(seq);
                 

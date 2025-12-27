@@ -1,6 +1,9 @@
 ﻿#include "GameScene.h"
 #include "MainMenuScene.h"
 #include "Entities/Player/Mage.h"
+#include "Entities/Player/Gunner.h"
+#include "Entities/Player/Warrior.h"
+#include "UI/CharacterSelectLayer.h"
 #include "Entities/Enemy/KongKaZi.h"
 #include "Entities/Enemy/DeYi.h"
 #include "Entities/Enemy/Ayao.h"
@@ -231,11 +234,31 @@ void GameScene::updateCamera(float dt)
 
 void GameScene::createPlayer()
 {
-    // 创建法师角色
-    _player = Mage::create();
+    // 根据角色选择创建对应的角色
+    CharacterType selectedCharacter = CharacterSelectLayer::getSelectedCharacter();
+    
+    switch (selectedCharacter)
+    {
+        case CharacterType::MAGE:
+            _player = Mage::create();
+            GAME_LOG("Creating Mage (Nymph)");
+            break;
+        case CharacterType::GUNNER:
+            _player = Gunner::create();
+            GAME_LOG("Creating Gunner (Wisdael)");
+            break;
+        case CharacterType::WARRIOR:
+            _player = Warrior::create();
+            GAME_LOG("Creating Warrior (Mudrock)");
+            break;
+        default:
+            _player = Mage::create();
+            GAME_LOG("Creating default Mage");
+            break;
+    }
     
     if (_player == nullptr) {
-        GAME_LOG_ERROR("Failed to create Mage!");
+        GAME_LOG_ERROR("Failed to create player!");
         return;
     }
     
