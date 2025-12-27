@@ -558,9 +558,12 @@ int Enemy::takeDamageReported(int damage)
             if (_sprite)
             {
                 _sprite->stopActionByTag(100);
+                _sprite->setVisible(true);
+                _sprite->setOpacity(255);   // 确保完全不透明
                 auto blink = Blink::create(0.2f, 2);
                 auto show = Show::create();
-                auto seq = Sequence::create(blink, show, nullptr);
+                auto opacity = FadeTo::create(0.01f, 255); // 确保透明度恢复
+                auto seq = Sequence::create(blink, show, opacity, nullptr);
                 seq->setTag(100);
                 _sprite->runAction(seq);
             }

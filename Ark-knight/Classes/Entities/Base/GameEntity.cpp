@@ -110,10 +110,12 @@ int GameEntity::takeDamageReported(int damage)
         // 先停止之前的闪烁动作，避免叠加导致精灵消失
         _sprite->stopActionByTag(100);
         _sprite->setVisible(true);  // 确保可见
+        _sprite->setOpacity(255);   // 确保完全不透明
         
         auto blink = Blink::create(0.2f, 2);
         auto show = Show::create();  // 闪烁结束后确保显示
-        auto sequence = Sequence::create(blink, show, nullptr);
+        auto opacity = FadeTo::create(0.01f, 255); // 确保透明度恢复
+        auto sequence = Sequence::create(blink, show, opacity, nullptr);
         sequence->setTag(100);  // 设置标签用于停止
         _sprite->runAction(sequence);
     }

@@ -308,19 +308,6 @@ void GameScene::spawnEnemiesInRoom(Room* room)
         return; // boss房间只生成boss，不生成其他敌人
     }
 
-    // --------- 调试：在每个战斗房间必定生成一个 Boss（便于调试） ----------
-    {
-        auto boss = KuiLongBoss::create();
-        if (boss)
-        {
-            boss->setPosition(roomCenter);
-            boss->setRoomBounds(walk);
-            addEnemy(boss);
-            GAME_LOG("Debug: KuiLongBoss spawned at room center (%.1f, %.1f)", roomCenter.x, roomCenter.y);
-        }
-    }
-    // -------------------------------------------------------------------------
-
     // 随机生成3-8个怪（普通小怪：Ayao / DeYi，精英怪：XinXing / TangHuang / Du）
     int enemyCount = RANDOM_INT(3, 8);
 
