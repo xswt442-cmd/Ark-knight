@@ -443,6 +443,10 @@ void GameScene::createHUD()
     _gameHUD->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL);
     _uiLayer->addChild(_gameHUD);
     
+    // 根据选择的角色设置技能图标
+    CharacterType selectedCharacter = CharacterSelectLayer::getSelectedCharacter();
+    _gameHUD->setSkillIcon(static_cast<int>(selectedCharacter));
+    
     GAME_LOG("GameHUD created");
 }
 

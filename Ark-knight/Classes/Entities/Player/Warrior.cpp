@@ -39,11 +39,11 @@ bool Warrior::init()
     }
     
     // 设置泥岩属性（高血量，低蓝）
-    setMaxHP(150);
-    setHP(150);
+    setMaxHP(150000);
+    setHP(150000);
     setMaxMP(80);
     setMP(80);
-    setAttack(30);
+    setAttack(300);
     setMoveSpeed(140.0f);  // 战士移速较慢
     
     // 设置技能冷却
@@ -59,8 +59,8 @@ bool Warrior::init()
     auto sprite = Sprite::create("Player/Mudrock/MudRock_Idle/MudRock_Idle_0001.png");
     if (sprite)
     {
-        // 设置缩放（战士体型较大）
-        float targetSize = Constants::FLOOR_TILE_SIZE * 5.0f;
+        // 设置缩放（与法师一致）
+        float targetSize = Constants::FLOOR_TILE_SIZE * 4.0f;
         float scale = targetSize / sprite->getContentSize().height;
         sprite->setScale(scale);
         
@@ -456,7 +456,8 @@ void Warrior::performMeleeAttack()
     Vec2 attackDir = _facingDirection;
     float attackAngle = 120.0f;  // 攻击扇形角度（度）
     
-    // 遍历所有敌人检测是否在攻击范围内
+    // 先收集所有符合条件的敌人，避免遍历时修改容器
+    std::vector<Enemy*> enemiesToHit;
     for (auto child : parent->getChildren())
     {
         if (child->getTag() == Constants::Tag::ENEMY)
@@ -490,7 +491,16 @@ void Warrior::performMeleeAttack()
                 }
             }
             
-            // 造成伤害
+            enemiesToHit.push_back(enemy);
+        }
+    }
+    
+    // 对收集到的敌人造成伤害
+    for (auto enemy : enemiesToHit)
+    {
+        if (enemy && !enemy->isDead())
+        {
+            Vec2 enemyPos = enemy->getPosition();
             int oldHP = enemy->getHP();
             enemy->takeDamage(damage);
             int applied = oldHP - enemy->getHP();

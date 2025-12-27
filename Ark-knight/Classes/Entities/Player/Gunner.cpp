@@ -35,11 +35,11 @@ bool Gunner::init()
     }
     
     // 设置维什戴尔属性
-    setMaxHP(100);
-    setHP(100);
+    setMaxHP(100000);
+    setHP(100000);
     setMaxMP(100);
     setMP(100);
-    setAttack(25);
+    setAttack(500);
     setMoveSpeed(160.0f);
     
     // 设置技能冷却
@@ -55,7 +55,7 @@ bool Gunner::init()
     auto sprite = Sprite::create("Player/Wisdael/Wisdael_Idle/Wisdael_Idle_0001.png");
     if (sprite)
     {
-        // 设置缩放
+        // 设置缩放（与法师一致）
         float targetSize = Constants::FLOOR_TILE_SIZE * 4.0f;
         float scale = targetSize / sprite->getContentSize().height;
         sprite->setScale(scale);
@@ -602,7 +602,8 @@ void Gunner::createExplosion(Node* parent, const Vec2& pos, int damage, float ra
         explosion->runAction(Sequence::create(animate, remove, nullptr));
     }
     
-    // 范围伤害
+    // 范围伤害 - 先收集敌人避免遍历时修改容器导致迭代器失效
+    std::vector<Enemy*> enemiesToHit;
     for (auto child : parent->getChildren())
     {
         if (child->getTag() == Constants::Tag::ENEMY)
@@ -613,16 +614,25 @@ void Gunner::createExplosion(Node* parent, const Vec2& pos, int damage, float ra
                 auto enemy = dynamic_cast<Enemy*>(child);
                 if (enemy != nullptr && !enemy->isDead() && !enemy->isStealthed())
                 {
-                    int oldHP = enemy->getHP();
-                    enemy->takeDamage(damage);
-                    int applied = oldHP - enemy->getHP();
-                    if (applied > 0)
-                    {
-                        FloatingText::show(parent, enemy->getPosition(), std::to_string(applied), Color3B(255, 100, 0));
-                    }
-                    GAME_LOG("Explosion hits enemy for %d damage!", applied);
+                    enemiesToHit.push_back(enemy);
                 }
             }
+        }
+    }
+    
+    // 对收集到的敌人造成伤害
+    for (auto enemy : enemiesToHit)
+    {
+        if (enemy && !enemy->isDead())
+        {
+            int oldHP = enemy->getHP();
+            enemy->takeDamage(damage);
+            int applied = oldHP - enemy->getHP();
+            if (applied > 0)
+            {
+                FloatingText::show(parent, enemy->getPosition(), std::to_string(applied), Color3B(255, 100, 0));
+            }
+            GAME_LOG("Explosion hits enemy for %d damage!", applied);
         }
     }
 }
