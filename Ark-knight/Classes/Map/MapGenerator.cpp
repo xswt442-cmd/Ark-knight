@@ -537,14 +537,15 @@ void MapGenerator::generateBossFloor() {
     startRoom->createMap();
     bossRoom->createMap();
     
-    // Boss房间生成火焰地板装饰
-    bossRoom->generateBossFloorTiles(30);
+    // Boss房间生成火焰地板装饰 (50个火焰地板)
+    bossRoom->generateBossFloorTiles(50);
+    log("Boss room fire tiles generated, center=(%.1f, %.1f)", bossRoom->getCenter().x, bossRoom->getCenter().y);
     
     this->addChild(startRoom);
     this->addChild(bossRoom);
     
     // ========== 生成连接走廊 ==========
-    // Boss层使用简化走廊：直接连接两个房间
+    // Boss层使用水平走廊连接两个房间
     float tileSize = Constants::FLOOR_TILE_SIZE;
     float startRoomWidth = Constants::ROOM_TILES_W * tileSize;
     float bossRoomWidth = Constants::ROOM_TILES_W * 2 * tileSize;
@@ -556,13 +557,16 @@ void MapGenerator::generateBossFloor() {
     float hallwayStartX = startCenter.x + startRoomWidth / 2;
     // 走廊终点：Boss房间左边缘
     float hallwayEndX = bossCenter.x - bossRoomWidth / 2;
+    float gapSize = hallwayEndX - hallwayStartX;
     
     // 只有当两个房间之间有间隙时才生成走廊
-    if (hallwayEndX > hallwayStartX) {
-        Hallway* hallway = Hallway::create();
-        hallway->setStartPosition(Vec2(hallwayStartX, startCenter.y));
-        hallway->setEndPosition(Vec2(hallwayEndX, bossCenter.y));
-        hallway->setHorizontal(true);
+    if (gapSize > 0) {
+        float hallwayCenterX = (hallwayStartX + hallwayEndX) / 2.0f;
+        float hallwayCenterY = startCenter.y;
+        
+        Hallway* hallway = Hallway::create(Constants::DIR_RIGHT);
+        hallway->setGapSize(gapSize);
+        hallway->setCenter(hallwayCenterX, hallwayCenterY);
         hallway->createMap();
         _hallways.push_back(hallway);
         this->addChild(hallway, Constants::ZOrder::FLOOR);

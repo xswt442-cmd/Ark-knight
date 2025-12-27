@@ -147,8 +147,9 @@ void GameScene::updateCamera(float dt)
             Room* room = _mapGenerator->getRoom(x, y);
             if (room) {
                 Vec2 center = room->getCenter();
-                float roomWidth = Constants::ROOM_TILES_W * Constants::FLOOR_TILE_SIZE;
-                float roomHeight = Constants::ROOM_TILES_H * Constants::FLOOR_TILE_SIZE;
+                // 使用房间实际尺寸，支持Boss房间2倍大小
+                float roomWidth = room->getTilesWidth() * Constants::FLOOR_TILE_SIZE;
+                float roomHeight = room->getTilesHeight() * Constants::FLOOR_TILE_SIZE;
                 
                 minX = std::min(minX, center.x - roomWidth / 2.0f);
                 maxX = std::max(maxX, center.x + roomWidth / 2.0f);

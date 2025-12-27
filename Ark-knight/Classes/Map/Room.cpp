@@ -753,6 +753,9 @@ void Room::generateBossFloorTiles(int count) {
     float startX = _centerX - (roomWidth * tileSize / 2) + tileSize / 2;
     float startY = _centerY - (roomHeight * tileSize / 2) + tileSize / 2;
     
+    log("generateBossFloorTiles: center=(%.1f, %.1f), roomSize=(%d x %d), startPos=(%.1f, %.1f)",
+        _centerX, _centerY, roomWidth, roomHeight, startX, startY);
+    
     // 收集所有可用的地板位置（排除边缘和中心Boss生成区域）
     std::vector<std::pair<int, int>> availablePositions;
     
@@ -781,6 +784,10 @@ void Room::generateBossFloorTiles(int count) {
     
     // 取前count个位置生成火焰地板
     int actualCount = std::min(count, (int)availablePositions.size());
+    int successCount = 0;
+    
+    log("generateBossFloorTiles: availablePositions=%d, actualCount=%d", 
+        (int)availablePositions.size(), actualCount);
     
     for (int i = 0; i < actualCount; ++i) {
         int tileX = availablePositions[i].first;
@@ -801,8 +808,11 @@ void Room::generateBossFloorTiles(int count) {
             auto sequence = cocos2d::Sequence::create(scaleUp, scaleDown, nullptr);
             auto repeat = cocos2d::RepeatForever::create(sequence);
             fireFloor->runAction(repeat);
+            successCount++;
+        } else {
+            log("WARNING: Failed to load Floor_fire.png at position (%.1f, %.1f)", posX, posY);
         }
     }
     
-    GAME_LOG("Generated %d fire floor tiles in boss room", actualCount);
+    log("Generated %d/%d fire floor tiles in boss room", successCount, actualCount);
 }
