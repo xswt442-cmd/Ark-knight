@@ -21,6 +21,7 @@ int GameScene::s_nextLevel = 1;
 int GameScene::s_nextStage = 1;
 int GameScene::s_savedHP = 0;
 int GameScene::s_savedMP = 0;
+std::vector<std::string> GameScene::s_savedItems;
 
 Scene* GameScene::createScene()
 {
@@ -48,15 +49,17 @@ bool GameScene::init()
     _currentStage = s_nextStage;
     _savedHP = s_savedHP;
     _savedMP = s_savedMP;
+    _collectedItems = s_savedItems;  // 恢复已收集的道具列表
     
-    GAME_LOG("GameScene init: Level %d-%d, SavedHP: %d, SavedMP: %d", 
-             _currentLevel, _currentStage, _savedHP, _savedMP);
+    GAME_LOG("GameScene init: Level %d-%d, SavedHP: %d, SavedMP: %d, SavedItems: %d", 
+             _currentLevel, _currentStage, _savedHP, _savedMP, (int)_collectedItems.size());
     
     // 重置静态变量为默认值（防止影响后续的重新开始）
     s_nextLevel = 1;
     s_nextStage = 1;
     s_savedHP = 0;
     s_savedMP = 0;
+    s_savedItems.clear();
     
     initLayers();
     initMapSystem();    // 初始化地图系统
@@ -64,6 +67,31 @@ bool GameScene::init()
     initCamera();       // 初始化相机
     // createTestEnemies();  // 敌人由房间生成，不再单独创建
     createHUD();
+    
+    // 恢复上一关收集的道具
+    if (!_collectedItems.empty())
+    {
+        GAME_LOG("Restoring %d items from previous level", (int)_collectedItems.size());
+        const auto& allItems = ItemLibrary::all();
+        for (const auto& itemId : _collectedItems)
+        {
+            // 根据ID查找道具定义
+            for (const auto& item : allItems)
+            {
+                if (item.id == itemId)
+                {
+                    // 恢复道具到UI（注意不要再次添加到_collectedItems）
+                    if (_gameHUD)
+                    {
+                        _gameHUD->addItemIcon(&item);
+                    }
+                    GAME_LOG("Restored item: %s", item.name.c_str());
+                    break;
+                }
+            }
+        }
+    }
+    
     createMenus();
     setupKeyboardListener();
     
@@ -1168,9 +1196,10 @@ void GameScene::goToNextLevel()
     s_nextStage = nextStage;
     s_savedHP = savedHP;
     s_savedMP = savedMP;
+    s_savedItems = _collectedItems;  // 保存已收集的道具
     
-    GAME_LOG("Set static vars for next scene: Level %d-%d, HP: %d, MP: %d", 
-             nextLevel, nextStage, savedHP, savedMP);
+    GAME_LOG("Set static vars for next scene: Level %d-%d, HP: %d, MP: %d, Items: %d", 
+             nextLevel, nextStage, savedHP, savedMP, (int)_collectedItems.size());
     
     // 创建新场景（init时会读取静态变量）
     auto newScene = GameScene::createScene();
@@ -1278,6 +1307,9 @@ void GameScene::addItemToUI(const ItemDef* itemDef)
     {
         return;
     }
+    
+    // 记录收集的道具ID（用于关卡继承）
+    _collectedItems.push_back(itemDef->id);
     
     _gameHUD->addItemIcon(itemDef);
 }
