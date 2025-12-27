@@ -1,15 +1,16 @@
-#include "KuiLongBoss.h"
+ï»¿#include "KuiLongBoss.h"
 #include "cocos2d.h"
 #include "Entities/Player/Player.h"
 #include "ui/CocosGUI.h"
-#include "Entities/Enemy/NiLuFire.h" // ĞÂÔö include
-#include "Scenes/GameScene.h"       // ÎªÁËµ÷ÓÃ addEnemy / getPlayer
+#include "Entities/Enemy/NiLuFire.h" // æ–°å¢ include
+#include "Scenes/GameScene.h"       // ä¸ºäº†è°ƒç”¨ addEnemy / getPlayer
+#include "UI/FloatingText.h"        // æ–°å¢ï¼šæ˜¾ç¤ºä¼¤å®³æµ®å­—
 
 USING_NS_CC;
 
 static const char* LOG_TAG = "KuiLongBoss";
 
-// ¹¹Ôìº¯Êı£ºÔÚ¹¹ÔìÌåÄÚÈ·±£ overlay Ö¸Õë³õÊ¼»¯
+// æ„é€ å‡½æ•°ï¼šåœ¨æ„é€ ä½“å†…ç¡®ä¿ overlay æŒ‡é’ˆåˆå§‹åŒ–
 KuiLongBoss::KuiLongBoss()
     : _phase(PHASE_A)
     , _phaseTimer(0.0f)
@@ -30,9 +31,10 @@ KuiLongBoss::KuiLongBoss()
     , _skillRange(220.0f)
     , _skillDamagePerHit(getAttack() * 4)
     , _skillPlaying(false)
-    , _roomBounds(Rect::ZERO) // ĞÂÔö
+    , _skillDamageScheduled(false) // <- æ–°å¢åˆå§‹åŒ–
+    , _roomBounds(Rect::ZERO) // æ–°å¢
     , _niluSpawnTimer(0.0f)
-    , _niluSpawnInterval(10.0f) // Ã¿10Ãë³¢ÊÔÉú³É
+    , _niluSpawnInterval(10.0f) // æ¯10ç§’å°è¯•ç”Ÿæˆ
     , _niluSpawnPerInterval(2)
     , _niluMaxPerRoom(12)
     , _niluMinDistance(50.0f)
@@ -44,17 +46,17 @@ void KuiLongBoss::setRoomBounds(const Rect& bounds)
     _roomBounds = bounds;
 }
 
-// ÔÚÎÄ¼ş¶¥²¿£¨include Ö®ºó£¬namespace Ê¹ÓÃ´¦Ö®ºó£©£¬²åÈëÈçÏÂ¾²Ì¬¸¨Öúº¯Êı£¨»ò·ÅÔÚÄäÃûÃüÃû¿Õ¼äÄÚ£©
+// åœ¨æ–‡ä»¶é¡¶éƒ¨ï¼ˆinclude ä¹‹åï¼Œnamespace ä½¿ç”¨å¤„ä¹‹åï¼‰ï¼Œæ’å…¥å¦‚ä¸‹é™æ€è¾…åŠ©å‡½æ•°ï¼ˆæˆ–æ”¾åœ¨åŒ¿åå‘½åç©ºé—´å†…ï¼‰
 static void collectNiLuFiresRecursive(cocos2d::Node* node, std::vector<class NiLuFire*>& out)
 {
     if (!node) return;
-    // ¼ì²éµ±Ç°½ÚµãÊÇ·ñÎª NiLuFire
+    // æ£€æŸ¥å½“å‰èŠ‚ç‚¹æ˜¯å¦ä¸º NiLuFire
     NiLuFire* fire = dynamic_cast<NiLuFire*>(node);
     if (fire)
     {
         out.push_back(fire);
     }
-    // µİ¹éÆä×Ó½Úµã
+    // é€’å½’å…¶å­èŠ‚ç‚¹
     const auto& children = node->getChildren();
     for (auto child : children)
     {
@@ -62,7 +64,7 @@ static void collectNiLuFiresRecursive(cocos2d::Node* node, std::vector<class NiL
     }
 }
 
-// ¼ÆËãµ±Ç°·¿¼äÄÚºÏ·¨µÄ NiLuFire ÊıÁ¿£¨±éÀú³¡¾°ÖĞµÄ ENEMY tag ²¢ dynamic_cast£©
+// è®¡ç®—å½“å‰æˆ¿é—´å†…åˆæ³•çš„ NiLuFire æ•°é‡ï¼ˆéå†åœºæ™¯ä¸­çš„ ENEMY tag å¹¶ dynamic_castï¼‰
 int KuiLongBoss::countNiLuFiresInRoom() const
 {
     Scene* running = Director::getInstance()->getRunningScene();
@@ -75,16 +77,15 @@ int KuiLongBoss::countNiLuFiresInRoom() const
     for (auto fire : found)
     {
         if (!fire) continue;
-        if (fire->isDead()) continue;
-
-        // Èç¹û boss ÓĞ·¿¼ä±ß½ç£¬ÔòÖ»Í³¼ÆÔÚ¸Ã bounds ÄÚµÄ NiLu
+        // ä¸å†æ ¹æ® isDead() è·³è¿‡ï¼šNiLu åˆå§‹ HP ä¸º 0ï¼Œä½†åªè¦è¯¥èŠ‚ç‚¹å­˜åœ¨åº”è¢«è§†ä½œç”Ÿæ•ˆ
+        // ä»…ç»Ÿè®¡åœ¨è¯¥ Boss æˆ¿é—´èŒƒå›´å†…çš„ NiLu
         if (!_roomBounds.equals(Rect::ZERO))
         {
             if (!_roomBounds.containsPoint(fire->getPosition())) continue;
         }
         else
         {
-            // ÈôÎ´ÉèÖÃ room bounds£¬°´¾àÀë±£ÊØ¼ÆÊı£¨¼æÈİ¾ÉÂß¼­£©
+            // è‹¥æœªè®¾ç½® room boundsï¼ŒæŒ‰è·ç¦»ä¿å®ˆè®¡æ•°ï¼ˆå…¼å®¹æ—§é€»è¾‘ï¼‰
             if (fire->getPosition().distance(this->getPosition()) >= 2000.0f) continue;
         }
         ++count;
@@ -94,12 +95,12 @@ int KuiLongBoss::countNiLuFiresInRoom() const
 
 bool KuiLongBoss::isPositionValidForNiLu(const Vec2& pos) const
 {
-    // ±ØĞëÔÚ·¿¼ä walkable area ÄÚ£¨Áô 1 ÏñËØ±ß¾à£©
+    // å¿…é¡»åœ¨æˆ¿é—´ walkable area å†…ï¼ˆç•™ 1 åƒç´ è¾¹è·ï¼‰
     if (_roomBounds.equals(Rect::ZERO)) return false;
     if (!(pos.x >= _roomBounds.getMinX() + 1.0f && pos.x <= _roomBounds.getMaxX() - 1.0f &&
         pos.y >= _roomBounds.getMinY() + 1.0f && pos.y <= _roomBounds.getMaxY() - 1.0f)) return false;
 
-    // È·±£ÓëÆäËû NiLuFire ¾àÀëÖÁÉÙ _niluMinDistance
+    // ç¡®ä¿ä¸å…¶ä»– NiLuFire è·ç¦»è‡³å°‘ _niluMinDistance
     Scene* running = Director::getInstance()->getRunningScene();
     if (!running) return false;
 
@@ -110,7 +111,7 @@ bool KuiLongBoss::isPositionValidForNiLu(const Vec2& pos) const
     {
         if (!fire) continue;
         if (fire->isDead()) continue;
-        // Ö»¿¼ÂÇÍ¬·¿¼äÄÚµÄ NiLu£¨Èô boss ÓĞ bounds£©
+        // åªè€ƒè™‘åŒæˆ¿é—´å†…çš„ NiLuï¼ˆè‹¥ boss æœ‰ boundsï¼‰
         if (!_roomBounds.equals(Rect::ZERO))
         {
             if (!_roomBounds.containsPoint(fire->getPosition())) continue;
@@ -122,11 +123,11 @@ bool KuiLongBoss::isPositionValidForNiLu(const Vec2& pos) const
 
 void KuiLongBoss::trySpawnNiLuFires()
 {
-    // ¼ÆÊıÏŞÖÆ
+    // è®¡æ•°é™åˆ¶
     int existing = countNiLuFiresInRoom();
     if (existing >= _niluMaxPerRoom) return;
 
-    // Ã¿´Î³¢ÊÔÉú³É _niluSpawnPerInterval ¸ö£¬Ö±µ½´ïÉÏÏŞ
+    // æ¯æ¬¡å°è¯•ç”Ÿæˆ _niluSpawnPerInterval ä¸ªï¼Œç›´åˆ°è¾¾ä¸Šé™
     int toSpawn = _niluSpawnPerInterval;
     if (existing + toSpawn > _niluMaxPerRoom)
         toSpawn = _niluMaxPerRoom - existing;
@@ -137,7 +138,7 @@ void KuiLongBoss::trySpawnNiLuFires()
     GameScene* gs = dynamic_cast<GameScene*>(running);
     if (!gs) return;
 
-    // Ëæ»úÎ»ÖÃ²ÉÑù£¨¼òµ¥ÖØÊÔ·¨£©
+    // éšæœºä½ç½®é‡‡æ ·ï¼ˆç®€å•é‡è¯•æ³•ï¼‰
     int attempts = 0;
     int spawned = 0;
     while (spawned < toSpawn && attempts < 50)
@@ -149,16 +150,16 @@ void KuiLongBoss::trySpawnNiLuFires()
 
         if (!isPositionValidForNiLu(cand)) continue;
 
-        // ´´½¨ NiLuFire
+        // åˆ›å»º NiLuFire
         auto fire = NiLuFire::create();
         if (!fire) continue;
         fire->setPosition(cand);
 
-        // ½« NiLu µÄ¹¥»÷Á¦Óë KuiLong ±£³ÖÒ»ÖÂ
-        fire->setAttack(this->getAttack()); // Ò²±£Áô base attack
-        // Ò²¸øÄÚ²¿×Ö¶Î£¨NiLuFire ÓĞ _attackDamage ×Ö¶ÎÓÃÓÚ performAttackImmediate£©
-        // Í¨¹ı dynamic cast ³É¹¦ºóÖ±½Ó·ÃÎÊË½ÓĞ²»ÊÇ¿ÉĞĞ£»Ê¹ÓÃ public setAttack ×ãÒÔ£¨performAttackImmediate ½ÓÊÜ damage ²ÎÊı£©
-        // ×¢²áµ½³¡¾°£¨GameScene::addEnemy »áµ÷ÓÃ setRoomBounds£©
+        // å°† NiLu çš„æ”»å‡»åŠ›ä¸ KuiLong ä¿æŒä¸€è‡´
+        fire->setAttack(this->getAttack()); // ä¹Ÿä¿ç•™ base attack
+        // ä¹Ÿç»™å†…éƒ¨å­—æ®µï¼ˆNiLuFire æœ‰ _attackDamage å­—æ®µç”¨äº performAttackImmediateï¼‰
+        // é€šè¿‡ dynamic cast æˆåŠŸåç›´æ¥è®¿é—®ç§æœ‰ä¸æ˜¯å¯è¡Œï¼›ä½¿ç”¨ public setAttack è¶³ä»¥ï¼ˆperformAttackImmediate æ¥å— damage å‚æ•°ï¼‰
+        // æ³¨å†Œåˆ°åœºæ™¯ï¼ˆGameScene::addEnemy ä¼šè°ƒç”¨ setRoomBoundsï¼‰
         gs->addEnemy(fire);
 
         spawned++;
@@ -174,29 +175,29 @@ bool KuiLongBoss::init()
 {
     if (!Enemy::init()) return false;
 
-    // »ù´¡ÊôĞÔ£¨¿É¸ù¾İĞèÇóµ÷Õû£©
+    // åŸºç¡€å±æ€§ï¼ˆå¯æ ¹æ®éœ€æ±‚è°ƒæ•´ï¼‰
     setEnemyType(EnemyType::MELEE);
     setMaxHP(20000);
     setHP(getMaxHP());
-    setMoveSpeed(30.0f); // Ô­ 60.0f -> 30.0f£¬ÒÑ½µµÍÒÆËÙ
+    setMoveSpeed(30.0f); // åŸ 60.0f -> 30.0fï¼Œå·²é™ä½ç§»é€Ÿ
     setAttack(1800);
     setSightRange(1000.0f);
     setAttackRange(120.0f);
 
-    // ¹¥»÷¼ä¸ô£º1 Ãë£¨Boss µÄ¹¥»÷ÀäÈ´£©£¬Í¨¹ı Character::setAttackCooldown / getAttackCooldown ¹ÜÀí
+    // æ”»å‡»é—´éš”ï¼š1 ç§’ï¼ˆBoss çš„æ”»å‡»å†·å´ï¼‰ï¼Œé€šè¿‡ Character::setAttackCooldown / getAttackCooldown ç®¡ç†
     setAttackCooldown(2.0f);
-    // ¹¥»÷Ç°Ò¡Ê±³¤£¨ºÍ Ayao ÀàËÆ£¬¿É°´Ğèµ÷Õû£©
+    // æ”»å‡»å‰æ‘‡æ—¶é•¿ï¼ˆå’Œ Ayao ç±»ä¼¼ï¼Œå¯æŒ‰éœ€è°ƒæ•´ï¼‰
     setAttackWindup(0.1f);
 
-    // ½×¶Î³õÊ¼
+    // é˜¶æ®µåˆå§‹
     _phase = PHASE_A;
     _phaseTimer = 0.0f;
     _phaseADuration = 10.0f;
 
-    // ÔØÈë¶¯»­×ÊÔ´£¨Ê¹ÓÃ Ayao ·ç¸ñÖğÖ¡¼ÓÔØ£¬±ãÓÚ¼ì²é£©
+    // è½½å…¥åŠ¨ç”»èµ„æºï¼ˆä½¿ç”¨ Ayao é£æ ¼é€å¸§åŠ è½½ï¼Œä¾¿äºæ£€æŸ¥ï¼‰
     loadAnimations();
 
-    // °ó¶¨³õÊ¼¾«Áé£ºÓÅÏÈ A Idle µÚÒ»Ö¡
+    // ç»‘å®šåˆå§‹ç²¾çµï¼šä¼˜å…ˆ A Idle ç¬¬ä¸€å¸§
     if (_animAIdle)
     {
         auto frames = _animAIdle->getFrames();
@@ -208,14 +209,14 @@ bool KuiLongBoss::init()
     }
     else
     {
-        // ¶µµ×Õ¼Î»
+        // å…œåº•å ä½
         auto sprite = Sprite::create();
         sprite->setTextureRect(Rect(0, 0, 48, 48));
         sprite->setColor(Color3B::RED);
         this->bindSprite(sprite);
     }
 
-    // ²¥·Å A Idle Ñ­»·£¨Èô´æÔÚ£©
+    // æ’­æ”¾ A Idle å¾ªç¯ï¼ˆè‹¥å­˜åœ¨ï¼‰
     if (_sprite && _animAIdle)
     {
         auto animate = Animate::create(_animAIdle);
@@ -225,21 +226,21 @@ bool KuiLongBoss::init()
         _moveAnimPlaying = true;
     }
 
-    // ³öÉúÔÚÆÁÄ»/³¡¾°ÖĞĞÄ£¨³¢ÊÔ GameScene ¾ÓÖĞ£»ÈôÊ§°ÜÔòÓÃ¿É¼ûÇøÓòÖĞĞÄ£©
+    // å‡ºç”Ÿåœ¨å±å¹•/åœºæ™¯ä¸­å¿ƒï¼ˆå°è¯• GameScene å±…ä¸­ï¼›è‹¥å¤±è´¥åˆ™ç”¨å¯è§åŒºåŸŸä¸­å¿ƒï¼‰
     Vec2 center = Vec2::ZERO;
     Size vs = Director::getInstance()->getVisibleSize();
     center = Vec2(vs.width * 0.5f, vs.height * 0.5f);
     this->setPosition(center);
 
-    // ---------- ÔÚ PHASE_A Ê±Ê¹ÓÃ TangHuang Ò»ÑùµÄ Stealth Ô´£¬±ÜÃâ±»×Óµ¯Ëø¶¨ ----------
+    // ---------- åœ¨ PHASE_A æ—¶ä½¿ç”¨ TangHuang ä¸€æ ·çš„ Stealth æºï¼Œé¿å…è¢«å­å¼¹é”å®š ----------
     this->addStealthSource((void*)this);
 
-    // ---------- ´´½¨ Boss ÑªÌõ UI£¨¾«ÁéÏÂ·½£© ----------
+    // ---------- åˆ›å»º Boss è¡€æ¡ UIï¼ˆç²¾çµä¸‹æ–¹ï¼‰ ----------
     {
         float barWidth = 120.0f;
         float barHeight = 10.0f;
 
-        // ÎÒÃÇ°ÑÑªÌõÉèÎª world-space µÄäÖÈ¾²ã¼¶£ºÔÚµØ°å²ãÖ®ÉÏ£¬µ«²»ÊôÓÚ UI ²ã£¨±ÜÃâ±» UI ÕÚµ²£©
+        // æˆ‘ä»¬æŠŠè¡€æ¡è®¾ä¸º world-space çš„æ¸²æŸ“å±‚çº§ï¼šåœ¨åœ°æ¿å±‚ä¹‹ä¸Šï¼Œä½†ä¸å±äº UI å±‚ï¼ˆé¿å…è¢« UI é®æŒ¡ï¼‰
         float bgGlobalZ = static_cast<float>(Constants::ZOrder::FLOOR + 1);
         float fillGlobalZ = static_cast<float>(Constants::ZOrder::FLOOR + 2);
         float labelGlobalZ = static_cast<float>(Constants::ZOrder::FLOOR + 3);
@@ -251,9 +252,9 @@ bool KuiLongBoss::init()
             bg->setScaleX(barWidth / bg->getContentSize().width);
             bg->setScaleY(barHeight / bg->getContentSize().height);
             bg->setPosition(Vec2(0.0f, -(_sprite ? _sprite->getBoundingBox().size.height * 0.5f : 24.0f) - _bossBarOffsetY));
-            // °ÑÑªÌõ·ÅÔÚµØ°å²ãÖ®ÉÏ£¨world-space£©
+            // æŠŠè¡€æ¡æ”¾åœ¨åœ°æ¿å±‚ä¹‹ä¸Šï¼ˆworld-spaceï¼‰
             bg->setGlobalZOrder(bgGlobalZ);
-            // Í¬Ê±°ÑËüµ±×÷ Boss µÄ×Ó½Úµã£¬ÒÔ±ãËæ Boss ÒÆ¶¯
+            // åŒæ—¶æŠŠå®ƒå½“ä½œ Boss çš„å­èŠ‚ç‚¹ï¼Œä»¥ä¾¿éš Boss ç§»åŠ¨
             this->addChild(bg, 0);
         }
 
@@ -289,7 +290,7 @@ bool KuiLongBoss::init()
 
 void KuiLongBoss::loadAnimations()
 {
-    // °´ Ayao µÄĞ´·¨Öğ¶¯»­ÖğÖ¡¼ÓÔØ£¬±ãÓÚÈË¹¤¼ì²é×ÊÔ´ÊÇ·ñ´æÔÚ²¢¼ÇÂ¼ÈÕÖ¾
+    // æŒ‰ Ayao çš„å†™æ³•é€åŠ¨ç”»é€å¸§åŠ è½½ï¼Œä¾¿äºäººå·¥æ£€æŸ¥èµ„æºæ˜¯å¦å­˜åœ¨å¹¶è®°å½•æ—¥å¿—
 
     // A Idle
     {
@@ -317,7 +318,7 @@ void KuiLongBoss::loadAnimations()
         }
     }
 
-    // A -> B ×ª³¡
+    // A -> B è½¬åœº
     {
         Vector<SpriteFrame*> frames;
         for (int i = 1; i <= 12; ++i)
@@ -390,7 +391,7 @@ void KuiLongBoss::loadAnimations()
         }
     }
 
-    // B -> C ËÀÍö×ª»»¶¯»­
+    // B -> C æ­»äº¡è½¬æ¢åŠ¨ç”»
     {
         Vector<SpriteFrame*> frames;
         for (int i = 1; i <= 13; ++i)
@@ -416,7 +417,7 @@ void KuiLongBoss::loadAnimations()
         }
     }
 
-    // B ChengWuJie ¼¼ÄÜ£¨23 Ö¡£©
+    // B ChengWuJie æŠ€èƒ½ï¼ˆ23 å¸§ï¼‰
     {
         Vector<SpriteFrame*> frames;
         for (int i = 1; i <= 23; ++i)
@@ -437,7 +438,7 @@ void KuiLongBoss::loadAnimations()
         }
         if (!frames.empty())
         {
-            // Ê¹ÓÃÓëÆäËü¹¥»÷¶¯»­ÀàËÆµÄÖ¡¼ä¸ô£¨¿É°´Ğèµ÷Õû£©
+            // ä½¿ç”¨ä¸å…¶å®ƒæ”»å‡»åŠ¨ç”»ç±»ä¼¼çš„å¸§é—´éš”ï¼ˆå¯æŒ‰éœ€è°ƒæ•´ï¼‰
             _animBChengWuJie = Animation::createWithSpriteFrames(frames, 0.10f);
             _animBChengWuJie->retain();
         }
@@ -454,7 +455,7 @@ void KuiLongBoss::loadAnimations()
 
 bool KuiLongBoss::isPoisonable() const
 {
-    // ÔÚ½×¶Î A »ò ×ª³¡ÆÚ¼äÃâÒß¶¾£¨²»»áÊÕµ½¾ç¶¾ÌØĞ§£©
+    // åœ¨é˜¶æ®µ A æˆ– è½¬åœºæœŸé—´å…ç–«æ¯’ï¼ˆä¸ä¼šæ”¶åˆ°å‰§æ¯’ç‰¹æ•ˆï¼‰
     return !(_phase == PHASE_A || _phase == TRANSITION_A_TO_B);
 }
 
@@ -462,36 +463,36 @@ void KuiLongBoss::update(float dt)
 {
     Enemy::update(dt);
 
-    // ¸üĞÂ½×¶Î¼ÆÊ±Æ÷£¨Ê¾Àı£©
+    // æ›´æ–°é˜¶æ®µè®¡æ—¶å™¨ï¼ˆç¤ºä¾‹ï¼‰
     if (_phase == PHASE_A)
     {
         _phaseTimer += dt;
         if (_phaseTimer >= _phaseADuration)
         {
-            // ½øÈë×ª³¡
+            // è¿›å…¥è½¬åœº
             _phase = TRANSITION_A_TO_B;
             _phaseTimer = 0.0f;
 
-            // ÒÆ³ı×ÔÉí×÷Îª stealth source£¨×ª³¡/ºóĞø½×¶Î½«¿É±»Ê¶±ğ£©
+            // ç§»é™¤è‡ªèº«ä½œä¸º stealth sourceï¼ˆè½¬åœº/åç»­é˜¶æ®µå°†å¯è¢«è¯†åˆ«ï¼‰
             this->removeStealthSource((void*)this);
 
-            // ²¥·Å×ª³¡¶¯»­£¨Èç¹ûÓĞ£©
+            // æ’­æ”¾è½¬åœºåŠ¨ç”»ï¼ˆå¦‚æœæœ‰ï¼‰
             if (_animAChangeToB && _sprite)
             {
-                // Í£Ö¹µ±Ç° idle Ñ­»·£¨Èç¹ûÔÚ²¥·Å£©
+                // åœæ­¢å½“å‰ idle å¾ªç¯ï¼ˆå¦‚æœåœ¨æ’­æ”¾ï¼‰
                 _sprite->stopActionByTag(KUI_LONG_MOVE_TAG);
                 _moveAnimPlaying = false;
 
                 auto animate = Animate::create(_animAChangeToB);
                 animate->setTag(KUI_LONG_CHANGE_TAG);
 
-                // ÔÚ¶¯»­½áÊøÊ±Á¢¼´ÇĞ»»µ½ PHASE_B£¬Ê¹Æä¿ÉÒÔÁ¢¿Ì±»Ê¶±ğ/ÊÜÉË/¹¥»÷/ÒÆ¶¯
+                // åœ¨åŠ¨ç”»ç»“æŸæ—¶ç«‹å³åˆ‡æ¢åˆ° PHASE_Bï¼Œä½¿å…¶å¯ä»¥ç«‹åˆ»è¢«è¯†åˆ«/å—ä¼¤/æ”»å‡»/ç§»åŠ¨
                 auto onFinish = CallFunc::create([this]() {
-                    // Á¢¼´½øÈë PHASE_B
+                    // ç«‹å³è¿›å…¥ PHASE_B
                     this->_phase = PHASE_B;
                     GAME_LOG("%s: Transition animation finished -> entered PHASE_B", LOG_TAG);
 
-                    // Æô¶¯ B ½×¶ÎµÄÒÆ¶¯Ñ­»·¶¯»­£¨Èç¹û´æÔÚ£©
+                    // å¯åŠ¨ B é˜¶æ®µçš„ç§»åŠ¨å¾ªç¯åŠ¨ç”»ï¼ˆå¦‚æœå­˜åœ¨ï¼‰
                     if (this->_animBMove && this->_sprite)
                     {
                         auto bmoveAnimate = Animate::create(this->_animBMove);
@@ -501,21 +502,21 @@ void KuiLongBoss::update(float dt)
                         this->_moveAnimPlaying = true;
                     }
 
-                    // ÆäËû½øÈë B µÄ³õÊ¼»¯£¨ÈôĞè£©¿ÉÒÔÔÚ´ËÌí¼Ó
+                    // å…¶ä»–è¿›å…¥ B çš„åˆå§‹åŒ–ï¼ˆè‹¥éœ€ï¼‰å¯ä»¥åœ¨æ­¤æ·»åŠ 
                     });
 
-                // Ê¹ÓÃ Sequence È·±£¶¯»­½áÊøºóÁ¢¼´Ö´ĞĞ»Øµ÷
+                // ä½¿ç”¨ Sequence ç¡®ä¿åŠ¨ç”»ç»“æŸåç«‹å³æ‰§è¡Œå›è°ƒ
                 auto seq = Sequence::create(animate, onFinish, nullptr);
                 seq->setTag(KUI_LONG_CHANGE_TAG);
                 _sprite->runAction(seq);
             }
             else
             {
-                // Ã»ÓĞ×ª³¡¶¯»­£¬Ö±½Ó½øÈë PHASE_B
+                // æ²¡æœ‰è½¬åœºåŠ¨ç”»ï¼Œç›´æ¥è¿›å…¥ PHASE_B
                 this->_phase = PHASE_B;
                 GAME_LOG("%s: No transition animation -> entered PHASE_B immediately", LOG_TAG);
 
-                // Á¢¼´¿ªÊ¼ B move ¶¯»­£¨ÈôÓĞ£©
+                // ç«‹å³å¼€å§‹ B move åŠ¨ç”»ï¼ˆè‹¥æœ‰ï¼‰
                 if (_animBMove && _sprite)
                 {
                     auto bmoveAnimate = Animate::create(_animBMove);
@@ -528,7 +529,7 @@ void KuiLongBoss::update(float dt)
         }
     }
 
-    // ¸üĞÂÑªÌõÏÔÊ¾£¨ËæÎ»ÖÃ/HP±ä»¯£©
+    // æ›´æ–°è¡€æ¡æ˜¾ç¤ºï¼ˆéšä½ç½®/HPå˜åŒ–ï¼‰
     if (_bossHPBar)
     {
         float percent = (getMaxHP() > 0) ? (static_cast<float>(getHP()) / static_cast<float>(getMaxHP()) * 100.0f) : 0.0f;
@@ -541,14 +542,14 @@ void KuiLongBoss::update(float dt)
         _bossHPLabel->setString(buf);
     }
 
-    // ¸üĞÂ¼¼ÄÜÀäÈ´¼ÆÊ±
+    // æ›´æ–°æŠ€èƒ½å†·å´è®¡æ—¶
     if (_skillCooldownTimer < _skillCooldown)
     {
         _skillCooldownTimer += dt;
         if (_skillCooldownTimer > _skillCooldown) _skillCooldownTimer = _skillCooldown;
     }
 
-    // ¼ÆÊ±Éú³É NiLuFire
+    // è®¡æ—¶ç”Ÿæˆ NiLuFire
     if (_currentState != EntityState::DIE)
     {
         _niluSpawnTimer += dt;
@@ -562,48 +563,48 @@ void KuiLongBoss::update(float dt)
 
 void KuiLongBoss::executeAI(Player* player, float dt)
 {
-    // ¼ò»¯Ê¾Àı£º½×¶Î A ²»×öÈÎºÎ¹¥»÷/ÒÆ¶¯£¬±£³ÖÒşÉí
+    // ç®€åŒ–ç¤ºä¾‹ï¼šé˜¶æ®µ A ä¸åšä»»ä½•æ”»å‡»/ç§»åŠ¨ï¼Œä¿æŒéšèº«
     if (_phase == PHASE_A || _phase == TRANSITION_A_TO_B)
     {
-        // ±£³Ö idle
+        // ä¿æŒ idle
         return;
     }
 
-    // ½×¶Î B ĞĞÎª£¨Ê¾Àı£©
+    // é˜¶æ®µ B è¡Œä¸ºï¼ˆç¤ºä¾‹ï¼‰
     if (_phase == PHASE_B)
     {
-        // ÓÅÏÈ¼¼ÄÜ£ºÈô¿¿½üÍæ¼Ò¡¢ÀäÈ´¾ÍĞ÷ÇÒÎ´ÔÚ¹¥»÷/¼¼ÄÜÖĞ£¬Ôò´¥·¢ ChengWuJie
+        // ä¼˜å…ˆæŠ€èƒ½ï¼šè‹¥é è¿‘ç©å®¶ã€å†·å´å°±ç»ªä¸”æœªåœ¨æ”»å‡»/æŠ€èƒ½ä¸­ï¼Œåˆ™è§¦å‘ ChengWuJie
         if (player && !this->_skillPlaying && this->canUseChengWuJie())
         {
             float distSqr = (player->getPosition() - this->getPosition()).lengthSquared();
             if (distSqr <= (_skillRange * _skillRange))
             {
-                // ´¥·¢¼¼ÄÜ£¨¼¼ÄÜ»áÉèÖÃ×´Ì¬ÓëÀäÈ´£©
+                // è§¦å‘æŠ€èƒ½ï¼ˆæŠ€èƒ½ä¼šè®¾ç½®çŠ¶æ€ä¸å†·å´ï¼‰
                 this->startChengWuJie(player);
-                // ´¥·¢ºóÖ±½Ó·µ»Ø£¨¼¼ÄÜ²»¿É±»´ò¶Ï£¬ÓÅÏÈ¼¶¸ß£©
+                // è§¦å‘åç›´æ¥è¿”å›ï¼ˆæŠ€èƒ½ä¸å¯è¢«æ‰“æ–­ï¼Œä¼˜å…ˆçº§é«˜ï¼‰
                 return;
             }
         }
 
-        // ÕâÀïĞ´Õı³£µÄ×·»÷/¹¥»÷Âß¼­£¨µ±¼¼ÄÜÎ´´¥·¢£©
+        // è¿™é‡Œå†™æ­£å¸¸çš„è¿½å‡»/æ”»å‡»é€»è¾‘ï¼ˆå½“æŠ€èƒ½æœªè§¦å‘ï¼‰
         Enemy::executeAI(player, dt);
     }
 }
 
 void KuiLongBoss::attack()
 {
-    // µ±ÕıÔÚ·Å¼¼ÄÜÊ±£¬½ûÖ¹±»ÆÕÍ¨¹¥»÷Á÷³Ì´ò¶Ï
+    // å½“æ­£åœ¨æ”¾æŠ€èƒ½æ—¶ï¼Œç¦æ­¢è¢«æ™®é€šæ”»å‡»æµç¨‹æ‰“æ–­
     if (_skillPlaying) return;
 
     if (_phase == PHASE_A || _phase == TRANSITION_A_TO_B) return;
 
     if (!canAttack()) return;
 
-    // ½øÈë¹¥»÷×´Ì¬²¢ÖØÖÃÀäÈ´
+    // è¿›å…¥æ”»å‡»çŠ¶æ€å¹¶é‡ç½®å†·å´
     setState(EntityState::ATTACK);
     resetAttackCooldown();
 
-    // Í£Ö¹ÒÆ¶¯Ñ­»·£¨µ«²»Òª stopAllActions£¬ÒÔÃâÓ°ÏìÆäËû²¢ĞĞ¶¯»­£©
+    // åœæ­¢ç§»åŠ¨å¾ªç¯ï¼ˆä½†ä¸è¦ stopAllActionsï¼Œä»¥å…å½±å“å…¶ä»–å¹¶è¡ŒåŠ¨ç”»ï¼‰
     if (_sprite)
     {
         auto moveAct = _sprite->getActionByTag(KUI_LONG_MOVE_TAG);
@@ -611,23 +612,64 @@ void KuiLongBoss::attack()
         _moveAnimPlaying = false;
     }
 
-    // È¡Ïû¿ÉÄÜ´æÔÚµÄ¾ÉµÄÇ°Ò¡/ÑÓ³Ù£¨·ÀÖ¹ÖØ¸´µ÷¶È£©
+    // å–æ¶ˆå¯èƒ½å­˜åœ¨çš„æ—§çš„å‰æ‘‡/å»¶è¿Ÿï¼ˆé˜²æ­¢é‡å¤è°ƒåº¦ï¼‰
     this->stopActionByTag(KUI_LONG_WINDUP_TAG);
     if (_sprite)
     {
-        // Ò²È¡Ïû sprite ÉÏ¾ÉµÄÇ°Ò¡ÊÓ¾õ£¨µ«²»Òª²¥·ÅÍêÕû¹¥»÷¶¯»­ÕâÀï£©
+        // ä¹Ÿå–æ¶ˆ sprite ä¸Šæ—§çš„å‰æ‘‡è§†è§‰ï¼ˆä½†ä¸è¦æ’­æ”¾å®Œæ•´æ”»å‡»åŠ¨ç”»è¿™é‡Œï¼‰
         auto prevWind = _sprite->getActionByTag(KUI_LONG_WINDUP_TAG);
         if (prevWind) _sprite->stopAction(prevWind);
     }
 
-    // Ê¹ÓÃ Enemy Ìá¹©µÄ windup •réLí°²ÅÅ¡°‚ûº¦´¥·¢•rüc¡±KÔÚïL“õ½YÊø•r²¥·ÅÕæÕıµÄ¹¥“ô„Ó®‹¡£
-    // ¹Ø¼ü£º²»ÒªÔÚ windup Íê³ÉÊ±Á¢¿Ì°Ñ×´Ì¬Éè»Ø IDLE£»¶øÊÇµ÷ÓÃ playAttackAnimation()£¬
-    // ÓÉ playAttackAnimation ÔÚ¶¯»­²¥·ÅÍê±ÏºóÔÙ½«×´Ì¬ÖØÖÃÎª IDLE£¨±£Ö¤¶¯»­ÍêÕû²¥·Å£©¡£
+    // ä½¿ç”¨ Enemy æä¾›çš„ windup æ™‚é•·ä¾†å®‰æ’â€œå‚·å®³è§¦å‘æ™‚é»â€ä¸¦åœ¨é¢¨æ“‹çµæŸæ—¶åŒæ—¶ï¼š
+    // 1) å¯¹ç©å®¶é€ æˆä¸€æ¬¡æ™®é€šæ”»å‡»ä¼¤å®³ï¼ˆè‹¥åœ¨èŒƒå›´å†…ï¼‰
+    // 2) è§¦å‘æˆ¿é—´å†…æ‰€æœ‰ NiLuFire çš„ performAttackImmediateï¼ˆä¼¤å®³ = KuiLong çš„æ”»å‡»åŠ›ï¼‰
+    // ä¹‹åå†æ’­æ”¾æ”»å‡»åŠ¨ç”»ï¼ˆè§†è§‰ï¼‰
     float windup = this->getAttackWindup();
     auto delay = DelayTime::create(windup);
     auto startAttackAnim = CallFunc::create([this]() {
-        // ÉËº¦´¥·¢µãÍ¨³£ÓÉ Enemy ²ãµÄÂß¼­´¦Àí£¨ÔÚ windup Ê±¼äµã£©£¬
-        // ÕâÀïÈ·±£ÊÓ¾õÉÏ²¥·Å¹¥»÷ÃüÖĞ¶¯»­²¢ÔÚ¶¯»­½áÊøºó»Ö¸´×´Ì¬¡£
+        // 1) ä¼¤å®³åˆ¤å®šï¼ˆworld-space åˆ¤æ–­ä¸ Playerï¼‰
+        Scene* running = Director::getInstance()->getRunningScene();
+        if (running)
+        {
+            GameScene* gs = dynamic_cast<GameScene*>(running);
+            if (gs)
+            {
+                Player* player = gs->getPlayer();
+                if (player && player->getParent() && !player->isDead())
+                {
+                    float distSqr = (player->getPosition() - this->getPosition()).lengthSquared();
+                    if (distSqr <= (this->getAttackRange() * this->getAttackRange()))
+                    {
+                        int dmg = this->getAttack();
+                        player->takeDamage(dmg);
+                        // æ˜¾ç¤ºçº¢è‰²æµ®å­—ï¼ˆPlayer::takeDamage ä¸­ä¹Ÿä¼šæ˜¾ç¤ºçº¢è‰²ï¼Œä¿ç•™ä»¥ä¾¿ä¸€è‡´ï¼‰
+                        Node* parentForText = player->getParent() ? player->getParent() : running;
+                        if (parentForText)
+                        {
+                            FloatingText::show(parentForText, player->getPosition(), std::to_string(dmg), Color3B(220,20,20));
+                        }
+                    }
+                }
+            }
+
+            // 2) åŒæ­¥è§¦å‘æˆ¿é—´å†…çš„ NiLuFire æ”»å‡»ï¼ˆä¸å¥éš†é€ æˆä¼¤å®³æ—¶æœºä¸€è‡´ï¼‰
+            std::vector<NiLuFire*> found;
+            collectNiLuFiresRecursive(running, found);
+            for (auto fire : found)
+            {
+                if (!fire) continue;
+                // ä¸ç”¨ isDead() è¿‡æ»¤ï¼šåªæŒ‰æˆ¿é—´èŒƒå›´è¿‡æ»¤ï¼ˆNiLu åˆå§‹ HP ä¸º 0 ä½†åº”è§†ä¸ºæœ‰æ•ˆï¼‰
+                if (!_roomBounds.equals(Rect::ZERO))
+                {
+                    if (!_roomBounds.containsPoint(fire->getPosition())) continue;
+                }
+                // ä¼ å…¥ KuiLong çš„æ”»å‡»åŠ›ï¼Œå¼ºåˆ¶è§¦å‘ï¼ˆNiLu å†…ä¼šåœ¨ä¿æŠ¤æœŸåˆ¤æ–­ï¼šæˆ‘ä»¬åœ¨ NiLu çš„å®ç°é‡Œå…è®¸ damage>0 å¼ºåˆ¶è§¦å‘ï¼‰
+                fire->performAttackImmediate(this->getAttack());
+            }
+        }
+
+        // è§†è§‰ï¼šæ’­æ”¾å¥éš†çš„æ”»å‡»åŠ¨ç”»ï¼ˆåœ¨æ”»å‡»åˆ¤å®šåï¼‰
         this->playAttackAnimation();
     });
     auto seq = Sequence::create(delay, startAttackAnim, nullptr);
@@ -637,34 +679,34 @@ void KuiLongBoss::attack()
 
 void KuiLongBoss::playAttackAnimation()
 {
-    // ¼¼ÄÜÊÍ·ÅÆÚ¼ä²»ÔÊĞí±»ÆÕÍ¨¹¥»÷¶¯»­Ìæ»»
+    // æŠ€èƒ½é‡Šæ”¾æœŸé—´ä¸å…è®¸è¢«æ™®é€šæ”»å‡»åŠ¨ç”»æ›¿æ¢
     if (_skillPlaying) return;
 
     if (_phase == PHASE_A || _phase == TRANSITION_A_TO_B) return;
 
     if (!_sprite) return;
 
-    // Èç¹ûÒÑ¾­ËÀÍöÔòºöÂÔ
+    // å¦‚æœå·²ç»æ­»äº¡åˆ™å¿½ç•¥
     if (_currentState == EntityState::DIE) return;
 
-    // È·±£´¦ÓÚ ATTACK ×´Ì¬ÒÔ×èÖ¹ÒÆ¶¯
+    // ç¡®ä¿å¤„äº ATTACK çŠ¶æ€ä»¥é˜»æ­¢ç§»åŠ¨
     if (_currentState != EntityState::ATTACK)
     {
         setState(EntityState::ATTACK);
     }
 
-    // Í£Ö¹ÒÆ¶¯Ñ­»·¶¯×÷£¨ÈôÔÚ²¥·Å£©
+    // åœæ­¢ç§»åŠ¨å¾ªç¯åŠ¨ä½œï¼ˆè‹¥åœ¨æ’­æ”¾ï¼‰
     auto moveAct = _sprite->getActionByTag(KUI_LONG_MOVE_TAG);
     if (moveAct) _sprite->stopAction(moveAct);
     _moveAnimPlaying = false;
 
-    // Í£Ö¹Ç°Ò¡¶¯»­£¨Èç¹û»¹ÔÚ²¥·Å£©
+    // åœæ­¢å‰æ‘‡åŠ¨ç”»ï¼ˆå¦‚æœè¿˜åœ¨æ’­æ”¾ï¼‰
     auto wind = _sprite->getActionByTag(KUI_LONG_WINDUP_TAG);
     if (wind) _sprite->stopAction(wind);
 
     if (_animBAttack)
     {
-        // Í£Ö¹ÒÑÓĞµÄÃüÖĞ¶¯×÷
+        // åœæ­¢å·²æœ‰çš„å‘½ä¸­åŠ¨ä½œ
         auto prevHit = _sprite->getActionByTag(KUI_LONG_HIT_TAG);
         if (prevHit) _sprite->stopAction(prevHit);
 
@@ -672,9 +714,9 @@ void KuiLongBoss::playAttackAnimation()
         auto animate = Animate::create(_animBAttack);
         animate->setTag(KUI_LONG_HIT_TAG);
 
-        // ²¥·Å¹¥»÷¶¯»­²¢ÔÚ»Øµ÷Ê±»Ö¸´×´Ì¬
+        // æ’­æ”¾æ”»å‡»åŠ¨ç”»å¹¶åœ¨å›è°ƒæ—¶æ¢å¤çŠ¶æ€
         auto callback = CallFunc::create([this]() {
-            // »Ö¸´µ½ B ½×¶ÎÒÆ¶¯¶¯»­µÄµÚÒ»Ö¡£¨Èç¹û´æÔÚ£©
+            // æ¢å¤åˆ° B é˜¶æ®µç§»åŠ¨åŠ¨ç”»çš„ç¬¬ä¸€å¸§ï¼ˆå¦‚æœå­˜åœ¨ï¼‰
             if (_animBMove && _sprite)
             {
                 auto frames = _animBMove->getFrames();
@@ -684,7 +726,7 @@ void KuiLongBoss::playAttackAnimation()
                 }
             }
 
-            // ÆÕÍ¨¹¥»÷´¥·¢Ê±£¬ÈÃ¸½½üµÄ NiLuFire Í¬²½ÊÍ·ÅÒ»´Î¹¥»÷£¨ÉËº¦µÈÓÚ KuiLong µÄ¹¥»÷Á¦£©
+            // æ™®é€šæ”»å‡»è§¦å‘æ—¶ï¼Œè®©é™„è¿‘çš„ NiLuFire åŒæ­¥é‡Šæ”¾ä¸€æ¬¡æ”»å‡»ï¼ˆä¼¤å®³ç­‰äº KuiLong çš„æ”»å‡»åŠ›ï¼‰
             Scene* running = Director::getInstance()->getRunningScene();
             if (running)
             {
@@ -693,8 +735,8 @@ void KuiLongBoss::playAttackAnimation()
                 for (auto fire : found)
                 {
                     if (!fire) continue;
-                    if (fire->isDead()) continue;
-                    // Ö»´¥·¢ÔÚÍ¬Ò»·¿¼äÄÚµÄ NiLu
+                    // ä¸å†æŒ‰ isDead() è·³è¿‡ï¼šNiLu åˆå§‹ HP ä¸º 0ï¼Œä½†å­˜åœ¨æ—¶åº”è¢«è§†ä½œæœ‰æ•ˆ
+                    // åªè§¦å‘åœ¨åŒä¸€æˆ¿é—´å†…çš„ NiLu
                     if (!_roomBounds.equals(Rect::ZERO))
                     {
                         if (!_roomBounds.containsPoint(fire->getPosition())) continue;
@@ -703,7 +745,7 @@ void KuiLongBoss::playAttackAnimation()
                 }
             }
 
-            // ²¥·Å½áÊøºó°Ñ×´Ì¬ÖØ»Ø IDLE£¨Ç°Ìá²»ÊÇËÀÍö£©
+            // æ’­æ”¾ç»“æŸåæŠŠçŠ¶æ€é‡å› IDLEï¼ˆå‰æä¸æ˜¯æ­»äº¡ï¼‰
             if (_currentState != EntityState::DIE)
             {
                 setState(EntityState::IDLE);
@@ -722,105 +764,125 @@ void KuiLongBoss::startChengWuJie(Player* target)
     if (!_sprite) return;
     if (!canUseChengWuJie()) return;
 
-    // ±ê¼Ç¼¼ÄÜÕıÔÚ²¥·Å²¢ÉèÖÃ×´Ì¬×èÖ¹ÒÆ¶¯/¹¥»÷
+    // æ ‡è®°æŠ€èƒ½æ­£åœ¨æ’­æ”¾å¹¶è®¾ç½®çŠ¶æ€é˜»æ­¢ç§»åŠ¨/æ”»å‡»
     _skillPlaying = true;
     setState(EntityState::SKILL);
     resetChengWuJieCooldown();
 
-    // Í£Ö¹ÒÆ¶¯Ñ­»·¶¯»­
+    // åœæ­¢ç§»åŠ¨å¾ªç¯åŠ¨ç”»
     auto moveAct = _sprite->getActionByTag(KUI_LONG_MOVE_TAG);
     if (moveAct) _sprite->stopAction(moveAct);
     _moveAnimPlaying = false;
 
-    // Í£Ö¹ÈÎºÎÇ°Ò¡/ÃüÖĞ/×ª³¡¶¯×÷£¨±ÜÃâ³åÍ»£©
+    // åœæ­¢ä»»ä½•å‰æ‘‡/å‘½ä¸­/è½¬åœºåŠ¨ä½œï¼ˆé¿å…å†²çªï¼‰
     auto wind = _sprite->getActionByTag(KUI_LONG_WINDUP_TAG);
     if (wind) _sprite->stopAction(wind);
     auto prevHit = _sprite->getActionByTag(KUI_LONG_HIT_TAG);
     if (prevHit) _sprite->stopAction(prevHit);
+    this->stopActionByTag(KUI_LONG_WINDUP_TAG);
     _sprite->stopActionByTag(KUI_LONG_CHANGE_TAG);
 
-    // ²¥·Å¼¼ÄÜ¶¯»­£¨sprite ²ãÃæ£©
+    // æ’­æ”¾æŠ€èƒ½åŠ¨ç”»ï¼ˆsprite å±‚é¢ï¼‰
     if (_animBChengWuJie)
     {
         _animBChengWuJie->setRestoreOriginalFrame(true);
         auto animate = Animate::create(_animBChengWuJie);
         animate->setTag(KUI_LONG_SKILL_TAG);
 
-        // ÔÚ¼¼ÄÜ¶¯»­½áÊøÊ±»Ö¸´×´Ì¬²¢ÇåÀí±êÖ¾£¨È·±£¶¯»­²¥·ÅÍê±Ï²Å»Ö¸´£©
-        auto onSkillFinish = CallFunc::create([this]() {
-            _skillPlaying = false;
-            if (_currentState != EntityState::DIE)
-            {
-                setState(EntityState::IDLE);
-            }
-        });
-
-        auto seq = Sequence::create(animate, onSkillFinish, nullptr);
-        seq->setTag(KUI_LONG_SKILL_TAG);
-        _sprite->runAction(seq);
+        // ã€å…³é”®ä¿®å¤ã€‘ç§»é™¤æ­¤å¤„çš„å›è°ƒçŠ¶æ€é‡ç½®ã€‚
+        // åŠ¨ç”»æ—¶é•¿(2.3s)çŸ­äºä¼¤å®³åºåˆ—(2.5s)ï¼ŒåŸé€»è¾‘ä¼šå¯¼è‡´è¿‡æ—©é‡ç½®çŠ¶æ€ï¼Œ
+        // ä»è€Œåœ¨æŠ€èƒ½æœªç»“æŸæ—¶æ’å…¥æ™®é€šæ”»å‡»ã€‚ç°åœ¨çŠ¶æ€é‡ç½®ç”±ä¼¤å®³åºåˆ—ç»Ÿä¸€ç®¡ç†ã€‚
+        _sprite->runAction(animate);
     }
     else
     {
-        auto fallbackDelay = DelayTime::create(2.5f);
-        auto onFinish = CallFunc::create([this]() {
-            _skillPlaying = false;
-            if (_currentState != EntityState::DIE) setState(EntityState::IDLE);
-        });
-        auto seq = Sequence::create(fallbackDelay, onFinish, nullptr);
-        seq->setTag(KUI_LONG_SKILL_TAG);
-        this->runAction(seq);
+        // æ— åŠ¨ç”»æ—¶çš„ fallbackï¼Œä»…ç”¨äºå ä½ï¼Œä¸è´Ÿè´£é‡ç½®çŠ¶æ€
     }
 
-    // ÔÚ½ÚµãÉÏ°²ÅÅ 5 ´ÎÉËº¦µ÷¶È£¬²¢ÔÚÃ¿Ò»´ÎÉËº¦Í¬Ê±ÈÃ·¿ÄÚ NiLuFire Í¬²½¹¥»÷
-    auto applyHitAndNiLu = [this, target](int damage) {
-        if (!target) return;
-        if (_currentState == EntityState::DIE) return;
-        float distSqr = (target->getPosition() - this->getPosition()).lengthSquared();
-        if (distSqr <= (_skillRange * _skillRange)) target->takeDamage(damage);
+    // å–æ¶ˆæ—§çš„æŠ€èƒ½ä¼¤å®³åºåˆ—ï¼Œé˜²æ­¢å åŠ 
+    this->stopActionByTag(KUI_LONG_SKILL_DAMAGE_TAG);
+    this->_skillDamageScheduled = false;
 
-        // Í¬²½´¥·¢·¿¼äÄÚ NiLuFire ¹¥»÷£¨ÉËº¦µÈÓÚ KuiLong µÄ¹¥»÷Á¦£©
-        Scene* running = Director::getInstance()->getRunningScene();
-        if (!running) return;
-        std::vector<NiLuFire*> found;
-        collectNiLuFiresRecursive(running, found);
-        for (auto fire : found)
-        {
-            if (!fire) continue;
-            if (fire->isDead()) continue;
-            if (!_roomBounds.equals(Rect::ZERO))
+    // ç”Ÿæˆ 5 æ¬¡ä¼¤å®³çš„åŠ¨ä½œï¼ˆæ—¶ç‚¹ï¼š0, 0.5, 1.0, 1.5, 2.5ï¼‰
+    int dmgPerHit = this->_skillDamagePerHit;
+
+    Vector<FiniteTimeAction*> acts;
+    
+    // è¾…åŠ© lambdaï¼šç”Ÿæˆå•æ¬¡ä¼¤å®³å›è°ƒ
+    auto createHitFunc = [this, target, dmgPerHit]() {
+        return CallFunc::create([this, target, dmgPerHit]() {
+            if (!target) return;
+            if (this->_currentState == EntityState::DIE) return;
+            float distSqr = (target->getPosition() - this->getPosition()).lengthSquared();
+            if (distSqr <= (this->_skillRange * this->_skillRange))
             {
-                if (!_roomBounds.containsPoint(fire->getPosition())) continue;
+                target->takeDamage(dmgPerHit);
             }
-            fire->performAttackImmediate(this->getAttack());
-        }
+        });
     };
 
-    // Éú³É sequence£º0,0.5,1.0,1.5,2.5 Ãë·Ö±ğ´¥·¢
-    auto damageSeq = Sequence::create(
-        DelayTime::create(0.0f), CallFunc::create([this, applyHitAndNiLu]() { applyHitAndNiLu(this->_skillDamagePerHit); }),
-        DelayTime::create(0.5f), CallFunc::create([this, applyHitAndNiLu]() { applyHitAndNiLu(this->_skillDamagePerHit); }),
-        DelayTime::create(0.5f), CallFunc::create([this, applyHitAndNiLu]() { applyHitAndNiLu(this->_skillDamagePerHit); }),
-        DelayTime::create(0.5f), CallFunc::create([this, applyHitAndNiLu]() { applyHitAndNiLu(this->_skillDamagePerHit); }),
-        DelayTime::create(1.0f), CallFunc::create([this, applyHitAndNiLu]() { applyHitAndNiLu(this->_skillDamagePerHit); }),
-        nullptr);
+    // t = 0
+    acts.pushBack(createHitFunc());
+    
+    // t = 0.5
+    acts.pushBack(DelayTime::create(0.5f));
+    acts.pushBack(createHitFunc());
 
-    damageSeq->setTag(KUI_LONG_SKILL_DAMAGE_TAG);
-    this->runAction(damageSeq);
+    // t = 1.0
+    acts.pushBack(DelayTime::create(0.5f));
+    acts.pushBack(createHitFunc());
+
+    // t = 1.5
+    acts.pushBack(DelayTime::create(0.5f));
+    acts.pushBack(createHitFunc());
+
+    // t = 2.5 (gap 1.0s)
+    acts.pushBack(DelayTime::create(1.0f));
+    acts.pushBack(createHitFunc());
+
+    // ã€å…³é”®ä¿®å¤ã€‘åºåˆ—ç»“æŸï¼šç»Ÿä¸€é‡ç½®çŠ¶æ€
+    // ç¡®ä¿åœ¨æ‰€æœ‰ä¼¤å®³æ‰“å®Œåï¼Œæ‰å…è®¸ Boss è¿›è¡Œä¸‹ä¸€ä¸ªåŠ¨ä½œ
+    acts.pushBack(CallFunc::create([this]() {
+        this->_skillDamageScheduled = false;
+        this->_skillPlaying = false;
+        if (this->_currentState != EntityState::DIE)
+        {
+            this->setState(EntityState::IDLE);
+        }
+    }));
+
+    // é€æ­¥æ‹¼æ¥ Sequence
+    FiniteTimeAction* seqHead = nullptr;
+    if (!acts.empty())
+    {
+        seqHead = acts.at(0);
+        for (ssize_t i = 1; i < static_cast<ssize_t>(acts.size()); ++i)
+        {
+            seqHead = Sequence::create(seqHead, acts.at(i), nullptr);
+        }
+    }
+
+    if (seqHead)
+    {
+        seqHead->setTag(KUI_LONG_SKILL_DAMAGE_TAG);
+        this->_skillDamageScheduled = true;
+        this->runAction(dynamic_cast<Action*>(seqHead));
+    }
 }
 
 void KuiLongBoss::takeDamage(int damage)
 {
-    // ÔÚ½×¶Î A »ò ×ª³¡ÆÚ¼äÍêÈ«ÃâÒßËùÓĞÉËº¦
+    // åœ¨é˜¶æ®µ A æˆ– è½¬åœºæœŸé—´å®Œå…¨å…ç–«æ‰€æœ‰ä¼¤å®³
     if (_phase == PHASE_A || _phase == TRANSITION_A_TO_B)
     {
         GAME_LOG("%s: damage ignored in PhaseA/Transition (incoming=%d)", LOG_TAG, damage);
         return;
     }
 
-    // µ±ÕıÔÚÊÍ·Å¼¼ÄÜ£¬²»¸Ä±ä¼¼ÄÜÁ÷³Ì£¨ÈÔÔÊĞí¿ÛÑª£¬µ«²»Ó¦´¥·¢´ò¶ÏÂß¼­£©
+    // å½“æ­£åœ¨é‡Šæ”¾æŠ€èƒ½ï¼Œä¸æ”¹å˜æŠ€èƒ½æµç¨‹ï¼ˆä»å…è®¸æ‰£è¡€ï¼Œä½†ä¸åº”è§¦å‘æ‰“æ–­é€»è¾‘ï¼‰
     if (_skillPlaying)
     {
-        // Ó¦ÓÃ NiLuFire ´øÀ´µÄÉËº¦¼õÃâ
+        // åº”ç”¨ NiLuFire å¸¦æ¥çš„ä¼¤å®³å‡å…
         int count = countNiLuFiresInRoom();
         float factor = powf(0.85f, static_cast<float>(count));
         int reduced = static_cast<int>(std::floor(static_cast<float>(damage) * factor + 0.0001f));
@@ -828,7 +890,7 @@ void KuiLongBoss::takeDamage(int damage)
         return;
     }
 
-    // ·ñÔòµ÷ÓÃ»ùÀàÊµÏÖ£¨°üº¬ Cup ·Öµ£Âß¼­µÈ£©£¬µ«ÏÈÓ¦ÓÃ NiLu ¼õÃâ
+    // å¦åˆ™è°ƒç”¨åŸºç±»å®ç°ï¼ˆåŒ…å« Cup åˆ†æ‹…é€»è¾‘ç­‰ï¼‰ï¼Œä½†å…ˆåº”ç”¨ NiLu å‡å…
     int count = countNiLuFiresInRoom();
     float factor = powf(0.85f, static_cast<float>(count));
     int reduced = static_cast<int>(std::floor(static_cast<float>(damage) * factor + 0.0001f));
@@ -837,19 +899,19 @@ void KuiLongBoss::takeDamage(int damage)
 
 int KuiLongBoss::takeDamageReported(int damage)
 {
-    // ÔÚ½×¶Î A »ò ×ª³¡ÆÚ¼äÍêÈ«ÃâÒßËùÓĞÉËº¦£¬·µ»ØÊµ¼ÊÉúĞ§Öµ 0
+    // åœ¨é˜¶æ®µ A æˆ– è½¬åœºæœŸé—´å®Œå…¨å…ç–«æ‰€æœ‰ä¼¤å®³ï¼Œè¿”å›å®é™…ç”Ÿæ•ˆå€¼ 0
     if (_phase == PHASE_A || _phase == TRANSITION_A_TO_B)
     {
         GAME_LOG("%s: takeDamageReported ignored in PhaseA/Transition (incoming=%d)", LOG_TAG, damage);
         return 0;
     }
 
-    // ¼ÆËã NiLuFire ¼õÃâ
+    // è®¡ç®— NiLuFire å‡å…
     int count = countNiLuFiresInRoom();
     float factor = powf(0.85f, static_cast<float>(count));
     int reduced = static_cast<int>(std::floor(static_cast<float>(damage) * factor + 0.0001f));
 
-    // Èç¹ûÕıÔÚ·Å¼¼ÄÜ£¬ÈÔÈ»ÔÊĞí¿ÛÑªµ«²»´ò¶Ï
+    // å¦‚æœæ­£åœ¨æ”¾æŠ€èƒ½ï¼Œä»ç„¶å…è®¸æ‰£è¡€ä½†ä¸æ‰“æ–­
     if (_skillPlaying)
     {
         return Enemy::takeDamageReported(reduced);
@@ -860,16 +922,16 @@ int KuiLongBoss::takeDamageReported(int damage)
 
 void KuiLongBoss::die()
 {
-    // Èç¹ûÒÑ¾­½øÈë DIE ×´Ì¬ÔòºöÂÔÖØ¸´µ÷ÓÃ
+    // å¦‚æœå·²ç»è¿›å…¥ DIE çŠ¶æ€åˆ™å¿½ç•¥é‡å¤è°ƒç”¨
     if (_currentState == EntityState::DIE) return;
 
-    // ±ê¼ÇÎªËÀÍö×´Ì¬²¢Í£Ö¹ÒÆ¶¯/¹¥»÷Ïà¹Ø¶¯×÷
+    // æ ‡è®°ä¸ºæ­»äº¡çŠ¶æ€å¹¶åœæ­¢ç§»åŠ¨/æ”»å‡»ç›¸å…³åŠ¨ä½œ
     setState(EntityState::DIE);
 
-    // ÏÈÒÆ³ı stealth source£¨±ÜÃâĞü¿ÕÖ¸Õë£©
+    // å…ˆç§»é™¤ stealth sourceï¼ˆé¿å…æ‚¬ç©ºæŒ‡é’ˆï¼‰
     this->removeStealthSource((void*)this);
 
-    // Á¢¼´ÒÆ³ıÍ¬·¿¼äµÄËùÓĞ NiLuFire£¨²»¼ÆÈë»÷É±¡¢ÇÒ²»´¥·¢×Ô±¬/¶îÍâĞ§¹û£©
+    // ç«‹å³ç§»é™¤åŒæˆ¿é—´çš„æ‰€æœ‰ NiLuFireï¼ˆä¸è®¡å…¥å‡»æ€ã€ä¸”ä¸è§¦å‘è‡ªçˆ†/é¢å¤–æ•ˆæœï¼‰
     Scene* running = Director::getInstance()->getRunningScene();
     if (running)
     {
@@ -878,35 +940,35 @@ void KuiLongBoss::die()
         for (auto fire : found)
         {
             if (!fire) continue;
-            // Ö»ÒÆ³ıÔÚ¸Ã Boss ·¿¼ä·¶Î§ÄÚµÄ NiLu£¨ÈôÓĞ room bounds£©
+            // åªç§»é™¤åœ¨è¯¥ Boss æˆ¿é—´èŒƒå›´å†…çš„ NiLuï¼ˆè‹¥æœ‰ room boundsï¼‰
             if (!_roomBounds.equals(Rect::ZERO))
             {
                 if (!_roomBounds.containsPoint(fire->getPosition())) continue;
             }
-            // Í£Ö¹ÆäËùÓĞ¶¯×÷Óëµ÷¶È£¬Ö±½ÓÒÆ³ı£¬±ÜÃâ´¥·¢×Ô±¬µÈ¸±×÷ÓÃ
+            // åœæ­¢å…¶æ‰€æœ‰åŠ¨ä½œä¸è°ƒåº¦ï¼Œç›´æ¥ç§»é™¤ï¼Œé¿å…è§¦å‘è‡ªçˆ†ç­‰å‰¯ä½œç”¨
             fire->stopAllActions();
             fire->unscheduleAllCallbacks();
-            // ÈôĞèÒª¸ü°²È«£¬Ò²¿ÉÏÈÉèÖÃ×´Ì¬Îª DIE
+            // è‹¥éœ€è¦æ›´å®‰å…¨ï¼Œä¹Ÿå¯å…ˆè®¾ç½®çŠ¶æ€ä¸º DIE
             fire->setState(EntityState::DIE);
             fire->removeFromParentAndCleanup(true);
         }
     }
 
-    // Í£Ö¹ sprite ÉÏµÄËùÓĞĞĞÎªÏà¹Ø¶¯×÷£¬È·±£×ª³¡¶¯»­ÄÜÕıÈ·²¥·Å
+    // åœæ­¢ sprite ä¸Šçš„æ‰€æœ‰è¡Œä¸ºç›¸å…³åŠ¨ä½œï¼Œç¡®ä¿è½¬åœºåŠ¨ç”»èƒ½æ­£ç¡®æ’­æ”¾
     if (_sprite)
     {
         _sprite->stopActionByTag(KUI_LONG_MOVE_TAG);
         _sprite->stopActionByTag(KUI_LONG_WINDUP_TAG);
         _sprite->stopActionByTag(KUI_LONG_HIT_TAG);
-        // Ò²È¡Ïû¿ÉÄÜÔÚ²¥·ÅµÄ×ª³¡¶¯×÷£¬±ÜÃâÖØ¸´
+        // ä¹Ÿå–æ¶ˆå¯èƒ½åœ¨æ’­æ”¾çš„è½¬åœºåŠ¨ä½œï¼Œé¿å…é‡å¤
         _sprite->stopActionByTag(KUI_LONG_CHANGE_TAG);
     }
 
-    // Èç¹û´¦ÓÚ B ½×¶ÎÇÒ´æÔÚ B->C ×ª³¡¶¯»­£¬Ôò°´¡°µÚ5Ö¡Í£¶Ù2ÃëÔÙ¼ÌĞø¡±²¥·Å
+    // å¦‚æœå¤„äº B é˜¶æ®µä¸”å­˜åœ¨ B->C è½¬åœºåŠ¨ç”»ï¼Œåˆ™æŒ‰â€œç¬¬5å¸§åœé¡¿2ç§’å†ç»§ç»­â€æ’­æ”¾
     if (_phase == PHASE_B && _animBChangeToC && _sprite)
     {
-        // £¨±£³ÖÄãÔ­ÓĞµÄ×ª³¡²¥·ÅÂß¼­²»±ä£©
-        // »ñÈ¡Ô­¶¯»­Ö¡ºÍµ¥Ö¡¼ä¸ô
+        // ï¼ˆä¿æŒä½ åŸæœ‰çš„è½¬åœºæ’­æ”¾é€»è¾‘ä¸å˜ï¼‰
+        // è·å–åŸåŠ¨ç”»å¸§å’Œå•å¸§é—´éš”
         auto origFrames = _animBChangeToC->getFrames();
         float delayPerUnit = 0.1f;
 #ifdef CC_ANIMATION_GET_DELAY_PER_UNIT
@@ -916,7 +978,7 @@ void KuiLongBoss::die()
 #endif
 
         const ssize_t total = static_cast<ssize_t>(origFrames.size());
-        const ssize_t splitIndex = 5; // ÔÚµÚ5Ö¡´¦Í£ÏÂ£¨Ë÷ÒıÎª0..4ÎªÇ°5Ö¡£©
+        const ssize_t splitIndex = 5; // åœ¨ç¬¬5å¸§å¤„åœä¸‹ï¼ˆç´¢å¼•ä¸º0..4ä¸ºå‰5å¸§ï¼‰
         if (total >= splitIndex + 1)
         {
             Vector<SpriteFrame*> firstFrames;
@@ -984,7 +1046,7 @@ void KuiLongBoss::die()
     }
     else
     {
-        // ·ñÔòÖ±½ÓÁ¢¼´µ÷ÓÃ»ùÀàËÀÍö´¦Àí²¢ÒÆ³ı
+        // å¦åˆ™ç›´æ¥ç«‹å³è°ƒç”¨åŸºç±»æ­»äº¡å¤„ç†å¹¶ç§»é™¤
         Enemy::die();
         this->removeFromParentAndCleanup(true);
     }
@@ -992,10 +1054,10 @@ void KuiLongBoss::die()
 
 void KuiLongBoss::move(const cocos2d::Vec2& direction, float dt)
 {
-    // ½×¶Î/¼¼ÄÜ/¹¥»÷ÆÚ¼ä½ûÖ¹ÒÆ¶¯
+    // é˜¶æ®µ/æŠ€èƒ½/æ”»å‡»æœŸé—´ç¦æ­¢ç§»åŠ¨
     if (_currentState == EntityState::DIE || _skillPlaying || _currentState == EntityState::ATTACK) return;
 
-    // ÈôÃ»ÓĞÊµ¼Ê·½Ïò£¬ÔòÍ£Ö¹ÒÆ¶¯¶¯»­
+    // è‹¥æ²¡æœ‰å®é™…æ–¹å‘ï¼Œåˆ™åœæ­¢ç§»åŠ¨åŠ¨ç”»
     if (direction.equals(cocos2d::Vec2::ZERO))
     {
         if (_moveAnimPlaying && _sprite)
@@ -1007,11 +1069,11 @@ void KuiLongBoss::move(const cocos2d::Vec2& direction, float dt)
         return;
     }
 
-    // ÈôÉĞÎ´²¥·ÅÒÆ¶¯¶¯»­£¬¸ù¾İµ±Ç°½×¶Î³¢ÊÔ²¥·ÅºÏÊÊµÄÑ­»·ÒÆ¶¯¶¯»­
+    // è‹¥å°šæœªæ’­æ”¾ç§»åŠ¨åŠ¨ç”»ï¼Œæ ¹æ®å½“å‰é˜¶æ®µå°è¯•æ’­æ”¾åˆé€‚çš„å¾ªç¯ç§»åŠ¨åŠ¨ç”»
     if (_sprite && !_moveAnimPlaying)
     {
         cocos2d::Animation* chosen = nullptr;
-        // ÔÚ B/C ½×¶ÎÓÅÏÈÊ¹ÓÃ B move£¬·ñÔòÊ¹ÓÃ A idle£¨¾¡Á¿±£Ö¤ÓĞ¶¯»­£©
+        // åœ¨ B/C é˜¶æ®µä¼˜å…ˆä½¿ç”¨ B moveï¼Œå¦åˆ™ä½¿ç”¨ A idleï¼ˆå°½é‡ä¿è¯æœ‰åŠ¨ç”»ï¼‰
         if ((_phase == PHASE_B || _phase == PHASE_C) && _animBMove) chosen = _animBMove;
         else if (_animAIdle) chosen = _animAIdle;
 
@@ -1025,20 +1087,20 @@ void KuiLongBoss::move(const cocos2d::Vec2& direction, float dt)
         }
     }
 
-    // ¼òµ¥Î»ÖÃ¸üĞÂ£¨°´ direction * dt Æ½ÒÆ£¬±ÜÃâÒÀÀµ¿ÉÄÜÈ±Ê§µÄ getter£©
+    // ç®€å•ä½ç½®æ›´æ–°ï¼ˆæŒ‰ direction * dt å¹³ç§»ï¼Œé¿å…ä¾èµ–å¯èƒ½ç¼ºå¤±çš„ getterï¼‰
     this->setPosition(this->getPosition() + direction * dt);
 }
 
 KuiLongBoss::~KuiLongBoss()
 {
-    // Í£Ö¹ËùÓĞµ÷¶È/¶¯×÷£¬±ÜÃâĞü¹Ò»Øµ÷
+    // åœæ­¢æ‰€æœ‰è°ƒåº¦/åŠ¨ä½œï¼Œé¿å…æ‚¬æŒ‚å›è°ƒ
     this->stopAllActions();
     if (_sprite) _sprite->stopAllActions();
 
-    // ÒÆ³ı stealth source£¨·ÀÖ¹Ğü¿ÕÖ¸Õë£©
+    // ç§»é™¤ stealth sourceï¼ˆé˜²æ­¢æ‚¬ç©ºæŒ‡é’ˆï¼‰
     this->removeStealthSource((void*)this);
 
-    // ÊÍ·Å retain µÄ Animation£¨¼æÈİ Cocos2d-x retain/release Ê¹ÓÃ£©
+    // é‡Šæ”¾ retain çš„ Animationï¼ˆå…¼å®¹ Cocos2d-x retain/release ä½¿ç”¨ï¼‰
     if (_animAIdle)        { _animAIdle->release();        _animAIdle = nullptr; }
     if (_animAChangeToB)   { _animAChangeToB->release();   _animAChangeToB = nullptr; }
     if (_animBMove)        { _animBMove->release();        _animBMove = nullptr; }
@@ -1046,13 +1108,13 @@ KuiLongBoss::~KuiLongBoss()
     if (_animBChangeToC)   { _animBChangeToC->release();   _animBChangeToC = nullptr; }
     if (_animBChengWuJie)  { _animBChengWuJie->release();  _animBChengWuJie = nullptr; }
 
-    // ÇåÀí UI / ¾«ÁéÒıÓÃ
+    // æ¸…ç† UI / ç²¾çµå¼•ç”¨
     if (_bossHPBar)    { _bossHPBar->removeFromParentAndCleanup(true); _bossHPBar = nullptr; }
     if (_bossHPLabel)  { _bossHPLabel->removeFromParentAndCleanup(true); _bossHPLabel = nullptr; }
     if (_skillSprite)  { _skillSprite->removeFromParentAndCleanup(true); _skillSprite = nullptr; }
 }
 
-// ĞÂÔöÊµÏÖ£ºÍ¨ÓÃÖğÖ¡¼ÓÔØ¡¢¼¼ÄÜ¿ÉÓÃÅĞ¶ÏÓëÖØÖÃÀäÈ´
+// æ–°å¢å®ç°ï¼šé€šç”¨é€å¸§åŠ è½½ã€æŠ€èƒ½å¯ç”¨åˆ¤æ–­ä¸é‡ç½®å†·å´
 
 cocos2d::Animation* KuiLongBoss::loadAnimationFrames(const std::string& folder, const std::string& prefix, int maxFrames, float delayPerUnit)
 {
@@ -1077,12 +1139,12 @@ cocos2d::Animation* KuiLongBoss::loadAnimationFrames(const std::string& folder, 
     if (frames.empty()) return nullptr;
 
     auto anim = Animation::createWithSpriteFrames(frames, delayPerUnit);
-    return anim; // ·µ»Ø autoreleased£¬µ÷ÓÃ·½¿É°´Ğè retain()
+    return anim; // è¿”å› autoreleasedï¼Œè°ƒç”¨æ–¹å¯æŒ‰éœ€ retain()
 }
 
 bool KuiLongBoss::canUseChengWuJie() const
 {
-    // ½öÔÚ PHASE_B ÇÒÎ´ÔÚ¼¼ÄÜ/ËÀÍö×´Ì¬ÇÒÀäÈ´ÒÑµ½Ê±¿ÉÓÃ
+    // ä»…åœ¨ PHASE_B ä¸”æœªåœ¨æŠ€èƒ½/æ­»äº¡çŠ¶æ€ä¸”å†·å´å·²åˆ°æ—¶å¯ç”¨
     if (_phase != PHASE_B) return false;
     if (_skillPlaying) return false;
     if (_currentState == EntityState::DIE) return false;

@@ -14,10 +14,11 @@ public:
     virtual void update(float dt) override;
     CREATE_FUNC(NiLuFire);
 
-    // 玩家使用治疗术时，会对 NiLuFire 扣除等量血
+    // 玩家使用治疗术时，恢复 NiLuFire 的血量（由调用方在半径200内调用）
     void onHealedByPlayer(int healAmount);
 
     // 让 NiLuFire 立即执行一次攻击（用于与 KuiLong 同步）
+    // 只有播放 Attack 动画时才在动画回调里真正造成一次伤害
     void performAttackImmediate(int damage);
 
     // 接收房间边界
@@ -32,10 +33,13 @@ public:
     // 禁止被恐卡兹标记/寄生（覆盖）
     virtual bool canSpawnKongKaZiOnDeath() const override { return false; }
 
+    // 查询当前是否处于“正在播放攻击动画/将要造成伤害”的状态
+    bool isPerformingAttack() const { return _isPerformingAttack; }
+
 protected:
     void loadAnimations();
 
-    // 自爆（60s 到点或回满触发）
+    // 自爆（60s 到点触发）——自爆会播放攻击动画并造成一次十字伤害后消失
     void performSelfDestruct();
 
     // HP UI 显示
@@ -59,8 +63,11 @@ protected:
     // 房间边界
     cocos2d::Rect _roomBounds;
 
-    // 攻击力（由 KuiLong 生成时赋值）
+    // 攻击力（可用传入参数或 getAttack()）
     int _attackDamage;
+
+    // 当前是否正在执行一次攻击（仅在播放 Attack 动画并在回调中造成伤害时为 true）
+    bool _isPerformingAttack;
 };
 
 #endif // __NILU_FIRE_H__

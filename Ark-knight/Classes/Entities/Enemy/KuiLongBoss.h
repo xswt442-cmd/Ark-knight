@@ -87,6 +87,9 @@ protected:
     bool  _skillPlaying;
     cocos2d::Sprite* _skillSprite;
 
+    // 新增：标记技能伤害序列是否已调度（防止重复/叠加）
+    bool  _skillDamageScheduled;
+
     bool canUseChengWuJie() const;
     void startChengWuJie(Player* target);
     void resetChengWuJieCooldown();

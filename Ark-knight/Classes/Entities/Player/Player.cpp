@@ -449,6 +449,20 @@ void Player::takeDamage(int damage)
     {
         setState(EntityState::HIT);
         
+        // 修复Bug：连续受击时 setState 可能会打断之前的 Blink 动作（若刚好在隐身帧被打断则会导致永久隐身）
+        // 强制恢复可见性并应用带 Show 的安全闪烁
+        if (_sprite)
+        {
+            _sprite->setVisible(true);
+            _sprite->stopActionByTag(100); // 停止旧的闪烁，防止叠加
+            
+            auto blink = Blink::create(0.2f, 2);
+            auto show = Show::create(); // 关键：动作结束或被覆盖时确保显示
+            auto seq = Sequence::create(blink, show, nullptr);
+            seq->setTag(100);
+            _sprite->runAction(seq);
+        }
+
         // 短暂硬直后恢复
         auto delay = DelayTime::create(0.2f);
         auto callback = CallFunc::create([this]() {
