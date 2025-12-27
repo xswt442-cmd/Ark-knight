@@ -389,3 +389,73 @@ void GameHUD::hideInteractionHint()
         _interactionLabel->setVisible(false);
     }
 }
+
+void GameHUD::setSkillIcon(int characterType)
+{
+    std::string iconPath;
+    switch (characterType)
+    {
+        case 0:  // MAGE
+            iconPath = "UIs/Skills/Mage/Nymph_skillicon.png";
+            break;
+        case 1:  // GUNNER
+            iconPath = "UIs/Skills/Gunner/Wisdael_skillicon.png";
+            break;
+        case 2:  // WARRIOR
+            iconPath = "UIs/Skills/Warrior/Mudrock_skillicon.png";
+            break;
+        default:
+            iconPath = "UIs/Skills/Mage/Nymph_skillicon.png";
+            break;
+    }
+    
+    // 更新技能图标
+    if (_skillIcon)
+    {
+        auto newTexture = Director::getInstance()->getTextureCache()->addImage(iconPath);
+        if (newTexture)
+        {
+            _skillIcon->setTexture(newTexture);
+        }
+    }
+    
+    // 更新CD遮罩
+    if (_skillCDMask)
+    {
+        auto newTexture = Director::getInstance()->getTextureCache()->addImage(iconPath);
+        if (newTexture)
+        {
+            _skillCDMask->setTexture(newTexture);
+        }
+    }
+    
+    // 更新进度条（需要重新创建ProgressTimer）
+    if (_skillCDProgress)
+    {
+        auto progressSprite = Sprite::create(iconPath);
+        if (progressSprite)
+        {
+            Vec2 pos = _skillCDProgress->getPosition();
+            float scale = _skillCDProgress->getScale();
+            int zOrder = _skillCDProgress->getGlobalZOrder();
+            
+            _skillCDProgress->removeFromParent();
+            
+            _skillCDProgress = ProgressTimer::create(progressSprite);
+            _skillCDProgress->setType(ProgressTimer::Type::RADIAL);
+            _skillCDProgress->setReverseDirection(false);
+            _skillCDProgress->setMidpoint(Vec2(0.5f, 0.5f));
+            _skillCDProgress->setBarChangeRate(Vec2(1, 1));
+            _skillCDProgress->setPosition(pos);
+            _skillCDProgress->setScale(scale);
+            _skillCDProgress->setPercentage(0.0f);
+            _skillCDProgress->setColor(Color3B(100, 100, 100));
+            _skillCDProgress->setOpacity(150);
+            _skillCDProgress->setVisible(false);
+            _skillCDProgress->setGlobalZOrder(zOrder);
+            this->addChild(_skillCDProgress);
+        }
+    }
+    
+    GAME_LOG("Skill icon set to character type: %d", characterType);
+}

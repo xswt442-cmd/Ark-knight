@@ -57,6 +57,12 @@ public:
      */
     Label* getInteractionLabel() const { return _interactionLabel; }
     
+    /**
+     * 设置技能图标（根据角色类型）
+     * @param characterType 0=Mage, 1=Gunner, 2=Warrior
+     */
+    void setSkillIcon(int characterType);
+    
 private:
     void createStatusBars();
     void createSkillIcons();

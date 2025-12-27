@@ -1,6 +1,9 @@
 ﻿#include "GameScene.h"
 #include "MainMenuScene.h"
 #include "Entities/Player/Mage.h"
+#include "Entities/Player/Gunner.h"
+#include "Entities/Player/Warrior.h"
+#include "UI/CharacterSelectLayer.h"
 #include "Entities/Enemy/KongKaZi.h"
 #include "Entities/Enemy/DeYi.h"
 #include "Entities/Enemy/Ayao.h"
@@ -8,6 +11,7 @@
 #include "Entities/Enemy/TangHuang.h"
 #include "Entities/Enemy/Du.h"
 #include "Entities/Enemy/Cup.h"
+#include "Entities/Enemy/Boat.h"
 #include "Entities/Enemy/KuiLongBoss.h"
 #include "Entities/Objects/Chest.h"
 #include "Entities/Objects/ItemDrop.h"
@@ -20,6 +24,7 @@ int GameScene::s_nextLevel = 1;
 int GameScene::s_nextStage = 1;
 int GameScene::s_savedHP = 0;
 int GameScene::s_savedMP = 0;
+std::vector<std::string> GameScene::s_savedItems;
 
 Scene* GameScene::createScene()
 {
@@ -41,21 +46,24 @@ bool GameScene::init()
     _currentRoom = nullptr;
     _gameHUD = nullptr;
     _gameMenus = nullptr;
+    _settingsLayer = nullptr;
     
     // 初始化关卡系统（从静态变量读取）
     _currentLevel = s_nextLevel;
     _currentStage = s_nextStage;
     _savedHP = s_savedHP;
     _savedMP = s_savedMP;
+    _collectedItems = s_savedItems;  // 恢复已收集的道具列表
     
-    GAME_LOG("GameScene init: Level %d-%d, SavedHP: %d, SavedMP: %d", 
-             _currentLevel, _currentStage, _savedHP, _savedMP);
+    GAME_LOG("GameScene init: Level %d-%d, SavedHP: %d, SavedMP: %d, SavedItems: %d", 
+             _currentLevel, _currentStage, _savedHP, _savedMP, (int)_collectedItems.size());
     
     // 重置静态变量为默认值（防止影响后续的重新开始）
     s_nextLevel = 1;
     s_nextStage = 1;
     s_savedHP = 0;
     s_savedMP = 0;
+    s_savedItems.clear();
     
     initLayers();
     initMapSystem();    // 初始化地图系统
@@ -63,6 +71,45 @@ bool GameScene::init()
     initCamera();       // 初始化相机
     // createTestEnemies();  // 敌人由房间生成，不再单独创建
     createHUD();
+    
+    // 恢复上一关收集的道具
+    if (!_collectedItems.empty())
+    {
+        GAME_LOG("Restoring %d items from previous level", (int)_collectedItems.size());
+        const auto& allItems = ItemLibrary::all();
+        for (const auto& itemId : _collectedItems)
+        {
+            // 根据ID查找道具定义
+            for (const auto& item : allItems)
+            {
+                if (item.id == itemId)
+                {
+                    // 恢复道具到UI（注意不要再次添加到_collectedItems）
+                    if (_gameHUD)
+                    {
+                        _gameHUD->addItemIcon(&item);
+                    }
+                    
+                    // 重新应用道具效果到玩家（不包括一次性治疗效果）
+                    if (_player)
+                    {
+                        ItemLibrary::applyItemEffect(itemId, _player);
+                    }
+                    
+                    GAME_LOG("Restored item: %s", item.name.c_str());
+                    break;
+                }
+            }
+        }
+    }
+    
+    // 道具效果恢复后，恢复保存的HP/MP（这样可以正确反映道具对MaxHP的影响）
+    if (_player && _savedHP > 0) {
+        _player->setHP(_savedHP);
+        _player->setMP(_savedMP);
+        GAME_LOG("Restored player HP: %d, MP: %d (after item effects)", _savedHP, _savedMP);
+    }
+    
     createMenus();
     setupKeyboardListener();
     
@@ -97,6 +144,12 @@ void GameScene::initMapSystem()
     // 创建地图生成器
     _mapGenerator = MapGenerator::create();
     _mapGenerator->setLevelNumber(_currentLevel, _currentStage);
+    
+    // stage=0表示Boss层
+    if (_currentStage == 0) {
+        _mapGenerator->setBossFloor(true);
+    }
+    
     _mapGenerator->generateMap();
     _gameLayer->addChild(_mapGenerator);
     
@@ -140,8 +193,9 @@ void GameScene::updateCamera(float dt)
             Room* room = _mapGenerator->getRoom(x, y);
             if (room) {
                 Vec2 center = room->getCenter();
-                float roomWidth = Constants::ROOM_TILES_W * Constants::FLOOR_TILE_SIZE;
-                float roomHeight = Constants::ROOM_TILES_H * Constants::FLOOR_TILE_SIZE;
+                // 使用房间实际尺寸，支持Boss房间2倍大小
+                float roomWidth = room->getTilesWidth() * Constants::FLOOR_TILE_SIZE;
+                float roomHeight = room->getTilesHeight() * Constants::FLOOR_TILE_SIZE;
                 
                 minX = std::min(minX, center.x - roomWidth / 2.0f);
                 maxX = std::max(maxX, center.x + roomWidth / 2.0f);
@@ -194,20 +248,35 @@ void GameScene::updateCamera(float dt)
 
 void GameScene::createPlayer()
 {
-    // 创建法师角色
-    _player = Mage::create();
+    // 根据角色选择创建对应的角色
+    CharacterType selectedCharacter = CharacterSelectLayer::getSelectedCharacter();
+    
+    switch (selectedCharacter)
+    {
+        case CharacterType::MAGE:
+            _player = Mage::create();
+            GAME_LOG("Creating Mage (Nymph)");
+            break;
+        case CharacterType::GUNNER:
+            _player = Gunner::create();
+            GAME_LOG("Creating Gunner (Wisdael)");
+            break;
+        case CharacterType::WARRIOR:
+            _player = Warrior::create();
+            GAME_LOG("Creating Warrior (Mudrock)");
+            break;
+        default:
+            _player = Mage::create();
+            GAME_LOG("Creating default Mage");
+            break;
+    }
     
     if (_player == nullptr) {
-        GAME_LOG_ERROR("Failed to create Mage!");
+        GAME_LOG_ERROR("Failed to create player!");
         return;
     }
     
-    // 如果有保存的血蓝量，恢复之
-    if (_savedHP > 0) {
-        _player->setHP(_savedHP);
-        _player->setMP(_savedMP);
-        GAME_LOG("Restored player HP: %d, MP: %d", _savedHP, _savedMP);
-    }
+    // 注意：HP/MP恢复移到道具效果恢复之后，在init()中进行
     
     // 设置玩家初始位置在起始房间的中心
     if (_currentRoom) {
@@ -307,19 +376,6 @@ void GameScene::spawnEnemiesInRoom(Room* room)
         return; // boss房间只生成boss，不生成其他敌人
     }
 
-    // --------- 调试：在每个战斗房间必定生成一个 Boss（便于调试） ----------
-    {
-        auto boss = KuiLongBoss::create();
-        if (boss)
-        {
-            boss->setPosition(roomCenter);
-            boss->setRoomBounds(walk);
-            addEnemy(boss);
-            GAME_LOG("Debug: KuiLongBoss spawned at room center (%.1f, %.1f)", roomCenter.x, roomCenter.y);
-        }
-    }
-    // -------------------------------------------------------------------------
-
     // 随机生成3-8个怪（普通小怪：Ayao / DeYi，精英怪：XinXing / TangHuang / Du）
     int enemyCount = RANDOM_INT(3, 8);
 
@@ -395,6 +451,10 @@ void GameScene::createHUD()
     _gameHUD = GameHUD::create();
     _gameHUD->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL);
     _uiLayer->addChild(_gameHUD);
+    
+    // 根据选择的角色设置技能图标
+    CharacterType selectedCharacter = CharacterSelectLayer::getSelectedCharacter();
+    _gameHUD->setSkillIcon(static_cast<int>(selectedCharacter));
     
     GAME_LOG("GameHUD created");
 }
@@ -651,6 +711,16 @@ void GameScene::updateEnemies(float dt)
             ++it;
         }
     }
+    
+    // 检测boss房间胜利条件
+    if (_currentRoom && _currentRoom->getRoomType() == Constants::RoomType::BOSS)
+    {
+        if (_currentRoom->allEnemiesKilled())
+        {
+            GAME_LOG("Boss room cleared! Showing victory.");
+            showVictory();
+        }
+    }
 }
 
 void GameScene::updateSpikes(float dt)
@@ -814,13 +884,10 @@ void GameScene::checkBarrierCollisions()
     {
         Vec2 playerPos = _player->getPosition();
         
-        // 获取玩家碰撞箱（使用精灵大小的40%作为碰撞体积，让玩家更灵活）
-        Size playerSize = Size(32, 32); 
-        if (_player->getSprite()) {
-             playerSize = _player->getSprite()->getBoundingBox().size;
-             playerSize.width *= 0.4f;
-             playerSize.height *= 0.4f;
-        }
+        // 使用固定的碰撞体积，与角色视觉大小无关
+        // 这样所有角色都能通过相同大小的间隙
+        float collisionSize = Constants::FLOOR_TILE_SIZE * 1.5f;  // 约1.5格的碰撞体积
+        Size playerSize = Size(collisionSize, collisionSize);
         
         Rect playerBox(playerPos.x - playerSize.width / 2, 
                        playerPos.y - playerSize.height / 2, 
@@ -974,6 +1041,13 @@ void GameScene::setupKeyboardListener()
     listener->onKeyPressed = [this](EventKeyboard::KeyCode keyCode, Event* event) {
         if (keyCode == EventKeyboard::KeyCode::KEY_ESCAPE)
         {
+            // 如果设置层打开，先关闭设置层
+            if (_settingsLayer)
+            {
+                _settingsLayer->close();
+                return;
+            }
+            
             if (_isPaused)
             {
                 resumeGame();
@@ -1152,12 +1226,10 @@ void GameScene::goToNextLevel()
     GAME_LOG("Going to next level. Current: %d-%d, Next: %d-%d, Saving HP: %d, MP: %d", 
              _currentLevel, _currentStage, nextLevel, nextStage, savedHP, savedMP);
     
-    // 判断是否通关（1-3 后结束）
+    // 1-3通关后进入Boss层（stage=0表示Boss层）
     if (nextLevel == 1 && nextStage > 3)
     {
-        // 显示胜利界面
-        showVictory();
-        return;
+        nextStage = 0; // Boss层
     }
     
     // 使用静态变量传递信息给新场景
@@ -1165,9 +1237,10 @@ void GameScene::goToNextLevel()
     s_nextStage = nextStage;
     s_savedHP = savedHP;
     s_savedMP = savedMP;
+    s_savedItems = _collectedItems;  // 保存已收集的道具
     
-    GAME_LOG("Set static vars for next scene: Level %d-%d, HP: %d, MP: %d", 
-             nextLevel, nextStage, savedHP, savedMP);
+    GAME_LOG("Set static vars for next scene: Level %d-%d, HP: %d, MP: %d, Items: %d", 
+             nextLevel, nextStage, savedHP, savedMP, (int)_collectedItems.size());
     
     // 创建新场景（init时会读取静态变量）
     auto newScene = GameScene::createScene();
@@ -1259,14 +1332,16 @@ void GameScene::showSettings()
     }
     
     // 创建设置层
-    auto settingsLayer = SettingsLayer::create();
-    settingsLayer->setCloseCallback([this]() {
+    _settingsLayer = SettingsLayer::create();
+    _settingsLayer->setCloseCallback([this]() {
+        // 清除设置层指针
+        _settingsLayer = nullptr;
         // 恢复显示暂停菜单
         if (_gameMenus) {
             _gameMenus->setPauseMenuVisible(true);
         }
     });
-    _uiLayer->addChild(settingsLayer);
+    _uiLayer->addChild(_settingsLayer);
 }
 
 void GameScene::addItemToUI(const ItemDef* itemDef)
@@ -1275,6 +1350,9 @@ void GameScene::addItemToUI(const ItemDef* itemDef)
     {
         return;
     }
+    
+    // 记录收集的道具ID（用于关卡继承）
+    _collectedItems.push_back(itemDef->id);
     
     _gameHUD->addItemIcon(itemDef);
 }

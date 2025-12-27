@@ -19,6 +19,8 @@ Player::Player()
     , _isDashing(false)
     , _armor(0)
     , _maxArmor(50)
+    , _blinkCooldown(1.0f)
+    , _blinkCooldownTimer(0.0f)
     , _keyboardListener(nullptr)
     , _mouseListener(nullptr)
     , _damageReductionPct(0.0f)
@@ -124,6 +126,12 @@ void Player::update(float dt)
     if (_dashCooldownTimer > 0)
     {
         _dashCooldownTimer -= dt;
+    }
+    
+    // 更新闪烁冷却
+    if (_blinkCooldownTimer > 0)
+    {
+        _blinkCooldownTimer -= dt;
     }
     
     // 处理移动输入
@@ -449,18 +457,33 @@ void Player::takeDamage(int damage)
     {
         setState(EntityState::HIT);
         
-        // 修复Bug：连续受击时 setState 可能会打断之前的 Blink 动作（若刚好在隐身帧被打断则会导致永久隐身）
-        // 强制恢复可见性并应用带 Show 的安全闪烁
+        // 受击视觉反馈：使用颜色闪烁代替Blink，彻底避免消失问题
         if (_sprite)
         {
+            // 确保可见性
             _sprite->setVisible(true);
-            _sprite->stopActionByTag(100); // 停止旧的闪烁，防止叠加
+            _sprite->setOpacity(255);
             
-            auto blink = Blink::create(0.2f, 2);
-            auto show = Show::create(); // 关键：动作结束或被覆盖时确保显示
-            auto seq = Sequence::create(blink, show, nullptr);
-            seq->setTag(100);
-            _sprite->runAction(seq);
+            // 只有冷却结束时才播放受击特效
+            if (_blinkCooldownTimer <= 0.0f)
+            {
+                _sprite->stopActionByTag(100);
+                _sprite->setColor(Color3B::WHITE);  // 立即重置颜色
+                
+                // 使用CallFunc+setColor瞬时设置颜色，避免TintTo渐变被中断导致的颜色卡住
+                auto setRed = CallFunc::create([this]() { _sprite->setColor(Color3B(255, 100, 100)); });
+                auto setWhite = CallFunc::create([this]() { _sprite->setColor(Color3B::WHITE); });
+                auto seq = Sequence::create(
+                    setRed, DelayTime::create(0.05f),
+                    setWhite, DelayTime::create(0.05f),
+                    setRed->clone(), DelayTime::create(0.05f),
+                    setWhite->clone(),
+                    nullptr);
+                seq->setTag(100);
+                _sprite->runAction(seq);
+                
+                _blinkCooldownTimer = _blinkCooldown;
+            }
         }
 
         // 短暂硬直后恢复

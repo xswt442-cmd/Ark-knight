@@ -7,6 +7,7 @@
 #include "Core/GameMacros.h"
 #include "Entities/Player/Player.h"
 #include "Entities/Enemy/Enemy.h"
+#include "Entities/Objects/Item.h"
 #include "Map/MapGenerator.h"
 #include "Map/Room.h"
 #include "UI/MiniMap.h"
@@ -39,6 +40,7 @@ public:
     static int s_nextStage;
     static int s_savedHP;
     static int s_savedMP;
+    static std::vector<std::string> s_savedItems;  // 保存的道具ID列表
     
     /**
      * 获取玩家对象
@@ -192,6 +194,7 @@ private:
     // HUD和菜单系统
     GameHUD* _gameHUD;
     GameMenus* _gameMenus;
+    SettingsLayer* _settingsLayer;  // 设置层指针
     
     // 状态
     bool _isPaused;
@@ -203,6 +206,7 @@ private:
     int _currentStage;     // 当前小关（1-5）
     int _savedHP;          // 保存的血量
     int _savedMP;          // 保存的蓝量
+    std::vector<std::string> _collectedItems;  // 已收集的道具ID列表
 };
 
 #endif // __GAME_SCENE_H__

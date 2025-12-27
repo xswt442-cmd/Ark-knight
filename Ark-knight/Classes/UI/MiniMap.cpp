@@ -294,7 +294,12 @@ MiniRoom* MiniMap::getMiniRoom(int x, int y) {
 void MiniMap::updateLevelDisplay(int level, int stage) {
     if (_levelLabel) {
         char levelText[16];
-        sprintf(levelText, "%d-%d", level, stage);
+        // stage=0表示Boss层
+        if (stage == 0) {
+            sprintf(levelText, "Boss");
+        } else {
+            sprintf(levelText, "%d-%d", level, stage);
+        }
         _levelLabel->setString(levelText);
     }
 }

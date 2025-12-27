@@ -1,5 +1,6 @@
 ﻿#include "Item.h"
 #include "cocos2d.h"
+#include "../Player/Player.h"
 
 using namespace cocos2d;
 
@@ -73,4 +74,76 @@ const ItemDef* ItemLibrary::pickRandom(const std::unordered_map<std::string, int
 
     int idx = cocos2d::RandomHelper::random_int(0, static_cast<int>(candidate.size()) - 1);
     return candidate[idx];
+}
+
+void ItemLibrary::applyItemEffect(const std::string& itemId, Player* player)
+{
+    if (!player)
+    {
+        return;
+    }
+    
+    if (itemId == "Knife") {
+        // 锈蚀刀片：攻击+15%
+        player->multiplyAttack(1.15f);
+    }
+    else if (itemId == "FirstAidKit") {
+        // 急救药箱：最大生命+20%，然后回复20%生命
+        player->multiplyMaxHP(1.2f, 0.2f);
+    }
+    else if (itemId == "Shield") {
+        // 坚守盾牌：减伤15%
+        player->addDamageReduction(0.15f);
+    }
+    else if (itemId == "CoinToy") {
+        // 投币玩具：攻击间隔-15%
+        player->multiplyAttackCooldown(0.85f);
+    }
+    else if (itemId == "Roses") {
+        // 活玫瑰：治疗术+50%
+        player->addHealPowerMultiplier(0.5f);
+    }
+    else if (itemId == "HappyDrink") {
+        // 快乐水：MP回复+1/秒
+        player->addMPRegenBonus(1.0f);
+    }
+    else if (itemId == "Revenger") {
+        // 复仇者：攻击+30%
+        player->multiplyAttack(1.3f);
+    }
+    else if (itemId == "UnknownInstrument") {
+        // 未知仪器：最大生命+40%，然后回复50%生命
+        player->multiplyMaxHP(1.4f, 0.5f);
+    }
+    else if (itemId == "AncientArmour") {
+        // 古老的铠甲：减伤30%
+        player->addDamageReduction(0.3f);
+    }
+    else if (itemId == "DaydreamPerfume") {
+        // 迷梦香精：MP回复+3/秒
+        player->addMPRegenBonus(3.0f);
+    }
+    else if (itemId == "GoldWine") {
+        // 金酒之杯：攻击间隔-30%
+        player->multiplyAttackCooldown(0.7f);
+    }
+    else if (itemId == "KingsSpear") {
+        // 国王的新枪：攻击间隔-50%
+        player->multiplyAttackCooldown(0.5f);
+    }
+    else if (itemId == "KingsCrown") {
+        // 诸王的冠冕：攻击+50%
+        player->multiplyAttack(1.5f);
+    }
+    else if (itemId == "KingsHelmet") {
+        // 国王的铠甲：最大生命+50%
+        player->multiplyMaxHP(1.5f, 0.0f);
+    }
+    else if (itemId == "KingsExtension") {
+        // 国王的延伸：MP回复+5/秒，HP回复2%/秒
+        player->addMPRegenBonus(5.0f);
+        player->addHPRegenPercent(0.02f);
+    }
+    
+    CCLOG("ItemLibrary: Applied item effect for %s", itemId.c_str());
 }

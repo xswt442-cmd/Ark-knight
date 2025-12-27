@@ -1,4 +1,5 @@
 ﻿#include "MapGenerator.h"
+#include "BossFloor.h"
 #include "Entities/Player/Player.h"
 #include "Hallway.h"
 #include <algorithm>
@@ -37,6 +38,7 @@ bool MapGenerator::init() {
     _endRoom = nullptr;
     _currentRoom = nullptr;
     _levelNumber = 1;
+    _isBossFloor = false;
     
     srand(static_cast<unsigned int>(time(nullptr)));
     
@@ -50,6 +52,13 @@ void MapGenerator::update(float delta) {
 void MapGenerator::generateMap() {
     clearMap();
     
+    // Boss层特殊处理：只生成起始房间+Boss房间
+    if (_isBossFloor) {
+        generateBossFloor();
+        return;
+    }
+    
+    // 普通关卡的生成逻辑
     int startX = Constants::MAP_GRID_SIZE / 2;
     int startY = 1 + rand() % 3;
     
@@ -213,8 +222,8 @@ void MapGenerator::assignRoomTypes() {
                 room->setRoomType(Constants::RoomType::BEGIN);
                 room->setVisited(true);
             } else if (room == _endRoom) {
-                // 1-3关卡（_levelNumber=3）为boss关
-                if (_levelNumber == 3) {
+                // 每5关一个boss（如果需要），否则是终点房间
+                if (_levelNumber % 5 == 0) {
                     room->setRoomType(Constants::RoomType::BOSS);
                 } else {
                     room->setRoomType(Constants::RoomType::END);
@@ -468,4 +477,18 @@ void MapGenerator::clearMap() {
     _beginRoom = nullptr;
     _endRoom = nullptr;
     _currentRoom = nullptr;
+}
+
+/**
+ * 生成Boss层地图
+ * 
+ * 使用 BossFloor 类生成Boss层
+ * 详细实现请查看 BossFloor.cpp
+ * 
+ * @see BossFloor - Boss层生成器类
+ */
+void MapGenerator::generateBossFloor() {
+    auto bossFloor = BossFloor::create();
+    bossFloor->generate(_roomMatrix, _hallways, _beginRoom, _endRoom, _roomCount);
+    this->addChild(bossFloor);
 }

@@ -67,6 +67,8 @@ list(APPEND GAME_SOURCE
      # Entities/Player
      Classes/Entities/Player/Player.cpp
      Classes/Entities/Player/Mage.cpp
+     Classes/Entities/Player/Gunner.cpp
+     Classes/Entities/Player/Warrior.cpp
      # Entities/Objects
      Classes/Entities/Objects/Item.cpp
      Classes/Entities/Objects/Chest.cpp
@@ -83,6 +85,7 @@ list(APPEND GAME_SOURCE
      Classes/Entities/Enemy/IronLightCup.cpp
      Classes/Entities/Enemy/TangHuang.cpp
      Classes/Entities/Enemy/NiLuFire.cpp
+     Classes/Entities/Enemy/Boat.cpp
      Classes/Entities/Enemy/KuiLongBoss.cpp
      # Scenes
      Classes/Scenes/MainMenuScene.cpp
@@ -93,12 +96,14 @@ list(APPEND GAME_SOURCE
      Classes/Map/Hallway.cpp
      Classes/Map/Barriers.cpp
      Classes/Map/TerrainLayouts.cpp
+     Classes/Map/BossFloor.cpp
      # UI
      Classes/UI/MiniMap.cpp
      Classes/UI/SettingsLayer.cpp
      Classes/UI/FloatingText.cpp
      Classes/UI/GameHUD.cpp
      Classes/UI/GameMenus.cpp
+     Classes/UI/CharacterSelectLayer.cpp
      # Managers
      Classes/Managers/GameManager.cpp
      Classes/Managers/SoundManager.cpp
@@ -116,6 +121,8 @@ list(APPEND GAME_HEADER
      # Entities/Player
      Classes/Entities/Player/Player.h
      Classes/Entities/Player/Mage.h
+     Classes/Entities/Player/Gunner.h
+     Classes/Entities/Player/Warrior.h
      # Entities/Objects
      Classes/Entities/Objects/Item.h
      Classes/Entities/Objects/Chest.h
@@ -132,6 +139,7 @@ list(APPEND GAME_HEADER
      Classes/Entities/Enemy/IronLightCup.h
      Classes/Entities/Enemy/TangHuang.h
      Classes/Entities/Enemy/NiLuFire.h
+     Classes/Entities/Enemy/Boat.h
      Classes/Entities/Enemy/KuiLongBoss.h
      # Scenes
      Classes/Scenes/MainMenuScene.h
@@ -148,6 +156,7 @@ list(APPEND GAME_HEADER
      Classes/UI/FloatingText.h
      Classes/UI/GameHUD.h
      Classes/UI/GameMenus.h
+     Classes/UI/CharacterSelectLayer.h
      # Managers
      Classes/Managers/GameManager.h
      Classes/Managers/SoundManager.h

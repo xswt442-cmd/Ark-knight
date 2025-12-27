@@ -25,16 +25,16 @@ public:
         _closeCallback = callback;
     }
     
+    /**
+     * 关闭设置界面
+     */
+    void close();
+    
 private:
     /**
      * 创建UI元素
      */
     void createUI();
-    
-    /**
-     * 关闭设置界面
-     */
-    void close();
     
     std::function<void()> _closeCallback;
 };

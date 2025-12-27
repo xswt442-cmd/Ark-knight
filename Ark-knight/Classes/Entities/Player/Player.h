@@ -162,6 +162,10 @@ protected:
     int _armor;
     int _maxArmor;
     
+    // 受击闪烁冷却（限制每秒最多闪烁一次）
+    float _blinkCooldown;
+    float _blinkCooldownTimer;
+    
     // 输入监听器
     EventListenerKeyboard* _keyboardListener;
     EventListenerMouse* _mouseListener;

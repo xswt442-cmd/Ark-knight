@@ -558,9 +558,18 @@ int Enemy::takeDamageReported(int damage)
             if (_sprite)
             {
                 _sprite->stopActionByTag(100);
-                auto blink = Blink::create(0.2f, 2);
-                auto show = Show::create();
-                auto seq = Sequence::create(blink, show, nullptr);
+                _sprite->setColor(Color3B::WHITE);  // 立即重置颜色
+                _sprite->setVisible(true);
+                _sprite->setOpacity(255);
+                // 使用CallFunc+setColor瞬时设置颜色，避免TintTo渐变被中断导致的颜色卡住
+                auto setRed = CallFunc::create([this]() { _sprite->setColor(Color3B(255, 100, 100)); });
+                auto setWhite = CallFunc::create([this]() { _sprite->setColor(Color3B::WHITE); });
+                auto seq = Sequence::create(
+                    setRed, DelayTime::create(0.05f),
+                    setWhite, DelayTime::create(0.05f),
+                    setRed->clone(), DelayTime::create(0.05f),
+                    setWhite->clone(),
+                    nullptr);
                 seq->setTag(100);
                 _sprite->runAction(seq);
             }

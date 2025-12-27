@@ -24,10 +24,13 @@ bool Spike::initWithTexturePath(const std::string& texturePath)
         return false;
     }
     
-    // 缩放到地砖大小
+    // 缩放到地砖大小（使用宽高中较大的值以确保覆盖）
     float targetSize = Constants::FLOOR_TILE_SIZE;
-    float scale = targetSize / this->getContentSize().width;
-    this->setScale(scale);
+    Size contentSize = this->getContentSize();
+    float scaleX = targetSize / contentSize.width;
+    float scaleY = targetSize / contentSize.height;
+    this->setScaleX(scaleX);
+    this->setScaleY(scaleY);
     
     this->setGlobalZOrder(Constants::ZOrder::FLOOR + 1);
     
@@ -132,10 +135,13 @@ bool Box::initWithType(BoxType type)
         return false;
     }
     
-    // 缩放到地砖大小
+    // 缩放到地砖大小（分别设置宽高确保精确对齐）
     float targetSize = Constants::FLOOR_TILE_SIZE;
-    float scale = targetSize / this->getContentSize().width;
-    this->setScale(scale);
+    Size contentSize = this->getContentSize();
+    float scaleX = targetSize / contentSize.width;
+    float scaleY = targetSize / contentSize.height;
+    this->setScaleX(scaleX);
+    this->setScaleY(scaleY);
     
     this->setGlobalZOrder(Constants::ZOrder::WALL_ABOVE);
     this->setTag(Constants::Tag::WALL);  // 设置为墙壁标签，子弹会检测
@@ -180,10 +186,13 @@ bool Pillar::initWithType(PillarType type)
         return false;
     }
     
-    // 缩放到地砖大小
+    // 缩放到地砖大小（分别设置宽高确保精确对齐）
     float targetSize = Constants::FLOOR_TILE_SIZE;
-    float scale = targetSize / this->getContentSize().width;
-    this->setScale(scale);
+    Size contentSize = this->getContentSize();
+    float scaleX = targetSize / contentSize.width;
+    float scaleY = targetSize / contentSize.height;
+    this->setScaleX(scaleX);
+    this->setScaleY(scaleY);
     
     this->setGlobalZOrder(Constants::ZOrder::WALL_ABOVE);
     this->setTag(Constants::Tag::WALL);  // 设置为墙壁标签，子弹会检测

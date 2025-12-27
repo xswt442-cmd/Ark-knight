@@ -1,5 +1,6 @@
 ﻿#include "MainMenuScene.h"
 #include "GameScene.h"
+#include "UI/CharacterSelectLayer.h"
 #include "ui/CocosGUI.h"
 
 USING_NS_CC;
@@ -77,9 +78,9 @@ void MainMenuScene::createButtons()
     selectButton->addClickEventListener(CC_CALLBACK_1(MainMenuScene::onSelectCharacter, this));
     _uiLayer->addChild(selectButton);
     
-    // 跳转1-3按钮（测试boss）
+    // 直接挑战Boss按钮
     auto bossButton = Button::create();
-    bossButton->setTitleText(u8"1-3 Boss关");
+    bossButton->setTitleText(u8"直接挑战Boss");
     bossButton->setTitleFontName("fonts/msyh.ttf");
     bossButton->setTitleFontSize(32);
     bossButton->setPosition(Vec2(centerX, startY - spacing * 2));
@@ -116,11 +117,11 @@ void MainMenuScene::onStartGame(Ref* sender)
 
 void MainMenuScene::onStartBossLevel(Ref* sender)
 {
-    GAME_LOG("Start boss level (1-3) clicked");
+    GAME_LOG("Start boss floor clicked");
     
-    // 设置为1-3关卡
+    // 设置为Boss层（stage=0表示Boss层）
     GameScene::s_nextLevel = 1;
-    GameScene::s_nextStage = 3;
+    GameScene::s_nextStage = 0;
     
     // 切换到游戏场景
     auto gameScene = GameScene::createScene();
@@ -134,17 +135,12 @@ void MainMenuScene::onSelectCharacter(Ref* sender)
     // 移除之前的提示（如果有）
     this->removeChildByName("hintLabel");
     
-    // TODO: 实现角色选择界面
-    auto label = Label::createWithSystemFont(u8"角色选择功能 - 敬请期待！", "Arial", 24);
-    label->setPosition(Vec2(SCREEN_CENTER.x, SCREEN_CENTER.y + 100));
-    label->setTextColor(Color4B::YELLOW);
-    label->setName("hintLabel");
-    this->addChild(label, 100);
-    
-    // 2秒后移除
-    auto delay = DelayTime::create(2.0f);
-    auto remove = RemoveSelf::create();
-    label->runAction(Sequence::create(delay, remove, nullptr));
+    // 创建角色选择层
+    auto selectLayer = CharacterSelectLayer::create();
+    selectLayer->setCloseCallback([this]() {
+        GAME_LOG("Character selection closed");
+    });
+    this->addChild(selectLayer, 100);
 }
 
 void MainMenuScene::onSettings(Ref* sender)
