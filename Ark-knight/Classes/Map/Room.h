@@ -78,6 +78,16 @@ public:
     // 地形布局
     void applyTerrainLayout(TerrainLayout layout);
     
+    /**
+     * 生成Boss房间的火焰地板
+     * 在房间内随机位置放置指定数量的火焰地板
+     * 
+     * @param count 火焰地板数量，默认30
+     * 
+     * 注：可以修改此方法来自定义Boss房间的地板装饰
+     */
+    void generateBossFloorTiles(int count = 30);
+    
     // 宝箱管理
     void createChest();
     Chest* getChest() const { return _chest; }

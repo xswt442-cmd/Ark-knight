@@ -175,16 +175,9 @@ void Room::createMap() {
 void Room::generateFloor(float x, float y) {
     int chosenIndex = _floorTextureIndex; // 默认使用房间的纹理索引
     
-    // Boss房间的地板选择：大部分使用原地板，但有一定概率使用火焰地板
-    if (_roomType == Constants::RoomType::BOSS) {
-        // Boss房间中30%的地板使用火焰纹理
-        if (rand() % 100 < 30) {
-            chosenIndex = 6; // 使用火焰地板
-        }
-        // 其余70%使用房间默认地板
-    }
+    // Boss房间使用普通地板，火焰地板通过 generateBossFloorTiles() 单独生成
     // 普通房间的地板选择逻辑
-    else if (_floorTextureIndex >= 1 && _floorTextureIndex <= 3) {
+    if (_floorTextureIndex >= 1 && _floorTextureIndex <= 3) {
         // 组 A: Floor1, Floor2, Floor3 -> 权重 75%,15%,10% (总和100)
         const int indices[3] = {1, 2, 3};
         const int weights[3] = {75, 15, 10};
@@ -735,4 +728,81 @@ bool Room::canInteractWithPortal(Player* player) const
     float distance = _portal->getPosition().distance(player->getPosition());
     
     return distance <= interactionDistance;
+}
+
+/**
+ * 生成Boss房间的火焰地板装饰
+ * 
+ * 此方法会在Boss房间的地板上随机放置火焰纹理
+ * 火焰地板会覆盖原有地板，并带有轻微缩放动画
+ * 
+ * @param count 火焰地板数量，默认为30
+ * 
+ * 修改说明：
+ * - 调整count参数可改变火焰地板密度
+ * - 火焰纹理路径: Map/Floor/Floor_fire.png
+ * - 当前使用2倍房间尺寸 (56x40 瓦片)
+ */
+void Room::generateBossFloorTiles(int count) {
+    // Boss房间是2倍大小
+    int roomWidth = Constants::ROOM_TILES_W * 2;
+    int roomHeight = Constants::ROOM_TILES_H * 2;
+    float tileSize = Constants::FLOOR_TILE_SIZE;
+    
+    // 计算房间左下角位置
+    float startX = _centerX - (roomWidth * tileSize / 2) + tileSize / 2;
+    float startY = _centerY - (roomHeight * tileSize / 2) + tileSize / 2;
+    
+    // 收集所有可用的地板位置（排除边缘和中心Boss生成区域）
+    std::vector<std::pair<int, int>> availablePositions;
+    
+    // 房间中心区域（Boss生成位置）需要排除，半径5个瓦片
+    int centerTileX = roomWidth / 2;
+    int centerTileY = roomHeight / 2;
+    int exclusionRadius = 5;
+    
+    for (int y = 2; y < roomHeight - 2; ++y) {
+        for (int x = 2; x < roomWidth - 2; ++x) {
+            // 排除中心Boss区域
+            int dx = x - centerTileX;
+            int dy = y - centerTileY;
+            if (dx * dx + dy * dy <= exclusionRadius * exclusionRadius) {
+                continue;
+            }
+            availablePositions.push_back({x, y});
+        }
+    }
+    
+    // 随机打乱位置
+    for (int i = availablePositions.size() - 1; i > 0; --i) {
+        int j = rand() % (i + 1);
+        std::swap(availablePositions[i], availablePositions[j]);
+    }
+    
+    // 取前count个位置生成火焰地板
+    int actualCount = std::min(count, (int)availablePositions.size());
+    
+    for (int i = 0; i < actualCount; ++i) {
+        int tileX = availablePositions[i].first;
+        int tileY = availablePositions[i].second;
+        
+        float posX = startX + tileX * tileSize;
+        float posY = startY + tileY * tileSize;
+        
+        auto fireFloor = cocos2d::Sprite::create("Map/Floor/Floor_fire.png");
+        if (fireFloor) {
+            fireFloor->setPosition(posX, posY);
+            // 火焰地板层级略高于普通地板
+            this->addChild(fireFloor, Constants::ZOrder::FLOOR + 1);
+            
+            // 添加轻微的缩放动画，增加视觉效果
+            auto scaleUp = cocos2d::ScaleTo::create(0.8f + (rand() % 100) / 200.0f, 1.05f);
+            auto scaleDown = cocos2d::ScaleTo::create(0.8f + (rand() % 100) / 200.0f, 0.95f);
+            auto sequence = cocos2d::Sequence::create(scaleUp, scaleDown, nullptr);
+            auto repeat = cocos2d::RepeatForever::create(sequence);
+            fireFloor->runAction(repeat);
+        }
+    }
+    
+    GAME_LOG("Generated %d fire floor tiles in boss room", actualCount);
 }

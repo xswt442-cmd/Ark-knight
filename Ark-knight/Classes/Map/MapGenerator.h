@@ -80,6 +80,23 @@ private:
     // 生成走廊
     void generateHallways();
     
+    /**
+     * 生成Boss层地图
+     * 
+     * Boss层结构说明：
+     * - 只有2个房间：起始房间(左) + Boss房间(右)
+     * - Boss房间大小为普通房间的2倍 (56x40 瓦片)
+     * - Boss房间会随机生成30个火焰地板
+     * - Boss房间中心会生成Boss敌人 (KuiLongBoss)
+     * 
+     * 修改Boss房间布局请编辑此方法
+     * 修改Boss敌人生成请编辑 GameScene::spawnEnemiesInRoom()
+     * 
+     * @see Room::generateBossFloorTiles() - Boss房间地板生成
+     * @see GameScene::spawnEnemiesInRoom() - Boss敌人生成
+     */
+    void generateBossFloor();
+    
     // 随机选择普通战斗房间地形布局（概率：空10%，其余各9%）
     TerrainLayout pickRandomTerrainLayout() const;
     
