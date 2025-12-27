@@ -213,8 +213,8 @@ void MapGenerator::assignRoomTypes() {
                 room->setRoomType(Constants::RoomType::BEGIN);
                 room->setVisited(true);
             } else if (room == _endRoom) {
-                // 1-3关卡（_levelNumber=3）为boss关
-                if (_levelNumber == 3) {
+                // 1-1关卡（_levelNumber=1）为boss关
+                if (_levelNumber == 1) {
                     room->setRoomType(Constants::RoomType::BOSS);
                 } else {
                     room->setRoomType(Constants::RoomType::END);

@@ -83,6 +83,7 @@ list(APPEND GAME_SOURCE
      Classes/Entities/Enemy/IronLightCup.cpp
      Classes/Entities/Enemy/TangHuang.cpp
      Classes/Entities/Enemy/NiLuFire.cpp
+     Classes/Entities/Enemy/Boat.cpp
      Classes/Entities/Enemy/KuiLongBoss.cpp
      # Scenes
      Classes/Scenes/MainMenuScene.cpp
@@ -132,6 +133,7 @@ list(APPEND GAME_HEADER
      Classes/Entities/Enemy/IronLightCup.h
      Classes/Entities/Enemy/TangHuang.h
      Classes/Entities/Enemy/NiLuFire.h
+     Classes/Entities/Enemy/Boat.h
      Classes/Entities/Enemy/KuiLongBoss.h
      # Scenes
      Classes/Scenes/MainMenuScene.h

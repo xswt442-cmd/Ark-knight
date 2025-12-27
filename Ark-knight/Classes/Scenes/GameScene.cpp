@@ -8,6 +8,7 @@
 #include "Entities/Enemy/TangHuang.h"
 #include "Entities/Enemy/Du.h"
 #include "Entities/Enemy/Cup.h"
+#include "Entities/Enemy/Boat.h"
 #include "Entities/Enemy/KuiLongBoss.h"
 #include "Entities/Objects/Chest.h"
 #include "Entities/Objects/ItemDrop.h"

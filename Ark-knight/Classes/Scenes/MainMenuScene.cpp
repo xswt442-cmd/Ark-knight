@@ -77,9 +77,9 @@ void MainMenuScene::createButtons()
     selectButton->addClickEventListener(CC_CALLBACK_1(MainMenuScene::onSelectCharacter, this));
     _uiLayer->addChild(selectButton);
     
-    // 跳转1-3按钮（测试boss）
+    // 跳转1-1按钮（测试boss）
     auto bossButton = Button::create();
-    bossButton->setTitleText(u8"1-3 Boss关");
+    bossButton->setTitleText(u8"1-1 Boss关");
     bossButton->setTitleFontName("fonts/msyh.ttf");
     bossButton->setTitleFontSize(32);
     bossButton->setPosition(Vec2(centerX, startY - spacing * 2));
@@ -116,11 +116,11 @@ void MainMenuScene::onStartGame(Ref* sender)
 
 void MainMenuScene::onStartBossLevel(Ref* sender)
 {
-    GAME_LOG("Start boss level (1-3) clicked");
+    GAME_LOG("Start boss level (1-1) clicked");
     
-    // 设置为1-3关卡
+    // 设置为1-1关卡
     GameScene::s_nextLevel = 1;
-    GameScene::s_nextStage = 3;
+    GameScene::s_nextStage = 1;
     
     // 切换到游戏场景
     auto gameScene = GameScene::createScene();
