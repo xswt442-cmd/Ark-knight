@@ -6,6 +6,7 @@
 #include "ui/CocosGUI.h"
 
 class NiLuFire; // 前向声明
+class Boat;     // 前向声明
 
 class KuiLongBoss : public Enemy {
 public:
@@ -22,7 +23,7 @@ public:
     virtual void attack() override;
     virtual void playAttackAnimation() override;
 
-    // 覆写移动以控制移动动画（防止攻击期间移动/恢复移动动画）
+    // 覆写移动以控制移动动画
     virtual void move(const cocos2d::Vec2& direction, float dt) override;
 
     // 伤害与死亡
@@ -30,13 +31,8 @@ public:
     virtual int takeDamageReported(int damage) override;
     virtual void die() override;
 
-    // Boss 不会在死亡时生成 KongKaZi（不能被寄生）
     virtual bool canSpawnKongKaZiOnDeath() const override { return false; }
-
-    // Boss 在阶段 A / 转场阶段免疫剧毒
     virtual bool isPoisonable() const override;
-
-    // 接收房间边界（用于 NiLu 生成位置限制）
     virtual void setRoomBounds(const cocos2d::Rect& bounds) override;
 
 protected:
@@ -48,12 +44,27 @@ protected:
         PHASE_A,
         TRANSITION_A_TO_B,
         PHASE_B,
-        PHASE_C
+        PHASE_C,
+        SKILL_CHENG_SAN_SHEN // 新增：承三身阶段
     };
 
     Phase _phase;
     float _phaseTimer;
     float _phaseADuration;
+
+    // ========== 承三身技能相关 ==========
+    bool _threshold75Triggered;
+    bool _threshold50Triggered;
+    bool _threshold25Triggered;
+    
+    float _chengSanShenTimer;
+    float _chengSanShenDuration; // 30秒
+    Boat* _summonedBoat;         // 记录召唤的 Boat
+
+    void checkChengSanShenTrigger();
+    void startChengSanShen();
+    void updateChengSanShen(float dt);
+    void endChengSanShen();
 
     // ========== 动画资源 ==========
     cocos2d::Animation* _animAIdle;
@@ -62,6 +73,11 @@ protected:
     cocos2d::Animation* _animBAttack;
     cocos2d::Animation* _animBChangeToC;
     cocos2d::Animation* _animBChengWuJie;
+    
+    // 新增承三身动画
+    cocos2d::Animation* _animCSS_Start;
+    cocos2d::Animation* _animCSS_Idle;
+    cocos2d::Animation* _animCSS_End;
 
     // ========== 动作 Tag ==========
     static const int KUI_LONG_MOVE_TAG = 0x7F01;
@@ -71,6 +87,7 @@ protected:
     static const int KUI_LONG_DIE_TAG = 0x7F05;
     static const int KUI_LONG_SKILL_TAG = 0x7F06;
     static const int KUI_LONG_SKILL_DAMAGE_TAG = 0x7F07;
+    static const int KUI_LONG_CSS_TAG = 0x7F08; // 承三身动画Tag
 
     bool _moveAnimPlaying;
 
@@ -86,8 +103,6 @@ protected:
     int   _skillDamagePerHit;
     bool  _skillPlaying;
     cocos2d::Sprite* _skillSprite;
-
-    // 新增：标记技能伤害序列是否已调度（防止重复/叠加）
     bool  _skillDamageScheduled;
 
     bool canUseChengWuJie() const;
@@ -95,17 +110,16 @@ protected:
     void resetChengWuJieCooldown();
 
     // ========== NiLuFire 管理 ==========
-    cocos2d::Rect _roomBounds; // 接收房间 walkable area
+    cocos2d::Rect _roomBounds;
     float _niluSpawnTimer;
-    float _niluSpawnInterval; // 10s
-    int _niluSpawnPerInterval; // 2
-    int _niluMaxPerRoom; // 12
-    float _niluMinDistance; // 50.0f
+    float _niluSpawnInterval;
+    int _niluSpawnPerInterval;
+    int _niluMaxPerRoom;
+    float _niluMinDistance;
 
-    // 辅助：count & spawn
     int countNiLuFiresInRoom() const;
     bool isPositionValidForNiLu(const cocos2d::Vec2& pos) const;
-    void trySpawnNiLuFires(); // 在 update 中调用
+    void trySpawnNiLuFires();
 };
 
 #endif // __KUILONGBOSS_H__
