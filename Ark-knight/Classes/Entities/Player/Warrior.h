@@ -43,6 +43,11 @@ public:
      */
     bool isEnhanced() const { return _isEnhanced; }
     
+    /**
+     * 重写受伤逻辑，优先扣除护盾
+     */
+    virtual void takeDamage(int damage) override;
+
 protected:
     /**
      * 重写状态切换，播放对应动画
@@ -75,6 +80,16 @@ private:
      */
     void exitEnhancedState();
     
+    /**
+     * 增加护盾
+     */
+    void addShield(int amount);
+
+    /**
+     * 更新护盾条显示（会同步位置到父节点）
+     */
+    void updateShieldBar();
+
     // 强化状态相关
     bool _isEnhanced;           // 是否处于强化状态
     float _enhancedTimer;       // 强化状态剩余时间
@@ -85,6 +100,11 @@ private:
     float _baseAttackRange;     // 基础攻击范围
     float _attackTimer;         // 攻击计时器
     
+    // 护盾相关
+    int _currentShield;         // 当前护盾值
+    cocos2d::DrawNode* _shieldBarNode; // 护盾条节点（绘制）
+    cocos2d::Label* _shieldLabel;      // 护盾数值文本（在护盾条下方显示）
+
     // 动画相关
     std::map<std::string, Animation*> _animations;  // 动画缓存
     std::string _currentAnimName;                    // 当前播放的动画名

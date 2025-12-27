@@ -12,9 +12,12 @@ Warrior::Warrior()
     , _enhancedTimer(0.0f)
     , _enhancedDuration(20.0f)
     , _baseAttackInterval(0.4f)
-    , _baseAttackRange(80.0f)
+    , _baseAttackRange(120.0f) // 增大基础攻击范围 (原80.0f)
     , _attackTimer(0.0f)
     , _currentAnimName("")
+    , _currentShield(0)
+    , _shieldBarNode(nullptr)
+    , _shieldLabel(nullptr)
 {
 }
 
@@ -57,10 +60,11 @@ bool Warrior::init()
     
     // 创建精灵并绑定
     auto sprite = Sprite::create("Player/Mudrock/MudRock_Idle/MudRock_Idle_0001.png");
+    float targetSize = Constants::FLOOR_TILE_SIZE * 4.5f;
+    
     if (sprite)
     {
         // 设置缩放（战士稍微大一点）
-        float targetSize = Constants::FLOOR_TILE_SIZE * 4.5f;
         float scale = targetSize / sprite->getContentSize().height;
         sprite->setScale(scale);
         
@@ -70,6 +74,22 @@ bool Warrior::init()
         playAnimation("idle", true);
     }
     
+    // 初始化护盾条与数值文本，作为角色子节点（避免每帧 reparent 导致崩溃）
+    _shieldBarNode = DrawNode::create();
+    _shieldLabel = Label::createWithSystemFont("", "Arial", 14);
+    _shieldLabel->setAnchorPoint(Vec2(0.5f, 1.0f)); // 文本位于护盾条下方
+    // 将护盾条和文本作为角色子节点，使用极大 globalZOrder 确保最上层显示
+    this->addChild(_shieldBarNode);
+    this->addChild(_shieldLabel);
+    _shieldBarNode->setGlobalZOrder(1000000);
+    _shieldLabel->setGlobalZOrder(1000000);
+    // 初始位置（局部坐标），距离精灵更近
+    float initialOffsetY = Constants::FLOOR_TILE_SIZE * 4.5f * 0.55f;
+    _shieldBarNode->setPosition(Vec2(0, initialOffsetY));
+    _shieldLabel->setPosition(Vec2(0, initialOffsetY - 8.0f - 4.0f));
+    // 先清空显示
+    updateShieldBar();
+
     GAME_LOG("Mudrock(Warrior) initialized - HP: %d/%d, MP: %d/%d", 
              getHP(), getMaxHP(), getMP(), getMaxMP());
     
@@ -326,6 +346,24 @@ void Warrior::update(float dt)
             exitEnhancedState();
         }
     }
+    
+    // ---- 替换 update() 中原来 reparent 的大块，改为只更新本地位置 ----
+    // 每帧同步护盾条位置（仅更新位置，不做 reparent）
+    if (_shieldBarNode != nullptr && _shieldLabel != nullptr)
+    {
+        // 护盾条局部偏移（相对于 Warrior）
+        float offsetY = Constants::FLOOR_TILE_SIZE * 4.5f * 0.55f; // 可根据需要微调
+        Vec2 localBarPos = Vec2(0, offsetY);
+        // 直接设置为子节点的本地位置（this 是它们父节点）
+        _shieldBarNode->setPosition(localBarPos);
+        // 文本位于护盾条下方
+        float barHeight = 8.0f;
+        _shieldLabel->setPosition(localBarPos + Vec2(0, -barHeight/2 - 6.0f));
+        // 保证 global ZOrder（若 init 未设置或被其它代码改动过，重新确保）
+        _shieldBarNode->setGlobalZOrder(1000000);
+        _shieldLabel->setGlobalZOrder(1000000);
+    }
+    // ---- update() 替换结束 ----
 }
 
 void Warrior::attack()
@@ -454,7 +492,7 @@ void Warrior::performMeleeAttack()
     
     // 攻击方向（面朝方向的扇形范围）
     Vec2 attackDir = _facingDirection;
-    float attackAngle = 120.0f;  // 攻击扇形角度（度）
+    float attackAngle = 160.0f;  // 增大攻击扇形角度 (原120.0f)
     
     // 先收集所有符合条件的敌人，避免遍历时修改容器
     std::vector<Enemy*> enemiesToHit;
@@ -493,6 +531,15 @@ void Warrior::performMeleeAttack()
             
             enemiesToHit.push_back(enemy);
         }
+    }
+    
+    // 1. 增加护盾逻辑 (仅当攻击命中敌人时)
+    if (!enemiesToHit.empty())
+    {
+        // 普通状态：2%最大生命值，强化状态：5%最大生命值
+        float shieldRatio = _isEnhanced ? 0.05f : 0.02f;
+        int shieldAmount = static_cast<int>(getMaxHP() * shieldRatio);
+        addShield(shieldAmount);
     }
     
     // 对收集到的敌人造成伤害
@@ -541,3 +588,78 @@ void Warrior::performMeleeAttack()
     auto remove = RemoveSelf::create();
     attackEffect->runAction(Sequence::create(fadeOut, remove, nullptr));
 }
+
+void Warrior::addShield(int amount)
+{
+    _currentShield += amount;
+    
+    // 上限不超过最大生命3倍
+    int maxShield = getMaxHP() * 3;
+    if (_currentShield > maxShield)
+    {
+        _currentShield = maxShield;
+    }
+    
+    updateShieldBar();
+}
+
+void Warrior::takeDamage(int damage)
+{
+    // 优先扣除护盾
+    if (_currentShield > 0)
+    {
+        int absorbed = std::min(damage, _currentShield);
+        _currentShield -= absorbed;
+        damage -= absorbed;
+        
+        updateShieldBar();
+        
+        // 显示护盾吸收效果（可选）
+        if (absorbed > 0 && this->getParent())
+        {
+            FloatingText::show(this->getParent(), this->getPosition() + Vec2(0, 120), 
+                              "Absorb", Color3B(200, 200, 200));
+        }
+    }
+    
+    // 剩余伤害扣血
+    if (damage > 0)
+    {
+        Player::takeDamage(damage);
+    }
+}
+
+// ---- 微调 updateShieldBar()：只绘制与文本赋值（确保无父变更） ----
+void Warrior::updateShieldBar()
+{
+    if (!_shieldBarNode || !_shieldLabel) return;
+    _shieldBarNode->clear();
+
+    if (_currentShield <= 0)
+    {
+        _shieldLabel->setString("");
+        return;
+    }
+
+    // 绘制护盾条
+    float width = 100.0f;
+    float height = 8.0f;
+
+    // 背景（更深的灰）
+    _shieldBarNode->drawSolidRect(Vec2(-width/2, -height/2), Vec2(width/2, height/2), Color4F(0.15f, 0.15f, 0.15f, 0.9f));
+
+    // 护盾值（灰色，深一点）
+    float maxDisplayShield = getMaxHP() * 1.0f;
+    float percent = (float)_currentShield / maxDisplayShield;
+    if (percent > 1.0f) percent = 1.0f;
+    float fillWidth = width * percent;
+    _shieldBarNode->drawSolidRect(Vec2(-width/2, -height/2), Vec2(-width/2 + fillWidth, height/2), Color4F(0.55f, 0.55f, 0.55f, 1.0f));
+
+    // 显示护盾数值文本（在护盾条下方）
+    char buf[64];
+    sprintf(buf, "%d", _currentShield);
+    _shieldLabel->setString(buf);
+    _shieldLabel->setTextColor(Color4B(230, 230, 230, 255));
+    _shieldLabel->setSystemFontSize(14);
+}
+// ---- updateShieldBar() 替换结束 ----
