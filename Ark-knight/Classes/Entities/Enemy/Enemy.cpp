@@ -558,6 +558,7 @@ int Enemy::takeDamageReported(int damage)
             if (_sprite)
             {
                 _sprite->stopActionByTag(100);
+                _sprite->setColor(Color3B::WHITE);  // 重置颜色，防止卡在红色状态
                 _sprite->setVisible(true);
                 _sprite->setOpacity(255);
                 // 使用红色高亮闪烁代替隐藏式Blink

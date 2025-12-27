@@ -108,6 +108,7 @@ int GameEntity::takeDamageReported(int damage)
     if (_sprite != nullptr)
     {
         _sprite->stopActionByTag(100);
+        _sprite->setColor(Color3B::WHITE);  // 重置颜色，防止卡在红色状态
         _sprite->setVisible(true);
         _sprite->setOpacity(255);
         

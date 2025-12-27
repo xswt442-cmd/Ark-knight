@@ -467,8 +467,7 @@ void Player::takeDamage(int damage)
             // 只有冷却结束时才播放受击特效
             if (_blinkCooldownTimer <= 0.0f)
             {
-                _sprite->stopActionByTag(100);
-                
+                _sprite->stopActionByTag(100);                _sprite->setColor(Color3B::WHITE);  // 重置颜色，防止卡在红色状态                
                 // 使用红色高亮闪烁代替隐藏式Blink
                 auto tintRed = TintTo::create(0.05f, 255, 100, 100);
                 auto tintNormal = TintTo::create(0.05f, 255, 255, 255);
