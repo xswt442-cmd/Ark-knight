@@ -89,11 +89,25 @@ bool GameScene::init()
                     {
                         _gameHUD->addItemIcon(&item);
                     }
+                    
+                    // 重新应用道具效果到玩家（不包括一次性治疗效果）
+                    if (_player)
+                    {
+                        ItemLibrary::applyItemEffect(itemId, _player);
+                    }
+                    
                     GAME_LOG("Restored item: %s", item.name.c_str());
                     break;
                 }
             }
         }
+    }
+    
+    // 道具效果恢复后，恢复保存的HP/MP（这样可以正确反映道具对MaxHP的影响）
+    if (_player && _savedHP > 0) {
+        _player->setHP(_savedHP);
+        _player->setMP(_savedMP);
+        GAME_LOG("Restored player HP: %d, MP: %d (after item effects)", _savedHP, _savedMP);
     }
     
     createMenus();
@@ -262,12 +276,7 @@ void GameScene::createPlayer()
         return;
     }
     
-    // 如果有保存的血蓝量，恢复之
-    if (_savedHP > 0) {
-        _player->setHP(_savedHP);
-        _player->setMP(_savedMP);
-        GAME_LOG("Restored player HP: %d, MP: %d", _savedHP, _savedMP);
-    }
+    // 注意：HP/MP恢复移到道具效果恢复之后，在init()中进行
     
     // 设置玩家初始位置在起始房间的中心
     if (_currentRoom) {

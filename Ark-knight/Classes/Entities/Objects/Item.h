@@ -5,6 +5,8 @@
 #include <vector>
 #include <unordered_map>
 
+class Player;  // 前向声明
+
 enum class ItemRarity {
     LOW,
     HIGH,
@@ -32,6 +34,13 @@ public:
      * @return 返回道具指针，如果没有可用道具则返回nullptr
      */
     static const ItemDef* pickRandom(const std::unordered_map<std::string, int>& ownedCounts);
+    
+    /**
+     * 根据道具ID应用效果到玩家（用于场景切换时恢复道具效果）
+     * @param itemId 道具ID
+     * @param player 玩家指针
+     */
+    static void applyItemEffect(const std::string& itemId, Player* player);
 };
 
 #endif // __ITEM_H__
