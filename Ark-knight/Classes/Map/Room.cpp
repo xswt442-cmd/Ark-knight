@@ -85,6 +85,8 @@ void Room::createMap() {
             // boss房间大小设为两倍
             _tilesWidth = Constants::ROOM_TILES_W * 2;
             _tilesHeight = Constants::ROOM_TILES_H * 2;
+            // Boss房间使用特殊的浅绿色地板 (Floor6)
+            _floorTextureIndex = 6;
             break;
         case Constants::RoomType::REWARD:
         case Constants::RoomType::END:
@@ -172,9 +174,14 @@ void Room::createMap() {
 }
 
 void Room::generateFloor(float x, float y) {
-    // 决定本房间使用哪个组：如果初始化的_floorTextureIndex是1~3，则视为组A(1-3)，否则为组B(4-5)
-    int chosenIndex = _floorTextureIndex; // 作为回退值
-    if (_floorTextureIndex >= 1 && _floorTextureIndex <= 3) {
+    int chosenIndex = _floorTextureIndex; // 默认使用房间的纹理索引
+    
+    // Boss房间直接使用Floor6，不进行随机化
+    if (_roomType == Constants::RoomType::BOSS) {
+        chosenIndex = 6;
+    }
+    // 普通房间的地板选择逻辑
+    else if (_floorTextureIndex >= 1 && _floorTextureIndex <= 3) {
         // 组 A: Floor1, Floor2, Floor3 -> 权重 75%,15%,10% (总和100)
         const int indices[3] = {1, 2, 3};
         const int weights[3] = {75, 15, 10};
@@ -204,8 +211,15 @@ void Room::generateFloor(float x, float y) {
         }
     }
 
-    // 使用选定的纹理创建地板（与原逻辑一致，保留回退处理）
-    std::string floorPath = "Map/Floor/Floor_000" + std::to_string(chosenIndex) + ".png";
+    // 使用选定的纹理创建地板
+    std::string floorPath;
+    if (chosenIndex == 6) {
+        // Boss房间使用特殊地板（腐蚀地板）
+        floorPath = "Map/Floor/Floor_cor.png";
+    } else {
+        // 普通地板1-5
+        floorPath = "Map/Floor/Floor_000" + std::to_string(chosenIndex) + ".png";
+    }
     auto floor = Sprite::create(floorPath);
     if (!floor) {
         floor = Sprite::create();

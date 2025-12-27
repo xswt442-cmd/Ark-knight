@@ -639,6 +639,16 @@ void GameScene::updateEnemies(float dt)
             ++it;
         }
     }
+    
+    // 检测boss房间胜利条件
+    if (_currentRoom && _currentRoom->getRoomType() == Constants::RoomType::BOSS)
+    {
+        if (_currentRoom->allEnemiesKilled())
+        {
+            GAME_LOG("Boss room cleared! Showing victory.");
+            showVictory();
+        }
+    }
 }
 
 void GameScene::updateSpikes(float dt)
