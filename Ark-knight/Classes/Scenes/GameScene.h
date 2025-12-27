@@ -194,6 +194,7 @@ private:
     // HUD和菜单系统
     GameHUD* _gameHUD;
     GameMenus* _gameMenus;
+    SettingsLayer* _settingsLayer;  // 设置层指针
     
     // 状态
     bool _isPaused;

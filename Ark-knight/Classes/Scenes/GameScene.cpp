@@ -43,6 +43,7 @@ bool GameScene::init()
     _currentRoom = nullptr;
     _gameHUD = nullptr;
     _gameMenus = nullptr;
+    _settingsLayer = nullptr;
     
     // 初始化关卡系统（从静态变量读取）
     _currentLevel = s_nextLevel;
@@ -1007,6 +1008,13 @@ void GameScene::setupKeyboardListener()
     listener->onKeyPressed = [this](EventKeyboard::KeyCode keyCode, Event* event) {
         if (keyCode == EventKeyboard::KeyCode::KEY_ESCAPE)
         {
+            // 如果设置层打开，先关闭设置层
+            if (_settingsLayer)
+            {
+                _settingsLayer->close();
+                return;
+            }
+            
             if (_isPaused)
             {
                 resumeGame();
@@ -1291,14 +1299,16 @@ void GameScene::showSettings()
     }
     
     // 创建设置层
-    auto settingsLayer = SettingsLayer::create();
-    settingsLayer->setCloseCallback([this]() {
+    _settingsLayer = SettingsLayer::create();
+    _settingsLayer->setCloseCallback([this]() {
+        // 清除设置层指针
+        _settingsLayer = nullptr;
         // 恢复显示暂停菜单
         if (_gameMenus) {
             _gameMenus->setPauseMenuVisible(true);
         }
     });
-    _uiLayer->addChild(settingsLayer);
+    _uiLayer->addChild(_settingsLayer);
 }
 
 void GameScene::addItemToUI(const ItemDef* itemDef)
