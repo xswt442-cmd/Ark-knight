@@ -77,6 +77,7 @@ void MapGenerator::generateMap() {
                 else if (room->getRoomType() == Constants::RoomType::END) {
                     room->createPortal();
                 }
+                // boss房间不生成传送门，由GameScene生成boss
             }
         }
     }
@@ -212,7 +213,8 @@ void MapGenerator::assignRoomTypes() {
                 room->setRoomType(Constants::RoomType::BEGIN);
                 room->setVisited(true);
             } else if (room == _endRoom) {
-                if (_levelNumber % 5 == 0) {
+                // 1-3关卡（_levelNumber=3）为boss关
+                if (_levelNumber == 3) {
                     room->setRoomType(Constants::RoomType::BOSS);
                 } else {
                     room->setRoomType(Constants::RoomType::END);

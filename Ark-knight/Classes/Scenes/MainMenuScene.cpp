@@ -77,12 +77,21 @@ void MainMenuScene::createButtons()
     selectButton->addClickEventListener(CC_CALLBACK_1(MainMenuScene::onSelectCharacter, this));
     _uiLayer->addChild(selectButton);
     
+    // 跳转1-3按钮（测试boss）
+    auto bossButton = Button::create();
+    bossButton->setTitleText(u8"1-3 Boss关");
+    bossButton->setTitleFontName("fonts/msyh.ttf");
+    bossButton->setTitleFontSize(32);
+    bossButton->setPosition(Vec2(centerX, startY - spacing * 2));
+    bossButton->addClickEventListener(CC_CALLBACK_1(MainMenuScene::onStartBossLevel, this));
+    _uiLayer->addChild(bossButton);
+    
     // 设置按钮
     auto settingsButton = Button::create();
     settingsButton->setTitleText(u8"设置");
     settingsButton->setTitleFontName("fonts/msyh.ttf");
     settingsButton->setTitleFontSize(32);
-    settingsButton->setPosition(Vec2(centerX, startY - spacing * 2));
+    settingsButton->setPosition(Vec2(centerX, startY - spacing * 3));
     settingsButton->addClickEventListener(CC_CALLBACK_1(MainMenuScene::onSettings, this));
     _uiLayer->addChild(settingsButton);
     
@@ -91,7 +100,7 @@ void MainMenuScene::createButtons()
     exitButton->setTitleText(u8"退出游戏");
     exitButton->setTitleFontName("fonts/msyh.ttf");
     exitButton->setTitleFontSize(32);
-    exitButton->setPosition(Vec2(centerX, startY - spacing * 3));
+    exitButton->setPosition(Vec2(centerX, startY - spacing * 4));
     exitButton->addClickEventListener(CC_CALLBACK_1(MainMenuScene::onExit, this));
     _uiLayer->addChild(exitButton);
 }
@@ -99,6 +108,19 @@ void MainMenuScene::createButtons()
 void MainMenuScene::onStartGame(Ref* sender)
 {
     GAME_LOG("Start game clicked");
+    
+    // 切换到游戏场景
+    auto gameScene = GameScene::createScene();
+    Director::getInstance()->replaceScene(TransitionFade::create(1.0f, gameScene));
+}
+
+void MainMenuScene::onStartBossLevel(Ref* sender)
+{
+    GAME_LOG("Start boss level (1-3) clicked");
+    
+    // 设置为1-3关卡
+    GameScene::s_nextLevel = 1;
+    GameScene::s_nextStage = 3;
     
     // 切换到游戏场景
     auto gameScene = GameScene::createScene();

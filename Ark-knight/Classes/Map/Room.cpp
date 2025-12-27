@@ -82,8 +82,9 @@ void Room::createMap() {
     // 根据房间类型调整大小
     switch (_roomType) {
         case Constants::RoomType::BOSS:
-            _tilesWidth = Constants::ROOM_TILES_W + 4;
-            _tilesHeight = Constants::ROOM_TILES_H + 4;
+            // boss房间大小设为两倍
+            _tilesWidth = Constants::ROOM_TILES_W * 2;
+            _tilesHeight = Constants::ROOM_TILES_H * 2;
             break;
         case Constants::RoomType::REWARD:
         case Constants::RoomType::END:

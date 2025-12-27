@@ -44,6 +44,11 @@ private:
     void onStartGame(Ref* sender);
     
     /**
+     * 开始boss关卡回调
+     */
+    void onStartBossLevel(Ref* sender);
+    
+    /**
      * 选择角色回调
      */
     void onSelectCharacter(Ref* sender);

@@ -39,6 +39,9 @@ public:
     // 检查并更新玩家所在房间
     Room* updatePlayerRoom(class Player* player);
     
+    // 设置关卡数
+    void setLevelNumber(int level, int stage) { _levelNumber = (level - 1) * 5 + stage; }
+    
     // 移动所有房间（用于视角跟随）
     void moveAllRoomsBy(float dx, float dy);
     

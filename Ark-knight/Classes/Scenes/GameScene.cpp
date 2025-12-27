@@ -96,6 +96,7 @@ void GameScene::initMapSystem()
 {
     // 创建地图生成器
     _mapGenerator = MapGenerator::create();
+    _mapGenerator->setLevelNumber(_currentLevel, _currentStage);
     _mapGenerator->generateMap();
     _gameLayer->addChild(_mapGenerator);
     
@@ -267,8 +268,9 @@ void GameScene::spawnEnemiesInRoom(Room* room)
         return;
     }
     
-    // 只在普通战斗房间生成敌人
-    if (room->getRoomType() != Constants::RoomType::NORMAL)
+    // 只在普通战斗房间和Boss房间生成敌人
+    if (room->getRoomType() != Constants::RoomType::NORMAL && 
+        room->getRoomType() != Constants::RoomType::BOSS)
     {
         return;
     }
@@ -291,6 +293,20 @@ void GameScene::spawnEnemiesInRoom(Room* room)
     // 使用房间自身计算的可行走区域（基于墙与玩家半径），确保边界与墙对齐
     Rect walk = room->getWalkableArea();
     
+    // Boss房间：只生成一个Boss在中心
+    if (room->getRoomType() == Constants::RoomType::BOSS)
+    {
+        auto boss = KuiLongBoss::create();
+        if (boss)
+        {
+            boss->setPosition(roomCenter);
+            boss->setRoomBounds(walk);
+            addEnemy(boss);
+            GAME_LOG("KuiLongBoss spawned at boss room center (%.1f, %.1f)", roomCenter.x, roomCenter.y);
+        }
+        return; // boss房间只生成boss，不生成其他敌人
+    }
+
     // --------- 调试：在每个战斗房间必定生成一个 Boss（便于调试） ----------
     {
         auto boss = KuiLongBoss::create();
@@ -1136,8 +1152,8 @@ void GameScene::goToNextLevel()
     GAME_LOG("Going to next level. Current: %d-%d, Next: %d-%d, Saving HP: %d, MP: %d", 
              _currentLevel, _currentStage, nextLevel, nextStage, savedHP, savedMP);
     
-    // 判断是否通关（1-2 后结束）
-    if (nextLevel == 1 && nextStage > 2)
+    // 判断是否通关（1-3 后结束）
+    if (nextLevel == 1 && nextStage > 3)
     {
         // 显示胜利界面
         showVictory();
