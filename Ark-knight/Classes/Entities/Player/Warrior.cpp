@@ -59,8 +59,8 @@ bool Warrior::init()
     auto sprite = Sprite::create("Player/Mudrock/MudRock_Idle/MudRock_Idle_0001.png");
     if (sprite)
     {
-        // 设置缩放（与法师一致）
-        float targetSize = Constants::FLOOR_TILE_SIZE * 4.0f;
+        // 设置缩放（战士稍微大一点）
+        float targetSize = Constants::FLOOR_TILE_SIZE * 4.5f;
         float scale = targetSize / sprite->getContentSize().height;
         sprite->setScale(scale);
         

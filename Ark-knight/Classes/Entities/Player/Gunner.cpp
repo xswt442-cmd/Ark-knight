@@ -520,6 +520,29 @@ void Gunner::shootBullet()
                             return;
                         }
                     }
+                    
+                    // 第三层深度检测
+                    for (auto deepChild : subChild->getChildren())
+                    {
+                        if (deepChild->getTag() == Constants::Tag::WALL)
+                        {
+                            Vec2 wallWorldPos = subChild->convertToWorldSpace(deepChild->getPosition());
+                            Vec2 wallPos = parent->convertToNodeSpace(wallWorldPos);
+
+                            float dist = bulletPos.distance(wallPos);
+                            if (dist < wallCollisionRadius)
+                            {
+                                // 爆炸范围伤害
+                                this->createExplosion(parent, bulletPos, bulletDamage, explosionRadius);
+                                
+                                bullet->setUserData((void*)1);
+                                bullet->stopAllActions();
+                                bullet->unschedule("bulletUpdate");
+                                bullet->removeFromParent();
+                                return;
+                            }
+                        }
+                    }
                 }
             }
             

@@ -83,7 +83,7 @@ void CharacterSelectLayer::createUI()
     _mageLabel = Label::createWithTTF(u8"妮芙\n（法师）", "fonts/msyh.ttf", 24);
     _mageLabel->setPosition(Vec2(mageX, characterY - 180));
     _mageLabel->setAlignment(TextHAlignment::CENTER);
-    _mageLabel->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL + 21);
+    _mageLabel->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL + 25);  // 高于角色图片
     this->addChild(_mageLabel);
     
     // ==================== 炮手（维什戴尔）====================
@@ -116,7 +116,7 @@ void CharacterSelectLayer::createUI()
     _gunnerLabel = Label::createWithTTF(u8"维什戴尔\n（炮手）", "fonts/msyh.ttf", 24);
     _gunnerLabel->setPosition(Vec2(gunnerX, characterY - 180));
     _gunnerLabel->setAlignment(TextHAlignment::CENTER);
-    _gunnerLabel->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL + 21);
+    _gunnerLabel->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL + 25);  // 高于角色图片
     this->addChild(_gunnerLabel);
     
     // ==================== 战士（泥岩）====================
@@ -147,9 +147,9 @@ void CharacterSelectLayer::createUI()
     }
     
     _warriorLabel = Label::createWithTTF(u8"泥岩\n（战士）", "fonts/msyh.ttf", 24);
-    _warriorLabel->setPosition(Vec2(warriorX, characterY - 180));
+    _warriorLabel->setPosition(Vec2(warriorX, characterY - 200));
     _warriorLabel->setAlignment(TextHAlignment::CENTER);
-    _warriorLabel->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL + 21);
+    _warriorLabel->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL + 25);  // 高于角色图片
     this->addChild(_warriorLabel);
     
     // ==================== 确认按钮 ====================

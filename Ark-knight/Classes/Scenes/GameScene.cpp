@@ -875,13 +875,10 @@ void GameScene::checkBarrierCollisions()
     {
         Vec2 playerPos = _player->getPosition();
         
-        // 获取玩家碰撞箱（使用精灵大小的40%作为碰撞体积，让玩家更灵活）
-        Size playerSize = Size(32, 32); 
-        if (_player->getSprite()) {
-             playerSize = _player->getSprite()->getBoundingBox().size;
-             playerSize.width *= 0.4f;
-             playerSize.height *= 0.4f;
-        }
+        // 使用固定的碰撞体积，与角色视觉大小无关
+        // 这样所有角色都能通过相同大小的间隙
+        float collisionSize = Constants::FLOOR_TILE_SIZE * 1.5f;  // 约1.5格的碰撞体积
+        Size playerSize = Size(collisionSize, collisionSize);
         
         Rect playerBox(playerPos.x - playerSize.width / 2, 
                        playerPos.y - playerSize.height / 2, 
