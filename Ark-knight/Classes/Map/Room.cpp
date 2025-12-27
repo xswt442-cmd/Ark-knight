@@ -744,17 +744,18 @@ bool Room::canInteractWithPortal(Player* player) const
  * - 当前使用2倍房间尺寸 (56x40 瓦片)
  */
 void Room::generateBossFloorTiles(int count) {
-    // Boss房间是2倍大小
-    int roomWidth = Constants::ROOM_TILES_W * 2;
-    int roomHeight = Constants::ROOM_TILES_H * 2;
+    // 使用房间实际尺寸（createMap已设置）
+    int roomWidth = _tilesWidth;
+    int roomHeight = _tilesHeight;
     float tileSize = Constants::FLOOR_TILE_SIZE;
     
-    // 计算房间左下角位置
-    float startX = _centerX - (roomWidth * tileSize / 2) + tileSize / 2;
-    float startY = _centerY - (roomHeight * tileSize / 2) + tileSize / 2;
+    // 使用与createMap相同的坐标计算方式
+    // 第0列瓦片中心 = centerX - tileSize * (width/2 - 0.5)
+    float baseX = _centerX - tileSize * (roomWidth / 2.0f - 0.5f);
+    float baseY = _centerY + tileSize * (roomHeight / 2.0f - 0.5f);  // 从顶部开始
     
-    log("generateBossFloorTiles: center=(%.1f, %.1f), roomSize=(%d x %d), startPos=(%.1f, %.1f)",
-        _centerX, _centerY, roomWidth, roomHeight, startX, startY);
+    log("generateBossFloorTiles: center=(%.1f, %.1f), roomSize=(%d x %d), basePos=(%.1f, %.1f)",
+        _centerX, _centerY, roomWidth, roomHeight, baseX, baseY);
     
     // 收集所有可用的地板位置（排除边缘和中心Boss生成区域）
     std::vector<std::pair<int, int>> availablePositions;
@@ -793,14 +794,15 @@ void Room::generateBossFloorTiles(int count) {
         int tileX = availablePositions[i].first;
         int tileY = availablePositions[i].second;
         
-        float posX = startX + tileX * tileSize;
-        float posY = startY + tileY * tileSize;
+        // 与createMap相同的坐标计算：X向右增加，Y从上往下（所以要减）
+        float posX = baseX + tileX * tileSize;
+        float posY = baseY - tileY * tileSize;  // 注意：Y是从上往下，所以要减
         
         auto fireFloor = cocos2d::Sprite::create("Map/Floor/Floor_fire.png");
         if (fireFloor) {
             fireFloor->setPosition(posX, posY);
-            // 火焰地板层级略高于普通地板
-            this->addChild(fireFloor, Constants::ZOrder::FLOOR + 1);
+            // 火焰地板层级设为DOOR级别，确保在普通地板之上
+            this->addChild(fireFloor, Constants::ZOrder::DOOR);
             
             // 添加轻微的缩放动画，增加视觉效果
             auto scaleUp = cocos2d::ScaleTo::create(0.8f + (rand() % 100) / 200.0f, 1.05f);
