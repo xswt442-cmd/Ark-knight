@@ -25,17 +25,36 @@ public:
     // 强制消失（Boss技能结束时调用）
     void forceDissipate();
 
+    // 覆写 takeDamage 以防止闪烁导致模型丢失
+    virtual void takeDamage(int damage) override;
+
+    // 【新增】覆写死亡逻辑
+    virtual void die() override;
+
+    // 【新增】设置死亡回调（用于通知 Boss）
+    void setDeathCallback(const std::function<void()>& callback) { _deathCallback = callback; }
+
+    // 免疫恐卡兹寄生
+    virtual bool canSpawnKongKaZiOnDeath() const override { return false; }
+
 protected:
     void loadAnimations();
     void pickNewDirection();
     void checkPlayerCollision();
+    void updateFacing();
 
     // 状态
     bool _isMoving;
     float _idleTimer;      // 出场待机计时
-    float _lifeTimer;      // 存活计时（虽然由Boss控制，但自身也维护一个以防万一）
+    float _lifeTimer;      // 存活计时
     int _collisionCount;   // 碰撞次数
-    int _absorbedCount;    // 吸收计数器（题目要求存入自身）
+    int _absorbedCount;    // 吸收计数器
+    
+    // 碰撞冷却
+    float _collisionCooldown;
+    
+    // 移动方向改变计时器
+    float _moveChangeTimer;
     
     cocos2d::Rect _roomBounds;
     cocos2d::Vec2 _currentMoveDir;
@@ -44,6 +63,9 @@ protected:
     cocos2d::Animation* _animIdle;
     cocos2d::Animation* _animMove;
     cocos2d::Animation* _animDie;
+
+    // 【新增】死亡回调
+    std::function<void()> _deathCallback;
 
     // 标记
     static const int BOAT_ACTION_TAG = 0xB0A7;

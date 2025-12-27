@@ -3,7 +3,7 @@
 #include "Entities/Player/Player.h"
 #include "ui/CocosGUI.h"
 #include "Entities/Enemy/NiLuFire.h"
-#include "Entities/Enemy/Boat.h" // 新增 include
+#include "Entities/Enemy/Boat.h"
 #include "Scenes/GameScene.h"
 #include "UI/FloatingText.h"
 
@@ -46,6 +46,7 @@ KuiLongBoss::KuiLongBoss()
     , _threshold25Triggered(false)
     , _chengSanShenTimer(0.0f)
     , _chengSanShenDuration(30.0f)
+    , _chengSanShenEnding(false)
     , _summonedBoat(nullptr)
 {
 }
@@ -535,20 +536,17 @@ void KuiLongBoss::startChengSanShen()
 
     _phase = SKILL_CHENG_SAN_SHEN;
     _chengSanShenTimer = 0.0f;
+    _chengSanShenEnding = false;
     
-    // 停止所有当前动作
     stopAllActions();
     if (_sprite) _sprite->stopAllActions();
     _moveAnimPlaying = false;
-    _skillPlaying = false; // 强制结束 ChengWuJie
+    _skillPlaying = false;
     _skillDamageScheduled = false;
 
-    // 进入隐身/无敌
     this->addStealthSource((void*)this);
-    // 状态设为 SKILL 或 IDLE，防止移动
     setState(EntityState::SKILL);
 
-    // 播放 Start -> Idle
     if (_sprite && _animCSS_Start)
     {
         auto startAnim = Animate::create(_animCSS_Start);
@@ -564,33 +562,27 @@ void KuiLongBoss::startChengSanShen()
                 auto boat = Boat::create();
                 if (boat) {
                     boat->setRoomBounds(_roomBounds);
-                    // 随机边界位置
                     float x, y;
                     int edge = cocos2d::random(0, 3);
                     switch(edge) {
-                        case 0: // Top
-                            x = cocos2d::random(_roomBounds.getMinX(), _roomBounds.getMaxX());
-                            y = _roomBounds.getMaxY();
-                            break;
-                        case 1: // Bottom
-                            x = cocos2d::random(_roomBounds.getMinX(), _roomBounds.getMaxX());
-                            y = _roomBounds.getMinY();
-                            break;
-                        case 2: // Left
-                            x = _roomBounds.getMinX();
-                            y = cocos2d::random(_roomBounds.getMinY(), _roomBounds.getMaxY());
-                            break;
-                        case 3: // Right
-                            x = _roomBounds.getMaxX();
-                            y = cocos2d::random(_roomBounds.getMinY(), _roomBounds.getMaxY());
-                            break;
+                        case 0: x = cocos2d::random(_roomBounds.getMinX(), _roomBounds.getMaxX()); y = _roomBounds.getMaxY(); break;
+                        case 1: x = cocos2d::random(_roomBounds.getMinX(), _roomBounds.getMaxX()); y = _roomBounds.getMinY(); break;
+                        case 2: x = _roomBounds.getMinX(); y = cocos2d::random(_roomBounds.getMinY(), _roomBounds.getMaxY()); break;
+                        case 3: x = _roomBounds.getMaxX(); y = cocos2d::random(_roomBounds.getMinY(), _roomBounds.getMaxY()); break;
                     }
                     boat->setPosition(Vec2(x, y));
                     
+                    // 【新增】设置死亡回调，当 Boat 被击杀时通知 Boss 结束技能
+                    boat->setDeathCallback([this]() {
+                        // 确保 Boss 仍有效（虽然通常 Boss 是 Boat 的管理者，但安全起见）
+                        if (this->getReferenceCount() > 0) {
+                            this->endChengSanShen();
+                        }
+                    });
+
                     auto scene = Director::getInstance()->getRunningScene();
                     auto gs = dynamic_cast<GameScene*>(scene);
                     if (gs) gs->addEnemy(boat);
-                    
                     _summonedBoat = boat;
                 }
             }
@@ -604,7 +596,7 @@ void KuiLongBoss::startChengSanShen()
 void KuiLongBoss::updateChengSanShen(float dt)
 {
     _chengSanShenTimer += dt;
-    if (_chengSanShenTimer >= _chengSanShenDuration)
+    if (!_chengSanShenEnding && _chengSanShenTimer >= _chengSanShenDuration)
     {
         endChengSanShen();
     }
@@ -612,9 +604,12 @@ void KuiLongBoss::updateChengSanShen(float dt)
 
 void KuiLongBoss::endChengSanShen()
 {
+    if (_chengSanShenEnding) return;
+    _chengSanShenEnding = true;
+
     // 移除 Boat
     if (_summonedBoat && !_summonedBoat->getReferenceCount()) {
-        _summonedBoat = nullptr; // 已被销毁
+        _summonedBoat = nullptr;
     }
     if (_summonedBoat) {
         _summonedBoat->forceDissipate();
@@ -626,12 +621,10 @@ void KuiLongBoss::endChengSanShen()
         _sprite->stopActionByTag(KUI_LONG_CSS_TAG);
         
         auto finishCallback = CallFunc::create([this](){
-            // 恢复状态
             _phase = PHASE_B;
             this->removeStealthSource((void*)this);
             setState(EntityState::IDLE);
             
-            // 恢复移动动画
             if (_animBMove && _sprite) {
                 auto bmoveAnimate = Animate::create(_animBMove);
                 auto repeat = RepeatForever::create(bmoveAnimate);
@@ -649,14 +642,11 @@ void KuiLongBoss::endChengSanShen()
             finishCallback->execute();
         }
     } else {
-        // 无 Sprite 兜底
         _phase = PHASE_B;
         this->removeStealthSource((void*)this);
         setState(EntityState::IDLE);
     }
 }
-
-// ... (startChengWuJie, die, move, destructor, loadAnimationFrames, canUseChengWuJie, resetChengWuJieCooldown 保持不变) ...
 
 void KuiLongBoss::startChengWuJie(Player* target)
 {
@@ -692,6 +682,8 @@ void KuiLongBoss::startChengWuJie(Player* target)
 
     int dmgPerHit = this->_skillDamagePerHit;
     Vector<FiniteTimeAction*> acts;
+    
+    // 辅助 lambda：生成单次伤害回调
     auto createHitFunc = [this, target, dmgPerHit]() {
         return CallFunc::create([this, target, dmgPerHit]() {
             if (!target) return;
@@ -700,9 +692,24 @@ void KuiLongBoss::startChengWuJie(Player* target)
             if (distSqr <= (this->_skillRange * this->_skillRange)) {
                 target->takeDamage(dmgPerHit);
             }
+            
+            // 【需求4】NiLuFire 响应 ChengWuJie：每次伤害判定时，NiLuFire 也进行攻击
+            Scene* running = Director::getInstance()->getRunningScene();
+            if (running) {
+                std::vector<NiLuFire*> found;
+                collectNiLuFiresRecursive(running, found);
+                for (auto fire : found) {
+                    if (!fire) continue;
+                    if (!_roomBounds.equals(Rect::ZERO)) {
+                        if (!_roomBounds.containsPoint(fire->getPosition())) continue;
+                    }
+                    fire->performAttackImmediate(this->getAttack());
+                }
+            }
         });
     };
 
+    // 伤害序列：0, 0.5, 1.0, 1.5, 2.5
     acts.pushBack(createHitFunc());
     acts.pushBack(DelayTime::create(0.5f));
     acts.pushBack(createHitFunc());

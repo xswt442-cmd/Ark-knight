@@ -35,6 +35,9 @@ public:
     virtual bool isPoisonable() const override;
     virtual void setRoomBounds(const cocos2d::Rect& bounds) override;
 
+    // 【修改】将 endChengSanShen 设为 public，供 Boat 死亡时调用
+    void endChengSanShen();
+
 protected:
     void loadAnimations();
     cocos2d::Animation* loadAnimationFrames(const std::string& folder, const std::string& prefix, int maxFrames, float delayPerUnit);
@@ -45,7 +48,7 @@ protected:
         TRANSITION_A_TO_B,
         PHASE_B,
         PHASE_C,
-        SKILL_CHENG_SAN_SHEN // 新增：承三身阶段
+        SKILL_CHENG_SAN_SHEN
     };
 
     Phase _phase;
@@ -58,13 +61,14 @@ protected:
     bool _threshold25Triggered;
     
     float _chengSanShenTimer;
-    float _chengSanShenDuration; // 30秒
-    Boat* _summonedBoat;         // 记录召唤的 Boat
+    float _chengSanShenDuration;
+    bool _chengSanShenEnding; 
+    Boat* _summonedBoat;
 
     void checkChengSanShenTrigger();
     void startChengSanShen();
     void updateChengSanShen(float dt);
-    void endChengSanShen();
+    // void endChengSanShen(); // Moved to public
 
     // ========== 动画资源 ==========
     cocos2d::Animation* _animAIdle;
@@ -74,7 +78,6 @@ protected:
     cocos2d::Animation* _animBChangeToC;
     cocos2d::Animation* _animBChengWuJie;
     
-    // 新增承三身动画
     cocos2d::Animation* _animCSS_Start;
     cocos2d::Animation* _animCSS_Idle;
     cocos2d::Animation* _animCSS_End;
@@ -87,7 +90,7 @@ protected:
     static const int KUI_LONG_DIE_TAG = 0x7F05;
     static const int KUI_LONG_SKILL_TAG = 0x7F06;
     static const int KUI_LONG_SKILL_DAMAGE_TAG = 0x7F07;
-    static const int KUI_LONG_CSS_TAG = 0x7F08; // 承三身动画Tag
+    static const int KUI_LONG_CSS_TAG = 0x7F08;
 
     bool _moveAnimPlaying;
 
