@@ -42,6 +42,10 @@ public:
     // 设置关卡数
     void setLevelNumber(int level, int stage) { _levelNumber = (level - 1) * 5 + stage; }
     
+    // 设置为Boss层模式（只生成起始房间+Boss房间）
+    void setBossFloor(bool isBoss) { _isBossFloor = isBoss; }
+    bool isBossFloor() const { return _isBossFloor; }
+    
     // 移动所有房间（用于视角跟随）
     void moveAllRoomsBy(float dx, float dy);
     
@@ -96,6 +100,9 @@ private:
     
     // 当前关卡编号
     int _levelNumber;
+    
+    // 是否为Boss层
+    bool _isBossFloor;
 };
 
 #endif // __MAP_GENERATOR_H__

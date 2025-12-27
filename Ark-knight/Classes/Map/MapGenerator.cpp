@@ -37,6 +37,7 @@ bool MapGenerator::init() {
     _endRoom = nullptr;
     _currentRoom = nullptr;
     _levelNumber = 1;
+    _isBossFloor = false;
     
     srand(static_cast<unsigned int>(time(nullptr)));
     
@@ -50,9 +51,57 @@ void MapGenerator::update(float delta) {
 void MapGenerator::generateMap() {
     clearMap();
     
+    Size visibleSize = Director::getInstance()->getVisibleSize();
     int startX = Constants::MAP_GRID_SIZE / 2;
     int startY = 1 + rand() % 3;
     
+    // Boss层特殊处理：只生成起始房间+Boss房间
+    if (_isBossFloor) {
+        // 创建起始房间
+        Room* startRoom = Room::create();
+        startRoom->setGridPosition(startX, startY);
+        startRoom->setCenter(visibleSize.width / 2, visibleSize.height / 2);
+        _roomMatrix[startX][startY] = startRoom;
+        _beginRoom = startRoom;
+        _roomCount = 1;
+        
+        // 创建Boss房间（在起始房间右边）
+        int bossX = startX + 1;
+        int bossY = startY;
+        Room* bossRoom = Room::create();
+        bossRoom->setGridPosition(bossX, bossY);
+        float bossRoomCenterX = visibleSize.width / 2 + Constants::ROOM_CENTER_DIST;
+        bossRoom->setCenter(bossRoomCenterX, visibleSize.height / 2);
+        _roomMatrix[bossX][bossY] = bossRoom;
+        _endRoom = bossRoom;
+        _roomCount = 2;
+        
+        // 设置房间类型
+        startRoom->setRoomType(Constants::RoomType::BEGIN);
+        startRoom->setVisited(true);
+        bossRoom->setRoomType(Constants::RoomType::BOSS);
+        
+        // 连接两个房间
+        startRoom->setDoor(Constants::DIR_RIGHT, true);
+        bossRoom->setDoor(Constants::DIR_LEFT, true);
+        
+        // 创建房间地图
+        startRoom->createMap();
+        bossRoom->createMap();
+        this->addChild(startRoom);
+        this->addChild(bossRoom);
+        
+        // 生成走廊
+        generateHallways();
+        for (auto hallway : _hallways) {
+            hallway->createMap();
+            this->addChild(hallway, Constants::ZOrder::FLOOR);
+        }
+        
+        return;
+    }
+    
+    // 普通关卡的生成逻辑
     randomGenerate(startX, startY);
     assignRoomTypes();
     connectAdjacentRooms();
@@ -213,8 +262,8 @@ void MapGenerator::assignRoomTypes() {
                 room->setRoomType(Constants::RoomType::BEGIN);
                 room->setVisited(true);
             } else if (room == _endRoom) {
-                // 1-1关卡（_levelNumber=1）为boss关
-                if (_levelNumber == 1) {
+                // 每5关一个boss（如果需要），否则是终点房间
+                if (_levelNumber % 5 == 0) {
                     room->setRoomType(Constants::RoomType::BOSS);
                 } else {
                     room->setRoomType(Constants::RoomType::END);

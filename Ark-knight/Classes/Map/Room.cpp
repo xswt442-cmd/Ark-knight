@@ -85,8 +85,7 @@ void Room::createMap() {
             // boss房间大小设为两倍
             _tilesWidth = Constants::ROOM_TILES_W * 2;
             _tilesHeight = Constants::ROOM_TILES_H * 2;
-            // Boss房间使用特殊的浅绿色地板 (Floor6)
-            _floorTextureIndex = 6;
+            // Boss房间会在generateFloor中随机生成火焰地板
             break;
         case Constants::RoomType::REWARD:
         case Constants::RoomType::END:
@@ -176,9 +175,13 @@ void Room::createMap() {
 void Room::generateFloor(float x, float y) {
     int chosenIndex = _floorTextureIndex; // 默认使用房间的纹理索引
     
-    // Boss房间直接使用Floor6，不进行随机化
+    // Boss房间的地板选择：大部分使用原地板，但有一定概率使用火焰地板
     if (_roomType == Constants::RoomType::BOSS) {
-        chosenIndex = 6;
+        // Boss房间中30%的地板使用火焰纹理
+        if (rand() % 100 < 30) {
+            chosenIndex = 6; // 使用火焰地板
+        }
+        // 其余70%使用房间默认地板
     }
     // 普通房间的地板选择逻辑
     else if (_floorTextureIndex >= 1 && _floorTextureIndex <= 3) {
@@ -214,8 +217,8 @@ void Room::generateFloor(float x, float y) {
     // 使用选定的纹理创建地板
     std::string floorPath;
     if (chosenIndex == 6) {
-        // Boss房间使用特殊地板（腐蚀地板）
-        floorPath = "Map/Floor/Floor_cor.png";
+        // Boss房间使用特殊地板（火焰地板）
+        floorPath = "Map/Floor/Floor_fire.png";
     } else {
         // 普通地板1-5
         floorPath = "Map/Floor/Floor_000" + std::to_string(chosenIndex) + ".png";

@@ -98,6 +98,12 @@ void GameScene::initMapSystem()
     // 创建地图生成器
     _mapGenerator = MapGenerator::create();
     _mapGenerator->setLevelNumber(_currentLevel, _currentStage);
+    
+    // stage=0表示Boss层
+    if (_currentStage == 0) {
+        _mapGenerator->setBossFloor(true);
+    }
+    
     _mapGenerator->generateMap();
     _gameLayer->addChild(_mapGenerator);
     
@@ -1150,12 +1156,10 @@ void GameScene::goToNextLevel()
     GAME_LOG("Going to next level. Current: %d-%d, Next: %d-%d, Saving HP: %d, MP: %d", 
              _currentLevel, _currentStage, nextLevel, nextStage, savedHP, savedMP);
     
-    // 判断是否通关（1-3 后结束）
+    // 1-3通关后进入Boss层（stage=0表示Boss层）
     if (nextLevel == 1 && nextStage > 3)
     {
-        // 显示胜利界面
-        showVictory();
-        return;
+        nextStage = 0; // Boss层
     }
     
     // 使用静态变量传递信息给新场景
