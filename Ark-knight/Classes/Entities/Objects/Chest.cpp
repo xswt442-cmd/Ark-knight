@@ -78,11 +78,13 @@ bool Chest::canInteract(Player* player, float interactionDistance) const
     return distance <= interactionDistance;
 }
 
-ItemDrop* Chest::open(const std::unordered_map<std::string, int>& ownedItems)
+cocos2d::Vector<ItemDrop*> Chest::open(const std::unordered_map<std::string, int>& ownedItems)
 {
+    cocos2d::Vector<ItemDrop*> drops;
+    
     if (_isOpened)
     {
-        return nullptr;
+        return drops;
     }
     
     _isOpened = true;
@@ -96,28 +98,34 @@ ItemDrop* Chest::open(const std::unordered_map<std::string, int>& ownedItems)
     
     _sprite->runAction(sequence);
     
-    // 抽取道具
-    const ItemDef* item = ItemLibrary::pickRandom(ownedItems);
+    // 随机生成 2-4 个道具
+    int itemCount = RandomHelper::random_int(2, 4);
+    GAME_LOG("Chest opened! Spawning %d items.", itemCount);
     
-    if (!item)
-    {
-        GAME_LOG("Chest opened, but no item available!");
-        return nullptr;
+    for (int i = 0; i < itemCount; ++i) {
+        // 抽取道具
+        const ItemDef* item = ItemLibrary::pickRandom(ownedItems);
+        
+        if (!item)
+        {
+            GAME_LOG("No item available for slot %d!", i);
+            continue;
+        }
+        
+        // 创建掉落物
+        ItemDrop* drop = ItemDrop::create(item);
+        if (drop)
+        {
+            // 随机分散位置，避免重叠
+            float offsetX = RandomHelper::random_real(-40.0f, 40.0f);
+            float offsetY = RandomHelper::random_real(-40.0f, 40.0f);
+            
+            drop->setPosition(this->getPosition() + Vec2(offsetX, offsetY));
+            drop->setGlobalZOrder(Constants::ZOrder::FLOOR + 2);
+            
+            drops.pushBack(drop);
+        }
     }
     
-    GAME_LOG("Chest opened! Got item: %s", item->name.c_str());
-    
-    // 创建掉落物
-    ItemDrop* drop = ItemDrop::create(item);
-    if (!drop)
-    {
-        GAME_LOG("Failed to create item drop!");
-        return nullptr;
-    }
-    
-    // 放置在宝箱位置
-    drop->setPosition(this->getPosition());
-    drop->setGlobalZOrder(Constants::ZOrder::FLOOR + 2);
-    
-    return drop;
+    return drops;
 }

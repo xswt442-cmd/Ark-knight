@@ -3,6 +3,7 @@
 #include "Map/Room.h"
 #include "Map/Hallway.h"
 #include "UI/FloatingText.h"
+#include "audio/include/AudioEngine.h"
 
 Mage::Mage()
     : _isEnhanced(false)
@@ -342,6 +343,16 @@ void Mage::attack()
     
     setState(EntityState::ATTACK);
     resetAttackCooldown();
+    
+    // 播放攻击音效
+    if (_isEnhanced)
+    {
+        AudioEngine::play2d("SoundEffect/Nymph_Skill_Attack-1.wav");
+    }
+    else
+    {
+        AudioEngine::play2d("SoundEffect/Nymph_Attack-1.wav");
+    }
     
     // 发射子弹
     shootBullet();

@@ -829,7 +829,21 @@ void GameScene::updateInteraction(float dt)
     // 显示或隐藏交互提示（道具优先于宝箱）
     if (canInteractItem)
     {
-        ItemDrop* itemDrop = _currentRoom->getItemDrop();
+        // 获取所有掉落物，找到最近的一个
+        const auto& drops = _currentRoom->getItemDrops();
+        ItemDrop* itemDrop = nullptr;
+        float minDistance = FLT_MAX;
+        
+        for (auto drop : drops) {
+            if (drop->canPickup(_player)) {
+                float dist = drop->getPosition().distance(_player->getPosition());
+                if (dist < minDistance) {
+                    minDistance = dist;
+                    itemDrop = drop;
+                }
+            }
+        }
+        
         if (!itemDrop || !itemDrop->getItemDef())
         {
             _gameHUD->hideInteractionHint();
@@ -845,7 +859,7 @@ void GameScene::updateInteraction(float dt)
         }
         
         std::string interactText = std::string(u8"[E]获取") + itemDef->name + u8"：" + itemDef->description;
-        CCLOG("Showing item interaction: %s", interactText.c_str());
+        // CCLOG("Showing item interaction: %s", interactText.c_str());
         
         Vec2 itemWorldPos = itemDrop->getParent()->convertToWorldSpace(itemDrop->getPosition());
         float itemHeight = itemSprite->getContentSize().height * itemSprite->getScale();

@@ -3,6 +3,7 @@
 #include "Map/Room.h"
 #include "Map/Hallway.h"
 #include "UI/FloatingText.h"
+#include "audio/include/AudioEngine.h"
 
 Gunner::Gunner()
     : _isEnhanced(false)
@@ -333,6 +334,16 @@ void Gunner::attack()
     
     setState(EntityState::ATTACK);
     resetAttackCooldown();
+    
+    // 播放攻击音效
+    if (_isEnhanced)
+    {
+        AudioEngine::play2d("SoundEffect/Wisdael_Skill_Attack-1.wav");
+    }
+    else
+    {
+        AudioEngine::play2d("SoundEffect/Wisdael_Attack-1.wav");
+    }
     
     // 40% 概率触发被动：5连发
     if (RandomHelper::random_real(0.0f, 1.0f) < 0.3f)

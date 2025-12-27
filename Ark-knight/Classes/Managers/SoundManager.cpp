@@ -19,6 +19,21 @@ void SoundManager::destroyInstance()
 {
     if (_instance != nullptr)
     {
+        // 1. 停止当前所有由 SoundManager 管理的音频（不直接 end AudioEngine）
+        // 停止 BGM
+        if (_instance->_bgmAudioID != AudioEngine::INVALID_AUDIO_ID)
+        {
+            AudioEngine::stop(_instance->_bgmAudioID);
+            _instance->_bgmAudioID = AudioEngine::INVALID_AUDIO_ID;
+        }
+        // 停止 SFX
+        std::vector<int> ids;
+        ids.reserve(_instance->_sfxMap.size());
+        for (auto &kv : _instance->_sfxMap) ids.push_back(kv.first);
+        for (int id : ids) AudioEngine::stop(id);
+        _instance->_sfxMap.clear();
+
+        // 注意：不要在这里调用 AudioEngine::end() —— AppDelegate 负责在程序退出时调用它。
         delete _instance;
         _instance = nullptr;
         GAME_LOG("SoundManager instance destroyed");
@@ -36,8 +51,8 @@ SoundManager::SoundManager()
 
 SoundManager::~SoundManager()
 {
-    stopBGM();
-    stopAllSFX();
+    // 析构时清理映射并确保不再保留任何 ID
+    _sfxMap.clear();
 }
 
 void SoundManager::playBGM(const std::string& filePath, bool loop)
@@ -46,16 +61,26 @@ void SoundManager::playBGM(const std::string& filePath, bool loop)
     {
         return;
     }
-    
-    // 停止当前BGM
-    stopBGM();
-    
-    // 播放新BGM
-    _bgmAudioID = AudioEngine::play2d(filePath, loop, _bgmVolume);
-    
+
+    // 停止当前BGM（如果有）
     if (_bgmAudioID != AudioEngine::INVALID_AUDIO_ID)
     {
-        GAME_LOG("Playing BGM: %s", filePath.c_str());
+        AudioEngine::stop(_bgmAudioID);
+        _bgmAudioID = AudioEngine::INVALID_AUDIO_ID;
+    }
+
+    // 播放新BGM
+    _bgmAudioID = AudioEngine::play2d(filePath, loop, _bgmVolume);
+
+    if (_bgmAudioID != AudioEngine::INVALID_AUDIO_ID)
+    {
+        // 当 BGM 结束或被停止时，重置 ID
+        AudioEngine::setFinishCallback(_bgmAudioID, [this](int id, const std::string& path){
+            if (id == _bgmAudioID) {
+                _bgmAudioID = AudioEngine::INVALID_AUDIO_ID;
+            }
+        });
+        GAME_LOG("Playing BGM: %s (ID: %d)", filePath.c_str(), _bgmAudioID);
     }
     else
     {
@@ -94,12 +119,13 @@ void SoundManager::resumeBGM()
 void SoundManager::setBGMVolume(float volume)
 {
     _bgmVolume = std::max(0.0f, std::min(1.0f, volume));
-    
+
+    // 只要当前有 BGM 播放，则设置其音量；否则仅保存 _bgmVolume，以便下次 playBGM 时生效
     if (_bgmAudioID != AudioEngine::INVALID_AUDIO_ID)
     {
         AudioEngine::setVolume(_bgmAudioID, _bgmVolume);
     }
-    
+
     GAME_LOG("BGM volume set to %.2f", _bgmVolume);
 }
 
@@ -109,19 +135,28 @@ int SoundManager::playSFX(const std::string& filePath, bool loop)
     {
         return AudioEngine::INVALID_AUDIO_ID;
     }
-    
+
     int audioID = AudioEngine::play2d(filePath, loop, _sfxVolume);
-    
+
     if (audioID != AudioEngine::INVALID_AUDIO_ID)
     {
         _sfxMap[audioID] = filePath;
+
+        // 自动清理回调，避免 map 膨胀
+        AudioEngine::setFinishCallback(audioID, [this](int id, const std::string& path){
+            auto it = _sfxMap.find(id);
+            if (it != _sfxMap.end()) {
+                _sfxMap.erase(it);
+            }
+        });
+
         GAME_LOG("Playing SFX: %s (ID: %d)", filePath.c_str(), audioID);
     }
     else
     {
         GAME_LOG_ERROR("Failed to play SFX: %s", filePath.c_str());
     }
-    
+
     return audioID;
 }
 
@@ -137,10 +172,11 @@ void SoundManager::stopSFX(int audioID)
 
 void SoundManager::stopAllSFX()
 {
-    for (auto& pair : _sfxMap)
-    {
-        AudioEngine::stop(pair.first);
-    }
+    // 复制 keys 后停止，避免在遍历时修改 map
+    std::vector<int> ids;
+    ids.reserve(_sfxMap.size());
+    for (auto &kv : _sfxMap) ids.push_back(kv.first);
+    for (int id : ids) AudioEngine::stop(id);
     _sfxMap.clear();
     GAME_LOG("All SFX stopped");
 }
@@ -148,20 +184,20 @@ void SoundManager::stopAllSFX()
 void SoundManager::setSFXVolume(float volume)
 {
     _sfxVolume = std::max(0.0f, std::min(1.0f, volume));
-    
-    // 更新所有正在播放的音效音量
-    for (auto& pair : _sfxMap)
+
+    // 更新所有正在播放的音效音量（只会包含正在被跟踪的 SFX IDs）
+    for (auto &kv : _sfxMap)
     {
-        AudioEngine::setVolume(pair.first, _sfxVolume);
+        AudioEngine::setVolume(kv.first, _sfxVolume);
     }
-    
+
     GAME_LOG("SFX volume set to %.2f", _sfxVolume);
 }
 
 void SoundManager::setMute(bool mute)
 {
     _isMuted = mute;
-    
+
     if (_isMuted)
     {
         pauseBGM();

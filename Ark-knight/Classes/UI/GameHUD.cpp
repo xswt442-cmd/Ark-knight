@@ -28,6 +28,7 @@ bool GameHUD::init()
     _mpIcon = nullptr;
     _hpLabel = nullptr;
     _mpLabel = nullptr;
+    _attackLabel = nullptr; // Add
     _skillIcon = nullptr;
     _skillCDProgress = nullptr;
     _skillCDMask = nullptr;
@@ -125,6 +126,15 @@ void GameHUD::createStatusBars()
     _mpLabel->setTextColor(Color4B::WHITE);
     _mpLabel->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL + 10);
     this->addChild(_mpLabel);
+    
+    // ==================== 攻击力 ====================
+    float atkY = mpBarY - 25;
+    _attackLabel = Label::createWithSystemFont("ATK: 0", "Arial", 14);
+    _attackLabel->setAnchorPoint(Vec2(0, 0.5f));
+    _attackLabel->setPosition(Vec2(barStartX + 25, atkY));
+    _attackLabel->setTextColor(Color4B(255, 220, 0, 255));
+    _attackLabel->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL + 10);
+    this->addChild(_attackLabel);
 }
 
 void GameHUD::createSkillIcons()
@@ -257,6 +267,13 @@ void GameHUD::update(Player* player, Room* currentRoom, int roomCount)
     sprintf(mpText, "%d/%d", currentMP, maxMP);
     _mpLabel->setString(mpText);
     
+    // 更新攻击力
+    if (_attackLabel) {
+        char atkText[32];
+        sprintf(atkText, "ATK: %d", player->getAttack());
+        _attackLabel->setString(atkText);
+    }
+    
     // 更新技能冷却
     float remain = player->getSkillCooldownRemaining();
     float totalCD = player->getSkillCooldown();
@@ -332,7 +349,7 @@ void GameHUD::addItemIcon(const ItemDef* itemDef)
     float barStartX = origin.x + 60;
     float mpBarY = origin.y + visibleSize.height - 70;
     float itemSlotStartX = barStartX - 10;
-    float itemSlotStartY = mpBarY - 50;
+    float itemSlotStartY = mpBarY - 60; // Changed from 50
     float itemSlotSize = 32.0f;
     float itemSlotSpacing = 5.0f;
     int maxItemsPerRow = 5;

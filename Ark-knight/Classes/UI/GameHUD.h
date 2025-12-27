@@ -80,6 +80,9 @@ private:
     Sprite* _mpIcon;
     Label* _mpLabel;
     
+    // 攻击力显示
+    Label* _attackLabel;
+    
     // 角色技能图标
     Sprite* _skillIcon;
     ProgressTimer* _skillCDProgress;

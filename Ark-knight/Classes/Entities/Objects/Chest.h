@@ -38,9 +38,9 @@ public:
     /**
      * 打开宝箱：播放动画、抽取道具、生成掉落物
      * @param ownedItems 玩家已拥有的道具计数（用于堆叠限制）
-     * @return 生成的ItemDrop指针，如果没有可用道具则返回nullptr
+     * @return 生成的ItemDrop列表，如果没有可用道具则返回空列表
      */
-    class ItemDrop* open(const std::unordered_map<std::string, int>& ownedItems);
+    cocos2d::Vector<class ItemDrop*> open(const std::unordered_map<std::string, int>& ownedItems);
     
     // Getter
     bool isOpened() const { return _isOpened; }

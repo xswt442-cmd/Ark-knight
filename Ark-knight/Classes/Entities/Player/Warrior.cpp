@@ -4,6 +4,8 @@
 #include "Map/Room.h"
 #include "Map/Hallway.h"
 #include "UI/FloatingText.h"
+#include "audio/include/AudioEngine.h"
+#include "Managers/SoundManager.h"
 
 USING_NS_CC;
 
@@ -375,6 +377,16 @@ void Warrior::attack()
     
     setState(EntityState::ATTACK);
     resetAttackCooldown();
+    
+    // 使用 SoundManager 播放攻击音效
+    if (_isEnhanced)
+    {
+        SoundManager::getInstance()->playSFX("SoundEffect/MudRock_Skill_Attack-1.wav");
+    }
+    else
+    {
+        SoundManager::getInstance()->playSFX("SoundEffect/MudRock_Attack-1.wav");
+    }
     
     // 执行近战范围攻击
     performMeleeAttack();

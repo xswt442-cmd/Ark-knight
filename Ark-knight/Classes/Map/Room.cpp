@@ -43,7 +43,7 @@ bool Room::init() {
     _enemiesSpawned = false;  // 初始化敌人生成标记
     _floorTextureIndex = (rand() % 5) + 1;  // 随机选择1-5号地板
     _chest = nullptr;  // 初始化宝箱指针
-    _itemDrop = nullptr;  // 初始化道具掉落指针
+    _itemDrops.clear();  // 初始化道具掉落列表
     _portal = nullptr;  // 初始化传送门指针
     _portalLighting = nullptr;  // 初始化传送门闪电特效指针
     
@@ -400,6 +400,23 @@ void Room::openDoors() {
         sprite->setTag(0);
     }
     
+    // 战斗胜利奖励：如果是普通战斗房间，在中心生成一个随机道具
+    if (_roomType == Constants::RoomType::NORMAL) {
+        std::unordered_map<std::string, int> emptyMap;
+        const ItemDef* itemDef = ItemLibrary::pickRandom(emptyMap);
+        
+        if (itemDef) {
+            auto drop = ItemDrop::create(itemDef);
+            if (drop) {
+                drop->setPosition(Vec2(_centerX, _centerY));
+                drop->setGlobalZOrder(Constants::ZOrder::FLOOR + 2);
+                this->addChild(drop, Constants::ZOrder::FLOOR + 2);
+                _itemDrops.pushBack(drop);
+                GAME_LOG("Room cleared! Spawned reward item: %s", itemDef->name.c_str());
+            }
+        }
+    }
+    
     GAME_LOG("Room doors opened");
 }
 
@@ -581,45 +598,68 @@ void Room::openChest(Player* player)
     
     // 使用空的道具计数（后续可以从Player中获取）
     std::unordered_map<std::string, int> ownedItems;
-    ItemDrop* drop = _chest->open(ownedItems);
     
-    if (drop)
+    // 获取所有掉落物（现在返回一个列表）
+    auto drops = _chest->open(ownedItems);
+    
+    if (!drops.empty())
     {
-        _itemDrop = drop;
-        this->addChild(_itemDrop, Constants::ZOrder::FLOOR + 2);
-        GAME_LOG("ItemDrop created in room at position (%.1f, %.1f)", drop->getPosition().x, drop->getPosition().y);
+        for (auto drop : drops) {
+            this->addChild(drop, Constants::ZOrder::FLOOR + 2);
+            _itemDrops.pushBack(drop);
+        }
+        GAME_LOG("Chest opened, spawned %d items", (int)drops.size());
     }
     else
     {
-        GAME_LOG("Failed to create ItemDrop from chest");
+        GAME_LOG("Chest opened but no items dropped");
     }
 }
 
 bool Room::canInteractWithItemDrop(Player* player) const
 {
-    if (!_itemDrop || !player)
+    if (_itemDrops.empty() || !player)
     {
         return false;
     }
     
-    bool canPickup = _itemDrop->canPickup(player);
-    if (canPickup)
-    {
-        GAME_LOG("Can pickup item drop!");
+    // 检查是否有任何一个道具在拾取范围内
+    for (auto drop : _itemDrops) {
+        if (drop->canPickup(player)) {
+            return true;
+        }
     }
-    return canPickup;
+    return false;
 }
 
 const ItemDef* Room::pickupItemDrop(Player* player)
 {
-    if (!_itemDrop || !player)
+    if (_itemDrops.empty() || !player)
     {
         return nullptr;
     }
     
-    const ItemDef* itemDef = _itemDrop->pickup(player);
-    _itemDrop = nullptr;  // 清空引用，对象会自动移除
-    return itemDef;
+    // 寻找最近的可拾取道具
+    ItemDrop* closestDrop = nullptr;
+    float minDistance = FLT_MAX;
+    
+    for (auto drop : _itemDrops) {
+        if (drop->canPickup(player)) {
+            float dist = drop->getPosition().distance(player->getPosition());
+            if (dist < minDistance) {
+                minDistance = dist;
+                closestDrop = drop;
+            }
+        }
+    }
+    
+    if (closestDrop) {
+        const ItemDef* itemDef = closestDrop->pickup(player);
+        _itemDrops.eraseObject(closestDrop);  // 从列表中移除，对象会自动从场景移除（在pickup动画结束后）
+        return itemDef;
+    }
+    
+    return nullptr;
 }
 
 // ==================== 传送门生成 ====================

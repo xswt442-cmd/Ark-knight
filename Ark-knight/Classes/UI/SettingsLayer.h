@@ -36,7 +36,16 @@ private:
      */
     void createUI();
     
+    /**
+     * 创建音量滑块
+     */
+    void createVolumeSliders();
+    
     std::function<void()> _closeCallback;
+    
+    // 音量显示标签
+    Label* _bgmVolumeLabel;
+    Label* _sfxVolumeLabel;
 };
 
 #endif // __SETTINGS_LAYER_H__
