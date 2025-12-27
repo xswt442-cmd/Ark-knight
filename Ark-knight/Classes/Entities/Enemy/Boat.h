@@ -11,7 +11,7 @@ public:
     virtual bool init() override;
     virtual void update(float dt) override;
     
-    // 覆写移动：忽略障碍物碰撞，但保留边界限制
+    // 重写移动：遇到障碍或碰撞房间边界反弹
     virtual void move(const cocos2d::Vec2& direction, float dt) override;
 
     CREATE_FUNC(Boat);
@@ -19,22 +19,25 @@ public:
     // 设置房间边界
     virtual void setRoomBounds(const cocos2d::Rect& bounds) override;
 
-    // 托生莲座不计入房间清理计数（因为它会消失）
+    // 托生莲座不计入房间清理计数
     virtual bool countsForRoomClear() const override { return false; }
 
-    // 强制消失（Boss技能结束时调用）
+    // 强制消失（Boss转阶段时调用）
     void forceDissipate();
 
-    // 覆写 takeDamage 以防止闪烁导致模型丢失
+    // 重写 takeDamage 以防止闪烁或击退（如果需要）
     virtual void takeDamage(int damage) override;
 
-    // 【新增】覆写死亡逻辑
+    // 死亡逻辑
     virtual void die() override;
 
-    // 【新增】设置死亡回调（用于通知 Boss）
+    // 设置死亡回调
     void setDeathCallback(const std::function<void()>& callback) { _deathCallback = callback; }
+    
+    // 设置吸收生命上限的回调（通知Boss）
+    void setAbsorbCallback(const std::function<void(int)>& callback) { _absorbCallback = callback; }
 
-    // 免疫恐卡兹寄生
+    // 无法生成恐卡兹
     virtual bool canSpawnKongKaZiOnDeath() const override { return false; }
 
 protected:
@@ -45,15 +48,15 @@ protected:
 
     // 状态
     bool _isMoving;
-    float _idleTimer;      // 出场待机计时
-    float _lifeTimer;      // 存活计时
+    float _idleTimer;      // 初始发呆计时
+    float _lifeTimer;      // 30秒生命周期计时
     int _collisionCount;   // 碰撞次数
-    int _absorbedCount;    // 吸收计数器
+    int _absorbedCount;    // 吸收总次数
     
     // 碰撞冷却
     float _collisionCooldown;
     
-    // 移动方向改变计时器
+    // 移动方向改变计时
     float _moveChangeTimer;
     
     cocos2d::Rect _roomBounds;
@@ -64,10 +67,11 @@ protected:
     cocos2d::Animation* _animMove;
     cocos2d::Animation* _animDie;
 
-    // 【新增】死亡回调
+    // 回调
     std::function<void()> _deathCallback;
+    std::function<void(int)> _absorbCallback;
 
-    // 标记
+    // 动作Tag
     static const int BOAT_ACTION_TAG = 0xB0A7;
 };
 

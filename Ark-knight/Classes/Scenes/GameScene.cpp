@@ -332,10 +332,7 @@ void GameScene::createTestEnemies()
 
 void GameScene::spawnEnemiesInRoom(Room* room)
 {
-    if (room == nullptr)
-    {
-        return;
-    }
+    if (room == nullptr) return;
     
     // 只在普通战斗房间和Boss房间生成敌人
     if (room->getRoomType() != Constants::RoomType::NORMAL && 
@@ -370,10 +367,47 @@ void GameScene::spawnEnemiesInRoom(Room* room)
         {
             boss->setPosition(roomCenter);
             boss->setRoomBounds(walk);
+            
+            // 获取三阶段房间并设置给 Boss
+            // 假设 MapGenerator 已经生成了 BossFloor，我们需要找到它
+            // 这里通过遍历子节点找到 BossFloor，或者通过 MapGenerator 获取
+            // 由于 GameScene 持有 _mapGenerator，我们可以尝试从那里获取信息
+            // 但 MapGenerator 没有直接暴露 BossFloor，我们需要一种方式获取 Phase3Room
+            
+            // 方案：遍历所有房间，找到位于 Boss 房间右侧的那个房间
+            if (_mapGenerator) {
+                int bossGridX = room->getGridX();
+                int bossGridY = room->getGridY();
+                Room* phase3Room = _mapGenerator->getRoom(bossGridX + 1, bossGridY);
+                if (phase3Room) {
+                    boss->setPhase3Room(phase3Room);
+                }
+            }
+
             addEnemy(boss);
             GAME_LOG("KuiLongBoss spawned at boss room center (%.1f, %.1f)", roomCenter.x, roomCenter.y);
         }
-        return; // boss房间只生成boss，不生成其他敌人
+
+        // 2.1: Boss房间初始会生成30个怪，怪物只包含妒，阿咬，魂灵圣杯和堂皇。
+        int initialMinions = 30;
+        for (int i = 0; i < initialMinions; ++i) {
+            Enemy* minion = nullptr;
+            float r = CCRANDOM_0_1();
+            // 四种怪物均分概率 (各25%)
+            if (r < 0.25f) minion = Du::create();
+            else if (r < 0.50f) minion = Ayao::create();
+            else if (r < 0.75f) minion = Cup::create();
+            else minion = TangHuang::create();
+
+            if (minion) {
+                // 在可行走区域内随机生成
+                float x = walk.origin.x + CCRANDOM_0_1() * walk.size.width;
+                float y = walk.origin.y + CCRANDOM_0_1() * walk.size.height;
+                minion->setPosition(Vec2(x, y));
+                addEnemy(minion);
+            }
+        }
+        return; 
     }
 
     // 随机生成3-8个怪（普通小怪：Ayao / DeYi，精英怪：XinXing / TangHuang / Du）

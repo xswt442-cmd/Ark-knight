@@ -19,6 +19,7 @@ Boat::Boat()
     , _animMove(nullptr)
     , _animDie(nullptr)
     , _deathCallback(nullptr)
+    , _absorbCallback(nullptr)
 {
 }
 
@@ -39,9 +40,9 @@ bool Boat::init()
     setMoveSpeed(150.0f);
     setAttack(0);
 
-    // 图层设置：在障碍物上方
+    // 图层设置，在障碍上方
     this->setLocalZOrder(100); 
-    // 扩大1.5倍
+    // 放大1.5倍
     this->setScale(1.5f);
 
     loadAnimations();
@@ -111,7 +112,16 @@ void Boat::update(float dt)
         _collisionCooldown -= dt;
     }
 
-    // 1. 出场 Idle 5秒
+    // 3. 托生莲座移动30秒后消失
+    if (_isMoving) {
+        _lifeTimer += dt;
+        if (_lifeTimer >= 30.0f) {
+            forceDissipate();
+            return;
+        }
+    }
+
+    // 1. 初始 Idle 5秒
     if (!_isMoving)
     {
         _idleTimer += dt;
@@ -135,7 +145,7 @@ void Boat::update(float dt)
     // 2. 移动逻辑
     if (_isMoving)
     {
-        // AI: 定时改变方向 (随机游荡)
+        // AI: 定时改变方向 (布朗运动)
         _moveChangeTimer -= dt;
         if (_moveChangeTimer <= 0.0f) {
             pickNewDirection();
@@ -143,13 +153,13 @@ void Boat::update(float dt)
 
         Vec2 nextPos = getPosition() + _currentMoveDir * getMoveSpeed() * dt;
         
-        // 边界检查 (Clamp)
+        // 边界限制 (Clamp)
         if (!_roomBounds.equals(Rect::ZERO))
         {
             if (nextPos.x < _roomBounds.getMinX() || nextPos.x > _roomBounds.getMaxX() ||
                 nextPos.y < _roomBounds.getMinY() || nextPos.y > _roomBounds.getMaxY())
             {
-                // 撞到边界：限制位置并立即换向
+                // 撞到边界，限制位置并反弹
                 nextPos.x = std::max(_roomBounds.getMinX(), std::min(nextPos.x, _roomBounds.getMaxX()));
                 nextPos.y = std::max(_roomBounds.getMinY(), std::min(nextPos.y, _roomBounds.getMaxY()));
                 
@@ -167,7 +177,7 @@ void Boat::update(float dt)
 
 void Boat::move(const Vec2& direction, float dt)
 {
-    // 留空，由 update 控制
+    // 留空，由 update 接管
 }
 
 void Boat::pickNewDirection()
@@ -189,7 +199,7 @@ void Boat::updateFacing()
 {
     if (!_sprite) return;
     
-    // 仅根据水平分量决定翻转
+    // 根据水平方向翻转
     if (_currentMoveDir.x > 0) {
         _sprite->setFlippedX(false);
     } else if (_currentMoveDir.x < 0) {
@@ -221,6 +231,7 @@ void Boat::checkPlayerCollision()
 
         int oldMax = player->getMaxHP();
         int newMax = std::max(1, oldMax - 500);
+        int absorbed = oldMax - newMax; // 计算实际扣除量
         player->setMaxHP(newMax);
         
         if (player->getHP() > newMax)
@@ -230,12 +241,17 @@ void Boat::checkPlayerCollision()
 
         FloatingText::show(player->getParent(), player->getPosition(), "-500 MaxHP", Color3B::MAGENTA);
 
+        // 报告给 Boss
+        if (_absorbCallback) {
+            _absorbCallback(absorbed);
+        }
+
         if (_collisionCount == 1)
         {
             setMoveSpeed(getMoveSpeed() * 0.5f);
         }
 
-        // 碰撞后反向移动一段距离
+        // 碰撞后移动一次距离
         _currentMoveDir = -_currentMoveDir;
         setPosition(getPosition() + _currentMoveDir * 60.0f); 
         updateFacing();
@@ -256,7 +272,7 @@ void Boat::takeDamage(int damage)
     }
 }
 
-// 【新增】实现死亡逻辑
+// 死亡逻辑
 void Boat::die()
 {
     if (_currentState == EntityState::DIE) return;
@@ -270,7 +286,7 @@ void Boat::die()
     {
         auto animate = Animate::create(_animDie);
         auto callback = CallFunc::create([this](){
-            // 动画结束后触发回调（通知 Boss）
+            // 动画结束后触发回调通知 Boss
             if (_deathCallback) _deathCallback();
             this->removeFromParentAndCleanup(true);
         });
@@ -278,7 +294,7 @@ void Boat::die()
     }
     else
     {
-        // 无动画直接触发
+        // 无动画直接处理
         if (_deathCallback) _deathCallback();
         this->removeFromParentAndCleanup(true);
     }
@@ -288,7 +304,7 @@ void Boat::forceDissipate()
 {
     if (_currentState == EntityState::DIE) return;
     
-    // 强制消失时不触发死亡回调（避免 Boss 重复调用）
+    // 强制消失时不触发死亡回调（避免 Boss 重复处理）
     _deathCallback = nullptr;
     
     setState(EntityState::DIE);

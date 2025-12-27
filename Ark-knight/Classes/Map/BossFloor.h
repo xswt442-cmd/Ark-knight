@@ -10,21 +10,9 @@
  * BossFloor - Boss层地图生成器
  * 
  * 负责生成Boss层的所有内容，包括：
- * - 起始房间和Boss房间
+ * - 起始房间、Boss房间、以及新增的三阶段房间
  * - 房间之间的走廊连接
  * - Boss房间的火焰地板装饰
- * 
- * 使用方法：
- *   auto bossFloor = BossFloor::create();
- *   bossFloor->generate(roomMatrix, hallways, beginRoom, endRoom, roomCount);
- *   parentNode->addChild(bossFloor);
- * 
- * 可调整的参数：
- * - FIRE_TILE_COUNT: 火焰地板数量
- * - FIRE_EXCLUSION_RADIUS: Boss中心区域排除半径
- * - FIRE_EDGE_MARGIN: 火焰距离边缘的最小距离
- * 
- * @author 队友可在此文件中调整Boss层的细节
  */
 class BossFloor : public cocos2d::Node {
 public:
@@ -66,15 +54,21 @@ public:
     
     /** 获取Boss房间 */
     Room* getBossRoom() const { return _bossRoom; }
+
+    /** 获取三阶段房间 */
+    Room* getPhase3Room() const { return _phase3Room; }
     
 private:
-    // ==================== 内部方法（队友可根据需要修改） ====================
+    // ==================== 内部方法 ====================
     
     /** 创建起始房间 */
     Room* createStartRoom(int gridX, int gridY);
     
     /** 创建Boss房间 */
     Room* createBossRoom(int gridX, int gridY, float startRoomRightEdge);
+
+    /** 创建三阶段房间 (Boss房间的一半大小) */
+    Room* createPhase3Room(int gridX, int gridY, float bossRoomRightEdge);
     
     /** 生成火焰地板装饰 */
     void generateFireTiles();
@@ -86,6 +80,7 @@ private:
     
     Room* _startRoom;
     Room* _bossRoom;
+    Room* _phase3Room; // 新增：三阶段房间
     cocos2d::Vector<cocos2d::Sprite*> _fireFloors;
 };
 
