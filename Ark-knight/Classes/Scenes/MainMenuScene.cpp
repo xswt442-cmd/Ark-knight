@@ -2,6 +2,7 @@
 #include "GameScene.h"
 #include "UI/CharacterSelectLayer.h"
 #include "ui/CocosGUI.h"
+#include "audio/include/AudioEngine.h"
 
 USING_NS_CC;
 using namespace ui;
@@ -21,6 +22,10 @@ bool MainMenuScene::init()
     createBackground();
     createUI();
     
+    // 播放主菜单背景音乐
+    AudioEngine::stopAll();
+    AudioEngine::play2d("Music/Menu.mp3", true);
+    
     GAME_LOG("MainMenuScene initialized");
     
     return true;
@@ -31,16 +36,25 @@ void MainMenuScene::createBackground()
     auto visibleSize = Director::getInstance()->getVisibleSize();
     Vec2 origin = Director::getInstance()->getVisibleOrigin();
     
-    // 创建背景色
-    auto background = LayerColor::create(Color4B(50, 50, 50, 255));
-    this->addChild(background, -1);
+    // 创建背景图片
+    auto background = Sprite::create("Scene.png");
+    if (background)
+    {
+        // 缩放以适应屏幕
+        background->setPosition(Vec2(origin.x + visibleSize.width / 2,
+                                     origin.y + visibleSize.height / 2));
+        float scaleX = visibleSize.width / background->getContentSize().width;
+        float scaleY = visibleSize.height / background->getContentSize().height;
+        background->setScale(std::max(scaleX, scaleY));
+        this->addChild(background, -1);
+    }
+    else
+    {
+        // 备用：如果图片加载失败，使用灰色背景
+        auto bgColor = LayerColor::create(Color4B(50, 50, 50, 255));
+        this->addChild(bgColor, -1);
+    }
     
-    // 游戏标题
-    auto titleLabel = Label::createWithSystemFont("Ark Knights", "Arial", 64);
-    titleLabel->setPosition(Vec2(origin.x + visibleSize.width / 2,
-                                 origin.y + visibleSize.height * 0.75f));
-    titleLabel->setTextColor(Color4B::WHITE);
-    this->addChild(titleLabel, 1);
 }
 
 void MainMenuScene::createUI()
@@ -49,6 +63,23 @@ void MainMenuScene::createUI()
     this->addChild(_uiLayer, Constants::ZOrder::UI);
     
     createButtons();
+}
+
+// 辅助函数：创建带黑边深黄色粗体样式的按钮
+static void styleMenuButton(ui::Button* button, const std::string& text)
+{
+    button->setTitleText(text);
+    button->setTitleFontName("fonts/msyh.ttf");
+    button->setTitleFontSize(32);
+    // 深黄色
+    button->setTitleColor(Color3B(220, 180, 0));
+    // 获取标题渲染器添加黑边描边
+    auto titleRenderer = button->getTitleRenderer();
+    if (titleRenderer)
+    {
+        titleRenderer->enableOutline(Color4B::BLACK, 2);
+        titleRenderer->enableBold();
+    }
 }
 
 void MainMenuScene::createButtons()
@@ -62,45 +93,35 @@ void MainMenuScene::createButtons()
     
     // 开始游戏按钮
     auto startButton = Button::create();
-    startButton->setTitleText(u8"开始游戏");
-    startButton->setTitleFontName("fonts/msyh.ttf");
-    startButton->setTitleFontSize(32);
+    styleMenuButton(startButton, u8"开始游戏");
     startButton->setPosition(Vec2(centerX, startY));
     startButton->addClickEventListener(CC_CALLBACK_1(MainMenuScene::onStartGame, this));
     _uiLayer->addChild(startButton);
     
     // 选择角色按钮
     auto selectButton = Button::create();
-    selectButton->setTitleText(u8"选择角色");
-    selectButton->setTitleFontName("fonts/msyh.ttf");
-    selectButton->setTitleFontSize(32);
+    styleMenuButton(selectButton, u8"选择角色");
     selectButton->setPosition(Vec2(centerX, startY - spacing));
     selectButton->addClickEventListener(CC_CALLBACK_1(MainMenuScene::onSelectCharacter, this));
     _uiLayer->addChild(selectButton);
     
     // 直接挑战Boss按钮
     auto bossButton = Button::create();
-    bossButton->setTitleText(u8"直接挑战Boss");
-    bossButton->setTitleFontName("fonts/msyh.ttf");
-    bossButton->setTitleFontSize(32);
+    styleMenuButton(bossButton, u8"直接挑战Boss");
     bossButton->setPosition(Vec2(centerX, startY - spacing * 2));
     bossButton->addClickEventListener(CC_CALLBACK_1(MainMenuScene::onStartBossLevel, this));
     _uiLayer->addChild(bossButton);
     
     // 设置按钮
     auto settingsButton = Button::create();
-    settingsButton->setTitleText(u8"设置");
-    settingsButton->setTitleFontName("fonts/msyh.ttf");
-    settingsButton->setTitleFontSize(32);
+    styleMenuButton(settingsButton, u8"设置");
     settingsButton->setPosition(Vec2(centerX, startY - spacing * 3));
     settingsButton->addClickEventListener(CC_CALLBACK_1(MainMenuScene::onSettings, this));
     _uiLayer->addChild(settingsButton);
     
     // 退出按钮
     auto exitButton = Button::create();
-    exitButton->setTitleText(u8"退出游戏");
-    exitButton->setTitleFontName("fonts/msyh.ttf");
-    exitButton->setTitleFontSize(32);
+    styleMenuButton(exitButton, u8"退出游戏");
     exitButton->setPosition(Vec2(centerX, startY - spacing * 4));
     exitButton->addClickEventListener(CC_CALLBACK_1(MainMenuScene::onExit, this));
     _uiLayer->addChild(exitButton);

@@ -16,6 +16,7 @@
 #include "Entities/Objects/Chest.h"
 #include "Entities/Objects/ItemDrop.h"
 #include "ui/CocosGUI.h"
+#include "audio/include/AudioEngine.h"
 #include <algorithm>
 #include "Map/Room.h"
 
@@ -116,6 +117,21 @@ bool GameScene::init()
     // 开启update
     scheduleUpdate();
     
+    // 播放战斗音乐
+    AudioEngine::stopAll();
+    if (_currentStage == 0)
+    {
+        // Boss战斗音乐
+        AudioEngine::play2d("Music/Boss_Battle.mp3", true);
+        GAME_LOG("Playing Boss battle music");
+    }
+    else
+    {
+        // 普通战斗音乐
+        AudioEngine::play2d("Music/Game_Battle.mp3", true);
+        GAME_LOG("Playing normal battle music");
+    }
+    
     GAME_LOG("GameScene initialized");
     
     return true;
@@ -126,8 +142,8 @@ void GameScene::initLayers()
     auto visibleSize = Director::getInstance()->getVisibleSize();
     Vec2 origin = Director::getInstance()->getVisibleOrigin();
     
-    // 创建背景
-    auto background = LayerColor::create(Color4B(40, 40, 50, 255));
+    // 创建背景（深绿色）
+    auto background = LayerColor::create(Color4B(20, 60, 30, 255));
     this->addChild(background, -1);
     
     // 游戏层

@@ -160,16 +160,27 @@ void GameMenus::showGameOver()
     _maskLayer->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL);
     this->addChild(_maskLayer);
     
-    // 显示游戏结束文字
-    _gameOverLabel = Label::createWithTTF(u8"游戏结束", "fonts/msyh.ttf", 64);
-    _gameOverLabel->setPosition(Vec2(SCREEN_CENTER.x, SCREEN_CENTER.y + 50));
-    _gameOverLabel->setTextColor(Color4B::RED);
-    _gameOverLabel->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL + 1);
-    this->addChild(_gameOverLabel);
+    // 显示游戏结束图片
+    auto gameOverSprite = Sprite::create("Enemy/GameOver.png");
+    if (gameOverSprite)
+    {
+        gameOverSprite->setPosition(Vec2(SCREEN_CENTER.x, SCREEN_CENTER.y + 50));
+        gameOverSprite->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL + 1);
+        this->addChild(gameOverSprite);
+    }
+    else
+    {
+        // 备用：如果图片加载失败，使用文字
+        _gameOverLabel = Label::createWithTTF(u8"游戏结束", "fonts/msyh.ttf", 64);
+        _gameOverLabel->setPosition(Vec2(SCREEN_CENTER.x, SCREEN_CENTER.y + 50));
+        _gameOverLabel->setTextColor(Color4B::RED);
+        _gameOverLabel->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL + 1);
+        this->addChild(_gameOverLabel);
+    }
     
     // 显示重新开始提示
     _gameOverHint = Label::createWithTTF(u8"按 R 重新开始\n按 Q 退出到主菜单", "fonts/msyh.ttf", 32);
-    _gameOverHint->setPosition(Vec2(SCREEN_CENTER.x, SCREEN_CENTER.y - 50));
+    _gameOverHint->setPosition(Vec2(SCREEN_CENTER.x, SCREEN_CENTER.y - 100));
     _gameOverHint->setTextColor(Color4B::WHITE);
     _gameOverHint->setAlignment(TextHAlignment::CENTER);
     _gameOverHint->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL + 1);
