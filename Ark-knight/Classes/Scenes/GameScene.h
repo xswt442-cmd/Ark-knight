@@ -58,6 +58,11 @@ public:
      */
     void addItemToUI(const ItemDef* itemDef);
     
+    /**
+     * 显示胜利界面（公开，供 Boss 死亡时调用）
+     */
+    void showVictory();
+    
 private:
     /**
      * 初始化层级
@@ -160,11 +165,6 @@ private:
      * 显示游戏结束界面
      */
     void showGameOver();
-    
-    /**
-     * 显示胜利界面
-     */
-    void showVictory();
     
     /**
      * 切换到下一关

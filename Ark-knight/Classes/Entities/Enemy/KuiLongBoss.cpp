@@ -6,7 +6,7 @@
 #include "Entities/Enemy/Boat.h"
 #include "Scenes/GameScene.h"
 #include "UI/FloatingText.h"
-#include "Map/Room.h" // 引入Room头文件
+#include "Map/Room.h"
 
 // 引入怪物头文件
 #include "Entities/Enemy/Du.h"
@@ -24,6 +24,8 @@ KuiLongBoss::KuiLongBoss()
     : _phase(PHASE_A)
     , _phaseTimer(0.0f)
     , _phaseADuration(60.0f)
+    , _phaseCIdleTimer(0.0f)
+    , _phaseCIdleDuration(20.0f) // 三阶段发呆20秒
     , _animAIdle(nullptr)
     , _animAChangeToB(nullptr)
     , _animBMove(nullptr)
@@ -63,7 +65,7 @@ KuiLongBoss::KuiLongBoss()
     , _phaseBSummonInterval(30.0f)
     , _escalationLevel(0)
     , _phaseBSummonCount(0)
-    , _totalBoatAbsorbed(0) // 确保初始化为0
+    , _totalBoatAbsorbed(0)
 {
 }
 
@@ -165,14 +167,14 @@ bool KuiLongBoss::init()
     setHP(getMaxHP());
     setMoveSpeed(30.0f);
     setAttack(1800);
-    setSightRange(1000.0f);
+    setSightRange(10000.0f);
     setAttackRange(120.0f);
     setAttackCooldown(2.0f);
     setAttackWindup(0.1f);
 
     _phase = PHASE_A;
     _phaseTimer = 0.0f;
-    _phaseADuration = 60.0f; // 2.2: 确保初始化也为60秒
+    _phaseADuration = 10.0f; // 2.2: 确保初始化也为60秒
 
     loadAnimations();
 
@@ -313,7 +315,6 @@ void KuiLongBoss::update(float dt)
                 auto animate = Animate::create(_animAChangeToB);
                 auto onFinish = CallFunc::create([this]() {
                     this->_phase = PHASE_B;
-                    // 2.3: Boss进入二阶段立即召唤
                     this->spawnPhaseBMinions(false);
                     
                     if (this->_animBMove && this->_sprite)
@@ -332,7 +333,6 @@ void KuiLongBoss::update(float dt)
             else
             {
                 this->_phase = PHASE_B;
-                // 2.3: Boss进入二阶段立即召唤
                 this->spawnPhaseBMinions(false);
                 
                 if (_animBMove && _sprite)
@@ -348,6 +348,52 @@ void KuiLongBoss::update(float dt)
     }
     else if (_phase == PHASE_B)
     {
+        _phaseBSummonTimer += dt;
+        if (_phaseBSummonTimer >= _phaseBSummonInterval)
+        {
+            spawnPhaseBMinions(true);
+            _phaseBSummonTimer = 0.0f;
+        }
+    }
+    else if (_phase == PHASE_C_IDLE)
+    {
+        // 1. 三阶段发呆逻辑
+        _phaseCIdleTimer += dt;
+        
+        // 发呆期间生成尼卢火：频率变为5秒2个
+        _niluSpawnTimer += dt;
+        if (_niluSpawnTimer >= 5.0f) {
+            _niluSpawnTimer = 0.0f;
+            // 临时修改生成数量为2
+            int oldSpawnCount = _niluSpawnPerInterval;
+            _niluSpawnPerInterval = 2;
+            trySpawnNiLuFires();
+            _niluSpawnPerInterval = oldSpawnCount;
+        }
+
+        if (_phaseCIdleTimer >= _phaseCIdleDuration)
+        {
+            _phase = PHASE_C;
+            _phaseCIdleTimer = 0.0f;
+            _niluSpawnTimer = 0.0f; // 重置尼卢火计时器给正常阶段用
+            GAME_LOG("KuiLongBoss Phase 3 Idle ended. Starting combat and summoning.");
+            
+            // 发呆结束，开始正常召唤怪物
+            spawnPhaseBMinions(false); 
+
+            // 恢复移动动画
+            if (_animBMove && _sprite) {
+                auto bmoveAnimate = Animate::create(_animBMove);
+                auto repeat = RepeatForever::create(bmoveAnimate);
+                repeat->setTag(KUI_LONG_MOVE_TAG);
+                _sprite->runAction(repeat);
+                _moveAnimPlaying = true;
+            }
+        }
+    }
+    else if (_phase == PHASE_C)
+    {
+        // 三阶段正常逻辑：召唤小怪
         _phaseBSummonTimer += dt;
         if (_phaseBSummonTimer >= _phaseBSummonInterval)
         {
@@ -373,8 +419,9 @@ void KuiLongBoss::update(float dt)
         if (_skillCooldownTimer > _skillCooldown) _skillCooldownTimer = _skillCooldown;
     }
 
-    // NiLuFire 生成
-    if (_currentState != EntityState::DIE && _phase != SKILL_CHENG_SAN_SHEN)
+    // NiLuFire 生成 (正常阶段)
+    // 修改：PHASE_C_IDLE 期间由上面单独控制，这里跳过
+    if (_currentState != EntityState::DIE && _phase != SKILL_CHENG_SAN_SHEN && _phase != PHASE_C_IDLE)
     {
         _niluSpawnTimer += dt;
         if (_niluSpawnTimer >= _niluSpawnInterval) {
@@ -386,7 +433,8 @@ void KuiLongBoss::update(float dt)
 
 void KuiLongBoss::executeAI(Player* player, float dt)
 {
-    if (_phase == PHASE_A || _phase == TRANSITION_A_TO_B || _phase == SKILL_CHENG_SAN_SHEN || _phase == TRANSITION_B_TO_C) return;
+    // 修改：PHASE_C_IDLE 期间不执行AI（不移动、不攻击）
+    if (_phase == PHASE_A || _phase == TRANSITION_A_TO_B || _phase == SKILL_CHENG_SAN_SHEN || _phase == TRANSITION_B_TO_C || _phase == PHASE_C_IDLE) return;
 
     // 6. 3阶段奎隆没有承三身和棒喝技能 (ChengWuJie)
     if (_phase == PHASE_B)
@@ -407,8 +455,9 @@ void KuiLongBoss::executeAI(Player* player, float dt)
 
 void KuiLongBoss::attack()
 {
-    if (_skillPlaying || _phase == SKILL_CHENG_SAN_SHEN) return;
-    if (_phase == PHASE_A || _phase == TRANSITION_A_TO_B) return;
+    // 修改：PHASE_C_IDLE 期间不攻击
+    if (_skillPlaying || _phase == SKILL_CHENG_SAN_SHEN || _phase == PHASE_C_IDLE) return;
+    if (_phase == PHASE_A || _phase == TRANSITION_A_TO_B || _phase == TRANSITION_B_TO_C) return;
     if (!canAttack()) return;
 
     setState(EntityState::ATTACK);
@@ -464,8 +513,9 @@ void KuiLongBoss::attack()
 
 void KuiLongBoss::playAttackAnimation()
 {
-    if (_skillPlaying || _phase == SKILL_CHENG_SAN_SHEN) return;
-    if (_phase == PHASE_A || _phase == TRANSITION_A_TO_B) return;
+    // 修改：PHASE_C_IDLE 期间不播放攻击动画
+    if (_skillPlaying || _phase == SKILL_CHENG_SAN_SHEN || _phase == PHASE_C_IDLE) return;
+    if (_phase == PHASE_A || _phase == TRANSITION_A_TO_B || _phase == TRANSITION_B_TO_C) return;
     if (!_sprite) return;
     if (_currentState == EntityState::DIE) return;
 
@@ -513,6 +563,7 @@ void KuiLongBoss::playAttackAnimation()
 
 void KuiLongBoss::takeDamage(int damage)
 {
+    // 修改：PHASE_C_IDLE 期间可以受伤，但不会触发其他逻辑
     if (_phase == PHASE_A || _phase == TRANSITION_A_TO_B || _phase == SKILL_CHENG_SAN_SHEN || _phase == TRANSITION_B_TO_C) return;
 
     int count = countNiLuFiresInRoom();
@@ -522,7 +573,6 @@ void KuiLongBoss::takeDamage(int damage)
     // 2.4: 检查二阶段阵亡逻辑
     if (_phase == PHASE_B && (getHP() - reduced) <= 0)
     {
-        // 锁血，触发转阶段
         setHP(1); 
         startTransitionBToC();
         return;
@@ -546,7 +596,7 @@ int KuiLongBoss::takeDamageReported(int damage)
     {
         setHP(1);
         startTransitionBToC();
-        return reduced; // 报告伤害，但实际不致死
+        return reduced;
     }
 
     int actual = Enemy::takeDamageReported(reduced);
@@ -795,7 +845,6 @@ void KuiLongBoss::die()
 {
     if (_currentState == EntityState::DIE) return;
     
-    // 2.4: 如果在二阶段死亡，触发强制击杀和转阶段
     if (_phase == PHASE_B) {
         startTransitionBToC();
         return;
@@ -804,16 +853,44 @@ void KuiLongBoss::die()
     setState(EntityState::DIE);
     this->removeStealthSource((void*)this);
 
-    // 5. 3阶段击杀奎隆播放真正的Die动画并胜利
-    if (_phase == PHASE_C)
+    if (_phase == PHASE_C || _phase == PHASE_C_IDLE)
     {
         stopAllActions();
         if (_sprite) _sprite->stopAllActions();
 
-        // 修改：移除直接调用 showVictory，依靠 GameScene 自动检测
+        // 清理场上其他敌人
+        Node* parent = this->getParent();
+        if (parent) {
+            Vector<Node*> toRemove;
+            for (auto child : parent->getChildren()) {
+                if (child == this) continue;
+                if (dynamic_cast<Enemy*>(child)) {
+                    toRemove.pushBack(child);
+                }
+            }
+            for (auto node : toRemove) {
+                auto e = dynamic_cast<Enemy*>(node);
+                if (e) e->setState(EntityState::DIE);
+                node->removeFromParentAndCleanup(true);
+            }
+        }
+
+        // 保持引用防止提前释放
+        this->retain();
+
         auto onFinish = CallFunc::create([this]() {
-            // 移除自身后，GameScene::updateEnemies 会检测到房间内无敌人，自动调用 showVictory
+            auto scene = Director::getInstance()->getRunningScene();
+            auto gs = dynamic_cast<GameScene*>(scene);
+            
+            // 先从父节点移除
             this->removeFromParentAndCleanup(true);
+            
+            // 直接调用 showVictory
+            if (gs) {
+                gs->showVictory();
+            }
+            
+            this->release();
         });
 
         if (_sprite && _animCDie) {
@@ -862,7 +939,8 @@ void KuiLongBoss::die()
 
 void KuiLongBoss::move(const cocos2d::Vec2& direction, float dt)
 {
-    if (_currentState == EntityState::DIE || _skillPlaying || _currentState == EntityState::ATTACK || _phase == SKILL_CHENG_SAN_SHEN) return;
+    // 修改：PHASE_C_IDLE 期间不移动
+    if (_currentState == EntityState::DIE || _skillPlaying || _currentState == EntityState::ATTACK || _phase == SKILL_CHENG_SAN_SHEN || _phase == PHASE_C_IDLE) return;
 
     if (direction.equals(cocos2d::Vec2::ZERO)) {
         if (_moveAnimPlaying && _sprite) {
@@ -1043,21 +1121,63 @@ void KuiLongBoss::startTransitionBToC()
     _skillPlaying = false;
     _skillDamageScheduled = false;
     
-    // 播放 B -> C 动画
+    // 1. 立即清空场上所有单位 (除Boss和Player外)
+    Node* parent = this->getParent();
+    if (parent) {
+        Vector<Node*> toRemove;
+        for (auto child : parent->getChildren()) {
+            if (child == this) continue;
+            if (dynamic_cast<Player*>(child)) continue;
+            if (dynamic_cast<Enemy*>(child)) {
+                toRemove.pushBack(child);
+            }
+        }
+        for (auto node : toRemove) {
+            auto e = dynamic_cast<Enemy*>(node);
+            if (e) e->setState(EntityState::DIE);
+            node->removeFromParentAndCleanup(true);
+        }
+    }
+
+    // 2. 计算动画时长
+    float animDuration = 1.3f; // 默认时长
     if (_sprite && _animBChangeToC) {
         _animBChangeToC->setRestoreOriginalFrame(false);
         auto animate = Animate::create(_animBChangeToC);
+        animDuration = animate->getDuration();
+        _sprite->runAction(animate);
+    }
+
+    // 3. 黑屏过渡逻辑 - 使用 retain 确保 Boss 不被提前释放
+    this->retain();
+    
+    auto scene = Director::getInstance()->getRunningScene();
+    if (scene) {
+        auto blackLayer = LayerColor::create(Color4B::BLACK);
+        scene->addChild(blackLayer, Constants::ZOrder::UI + 100); 
+        blackLayer->setOpacity(0);
         
-        auto onFinish = CallFunc::create([this]() {
-            this->forceKillAllAndTransition();
-        });
+        float fadeDuration = 1.5f;
+
+        auto seq = Sequence::create(
+            DelayTime::create(animDuration),
+            FadeIn::create(fadeDuration),
+            CallFunc::create([this]() {
+                this->forceKillAllAndTransition();
+            }),
+            DelayTime::create(0.5f),
+            FadeOut::create(fadeDuration),
+            CallFunc::create([this, blackLayer]() {
+                blackLayer->removeFromParent();
+                this->release(); // 配对 retain
+            }),
+            nullptr
+        );
         
-        auto seq = Sequence::create(animate, onFinish, nullptr);
-        seq->setTag(KUI_LONG_CHANGE_TAG);
-        _sprite->runAction(seq);
+        blackLayer->runAction(seq);
     } else {
-        // 无动画直接转
-        forceKillAllAndTransition();
+        this->forceKillAllAndTransition();
+        this->release();
     }
 }
 
@@ -1067,38 +1187,35 @@ void KuiLongBoss::forceKillAllAndTransition()
     // 1. 恢复生命值
     setHP(getMaxHP());
 
-    // 2. 强制击杀场上所有敌方与我方单位（不包括Boss自己）
+    // 2. 再次确保清场（防止黑屏期间有新生成的怪）
+    Node* parent = this->getParent();
+    if (parent) {
+        Vector<Node*> toRemove;
+        for (auto child : parent->getChildren()) {
+            if (child == this) continue;
+            if (dynamic_cast<Player*>(child)) continue;
+            if (dynamic_cast<Enemy*>(child)) {
+                toRemove.pushBack(child);
+            }
+        }
+        for (auto node : toRemove) {
+            node->removeFromParentAndCleanup(true);
+            auto e = dynamic_cast<Enemy*>(node);
+            if (e) e->setState(EntityState::DIE);
+        }
+    }
+
+    // 3. 切换到三阶段（初始为发呆状态）
+    _phase = PHASE_C_IDLE;
+    _phaseCIdleTimer = 0.0f;
+    _niluSpawnTimer = 0.0f; // 重置尼卢火计时器
+    setAttack(getAttack() * 2);
+    
+    // 4. 移动到三阶段房间
     auto scene = Director::getInstance()->getRunningScene();
     GameScene* gs = dynamic_cast<GameScene*>(scene);
     Player* player = gs ? gs->getPlayer() : nullptr;
 
-    if (scene) {
-        Vector<Node*> toRemove;
-        for (auto child : scene->getChildren()) {
-            Enemy* enemy = dynamic_cast<Enemy*>(child);
-            if (enemy && enemy != this) {
-                toRemove.pushBack(enemy);
-            }
-            NiLuFire* fire = dynamic_cast<NiLuFire*>(child);
-            if (fire) {
-                toRemove.pushBack(fire);
-            }
-            Boat* boat = dynamic_cast<Boat*>(child);
-            if (boat) {
-                toRemove.pushBack(boat);
-            }
-        }
-
-        for (auto node : toRemove) {
-            node->removeFromParentAndCleanup(true);
-        }
-    }
-
-    // 3. 切换到三阶段
-    _phase = PHASE_C;
-    setAttack(getAttack() * 2);
-    
-    // 4. 移动到三阶段房间
     if (_phase3Room) {
         // 更新房间边界
         _roomBounds = _phase3Room->getWalkableArea();
@@ -1110,13 +1227,6 @@ void KuiLongBoss::forceKillAllAndTransition()
         if (player) {
             Vec2 spawnPos(_phase3Room->getCenter().x, _phase3Room->getWalkableArea().getMinY() + 150.0f);
             player->setPosition(spawnPos);
-            
-            // 更新 GameScene 的当前房间，确保相机跟随
-            if (gs) {
-                // 这里需要一种方式通知 GameScene 切换房间，或者直接设置位置后 GameScene::updateMapSystem 会自动检测
-                // 由于是瞬移，最好手动触发一次更新或相机重置
-                // 但 GameScene::updateMapSystem 会在下一帧检测到玩家位置变化并更新 _currentRoom
-            }
         }
     } else {
         // 如果没有三阶段房间（异常情况），原地缩小边界
@@ -1128,30 +1238,30 @@ void KuiLongBoss::forceKillAllAndTransition()
         }
     }
 
-    // 5. 设置玩家血量
+    // 5. 设置玩家血量 (移除2倍效果)
     if (player) {
-        int newHP = (_totalBoatAbsorbed > 0) ? _totalBoatAbsorbed * 2 : player->getMaxHP();
+        int newHP = (_totalBoatAbsorbed > 0) ? _totalBoatAbsorbed : player->getMaxHP();
         if (newHP < 1000) newHP = 1000; 
         
         player->setMaxHP(newHP);
         player->setHP(newHP);
     }
     
-    // 恢复 Boss 动画
+    // 1. 发呆动作用二阶段移动动画第一帧图
     if (_animBMove && _sprite) {
-        auto bmoveAnimate = Animate::create(_animBMove);
-        auto repeat = RepeatForever::create(bmoveAnimate);
-        repeat->setTag(KUI_LONG_MOVE_TAG);
-        _sprite->runAction(repeat);
-        _moveAnimPlaying = true;
+        _sprite->stopAllActions();
+        // 获取第一帧
+        auto frames = _animBMove->getFrames();
+        if (!frames.empty()) {
+            _sprite->setSpriteFrame(frames.front()->getSpriteFrame());
+        }
+        _moveAnimPlaying = false;
     }
 
-    GAME_LOG("KuiLongBoss entered Phase 3. Moved to Phase 3 Room. All units cleared. Player HP reset.");
+    GAME_LOG("KuiLongBoss entered Phase 3 (Idle). Map shrunk. All units cleared. Player HP reset (1x absorbed).");
 }
 
 void KuiLongBoss::reportBoatAbsorb(int amount)
 {
     _totalBoatAbsorbed += amount;
-    // 可选：打印日志方便调试
-    // cocos2d::log("KuiLongBoss: Boat absorbed %d HP. Total: %d", amount, _totalBoatAbsorbed);
 }

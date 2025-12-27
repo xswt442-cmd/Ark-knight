@@ -54,14 +54,19 @@ protected:
         PHASE_A,
         TRANSITION_A_TO_B,
         PHASE_B,
-        TRANSITION_B_TO_C, // 新增：二转三过渡阶段
-        PHASE_C,
+        TRANSITION_B_TO_C,
+        PHASE_C_IDLE, // 新增：三阶段初始发呆
+        PHASE_C,      // 三阶段正常战斗
         SKILL_CHENG_SAN_SHEN
     };
 
     Phase _phase;
     float _phaseTimer;
     float _phaseADuration;
+    
+    // 新增：三阶段发呆计时
+    float _phaseCIdleTimer;
+    float _phaseCIdleDuration;
 
     // ========== 召唤与机制 ==========
     bool _threshold75Triggered;
