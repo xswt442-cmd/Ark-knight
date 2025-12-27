@@ -104,19 +104,20 @@ int GameEntity::takeDamageReported(int damage)
         return applied;  // 死亡后不播放受击效果，但返回实际值
     }
     
-    // 受击效果 - 闪烁
+    // 受击效果 - 颜色闪烁（避免Blink导致消失）
     if (_sprite != nullptr)
     {
-        // 先停止之前的闪烁动作，避免叠加导致精灵消失
         _sprite->stopActionByTag(100);
-        _sprite->setVisible(true);  // 确保可见
-        _sprite->setOpacity(255);   // 确保完全不透明
+        _sprite->setVisible(true);
+        _sprite->setOpacity(255);
         
-        auto blink = Blink::create(0.2f, 2);
-        auto show = Show::create();  // 闪烁结束后确保显示
-        auto opacity = FadeTo::create(0.01f, 255); // 确保透明度恢复
-        auto sequence = Sequence::create(blink, show, opacity, nullptr);
-        sequence->setTag(100);  // 设置标签用于停止
+        // 使用红色高亮闪烁代替隐藏式Blink
+        auto tintRed = TintTo::create(0.05f, 255, 100, 100);
+        auto tintNormal = TintTo::create(0.05f, 255, 255, 255);
+        auto tintRed2 = TintTo::create(0.05f, 255, 100, 100);
+        auto tintNormal2 = TintTo::create(0.05f, 255, 255, 255);
+        auto sequence = Sequence::create(tintRed, tintNormal, tintRed2, tintNormal2, nullptr);
+        sequence->setTag(100);
         _sprite->runAction(sequence);
     }
 

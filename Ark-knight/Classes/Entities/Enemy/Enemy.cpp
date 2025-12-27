@@ -559,11 +559,13 @@ int Enemy::takeDamageReported(int damage)
             {
                 _sprite->stopActionByTag(100);
                 _sprite->setVisible(true);
-                _sprite->setOpacity(255);   // 确保完全不透明
-                auto blink = Blink::create(0.2f, 2);
-                auto show = Show::create();
-                auto opacity = FadeTo::create(0.01f, 255); // 确保透明度恢复
-                auto seq = Sequence::create(blink, show, opacity, nullptr);
+                _sprite->setOpacity(255);
+                // 使用红色高亮闪烁代替隐藏式Blink
+                auto tintRed = TintTo::create(0.05f, 255, 100, 100);
+                auto tintNormal = TintTo::create(0.05f, 255, 255, 255);
+                auto tintRed2 = TintTo::create(0.05f, 255, 100, 100);
+                auto tintNormal2 = TintTo::create(0.05f, 255, 255, 255);
+                auto seq = Sequence::create(tintRed, tintNormal, tintRed2, tintNormal2, nullptr);
                 seq->setTag(100);
                 _sprite->runAction(seq);
             }
