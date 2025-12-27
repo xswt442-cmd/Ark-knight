@@ -7,7 +7,7 @@
 Mage::Mage()
     : _isEnhanced(false)
     , _enhancedTimer(0.0f)
-    , _enhancedDuration(8.0f)
+    , _enhancedDuration(20.0f)
     , _baseAttackInterval(0.1f)
     , _attackTimer(0.0f)
     , _currentAnimName("")
@@ -39,7 +39,7 @@ bool Mage::init()
     setHP(100000);
     setMaxMP(150);
     setMP(150);
-    setAttack(500);
+    setAttack(1500);
     setMoveSpeed(180.0f);
     
     // 设置技能冷却

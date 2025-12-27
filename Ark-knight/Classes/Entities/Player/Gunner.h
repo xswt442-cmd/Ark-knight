@@ -62,8 +62,9 @@ private:
     
     /**
      * 发射子弹
+     * @param damage 子弹造成的伤害
      */
-    void shootBullet();
+    void shootBullet(int damage);
     
     /**
      * 发射技能炸弹

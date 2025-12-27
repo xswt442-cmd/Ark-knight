@@ -145,7 +145,7 @@ bool KuiLongBoss::init()
     if (!Enemy::init()) return false;
 
     setEnemyType(EnemyType::MELEE);
-    setMaxHP(20000);
+    setMaxHP(120000);
     setHP(getMaxHP());
     setMoveSpeed(30.0f);
     setAttack(1800);

@@ -10,8 +10,8 @@ USING_NS_CC;
 Warrior::Warrior()
     : _isEnhanced(false)
     , _enhancedTimer(0.0f)
-    , _enhancedDuration(8.0f)
-    , _baseAttackInterval(0.8f)
+    , _enhancedDuration(20.0f)
+    , _baseAttackInterval(0.4f)
     , _baseAttackRange(80.0f)
     , _attackTimer(0.0f)
     , _currentAnimName("")
@@ -41,10 +41,10 @@ bool Warrior::init()
     // 设置泥岩属性（高血量，低蓝）
     setMaxHP(150000);
     setHP(150000);
-    setMaxMP(80);
-    setMP(80);
-    setAttack(300);
-    setMoveSpeed(140.0f);  // 战士移速较慢
+    setMaxMP(150);
+    setMP(150);
+    setAttack(1000);
+    setMoveSpeed(180.0f);  // 战士移速较慢
     
     // 设置技能冷却
     _skillCooldown = 18.0f;

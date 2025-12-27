@@ -7,7 +7,7 @@
 Gunner::Gunner()
     : _isEnhanced(false)
     , _enhancedTimer(0.0f)
-    , _enhancedDuration(8.0f)
+    , _enhancedDuration(30.0f)
     , _baseAttackInterval(1.0f)
     , _attackTimer(0.0f)
     , _currentAnimName("")
@@ -37,9 +37,9 @@ bool Gunner::init()
     // 设置维什戴尔属性
     setMaxHP(100000);
     setHP(100000);
-    setMaxMP(100);
-    setMP(100);
-    setAttack(500);
+    setMaxMP(200);
+    setMP(200);
+    setAttack(3250);
     setMoveSpeed(160.0f);
     
     // 设置技能冷却
@@ -334,10 +334,34 @@ void Gunner::attack()
     setState(EntityState::ATTACK);
     resetAttackCooldown();
     
-    // 发射子弹
-    shootBullet();
-    
-    GAME_LOG("Wisdael shoots bullet! Enhanced: %s", _isEnhanced ? "YES" : "NO");
+    // 40% 概率触发被动：5连发
+    if (RandomHelper::random_real(0.0f, 1.0f) < 0.3f)
+    {
+        // 计算伤害：普通状态150%，强化状态250%
+        float multiplier = _isEnhanced ? 2.5f : 1.5f;
+        int damage = static_cast<int>(getAttack() * multiplier);
+        
+        // 连续发射5枚子弹，间隔0.05秒，体现距离紧密
+        for (int i = 0; i < 5; i++)
+        {
+            auto delay = DelayTime::create(i * 0.05f);
+            auto shoot = CallFunc::create([this, damage]() {
+                this->shootBullet(damage);
+            });
+            this->runAction(Sequence::create(delay, shoot, nullptr));
+        }
+        
+        GAME_LOG("Wisdael Passive Triggered! 5-Burst. Damage: %d", damage);
+    }
+    else
+    {
+        // 普通攻击：普通状态100%，强化状态300% (保持原有逻辑)
+        float multiplier = _isEnhanced ? 3.0f : 1.0f;
+        int damage = static_cast<int>(getAttack() * multiplier);
+        shootBullet(damage);
+        
+        GAME_LOG("Wisdael shoots bullet! Enhanced: %s", _isEnhanced ? "YES" : "NO");
+    }
     
     // 攻击动画结束后返回IDLE
     auto delay = DelayTime::create(0.3f);
@@ -423,9 +447,9 @@ void Gunner::exitEnhancedState()
     GAME_LOG("Exited enhanced state - Attack interval: %.2fs", _attackCooldown);
 }
 
-void Gunner::shootBullet()
+void Gunner::shootBullet(int damage)
 {
-    // 根据强化状态选择子弹资源和伤害
+    // 根据强化状态选择子弹资源
     std::string bulletPath = "Player/Wisdael/Wisdael_bullet/Wisdael_bullet_0001.png";
     
     // 创建子弹精灵
@@ -471,11 +495,13 @@ void Gunner::shootBullet()
         bullet->runAction(repeat);
     }
     
-    // 计算伤害：普通100%攻击力，强化300%攻击力
-    int bulletDamage = _isEnhanced ? getAttack() * 3 : getAttack();
+    // 使用传入的伤害
+    int bulletDamage = damage;
     Vec2 direction = _facingDirection;
     bool isEnhanced = _isEnhanced;
-    float explosionRadius = _isEnhanced ? 100.0f : 50.0f;  // 强化时爆炸范围更大
+    
+    // 爆炸范围：普通50，强化200 (原100 + 扩大100)
+    float explosionRadius = _isEnhanced ? 200.0f : 50.0f;
     
     // 添加到父节点
     if (this->getParent() != nullptr)
@@ -592,12 +618,24 @@ void Gunner::shootBullet()
 void Gunner::shootSkillBomb()
 {
     // 技能炸弹使用更大的范围和更高的伤害
-    shootBullet();  // 简化实现，复用子弹逻辑
+    // 假设技能炸弹伤害倍率为 300% (与强化普攻一致)
+    shootBullet(getAttack() * 3);
 }
 
 // 创建爆炸效果并造成范围伤害
 void Gunner::createExplosion(Node* parent, const Vec2& pos, int damage, float radius)
 {
+    // Debug可视化：绘制有色半透明圆圈
+    auto debugDraw = DrawNode::create();
+    // 红色，透明度0.3
+    debugDraw->drawSolidCircle(Vec2::ZERO, radius, 0.0f, 30, Color4F(1.0f, 0.0f, 0.0f, 0.3f));
+    debugDraw->setPosition(pos);
+    debugDraw->setGlobalZOrder(Constants::ZOrder::PROJECTILE + 1);
+    parent->addChild(debugDraw);
+    
+    // 0.5秒后淡出并移除
+    debugDraw->runAction(Sequence::create(FadeOut::create(0.5f), RemoveSelf::create(), nullptr));
+
     // 创建爆炸视觉效果
     Vector<SpriteFrame*> boomFrames;
     for (int i = 1; i <= 5; i++)
@@ -615,7 +653,8 @@ void Gunner::createExplosion(Node* parent, const Vec2& pos, int damage, float ra
     {
         auto explosion = Sprite::createWithSpriteFrame(boomFrames.front());
         explosion->setPosition(pos);
-        explosion->setScale(radius / 50.0f);  // 根据爆炸半径调整大小
+        // 根据爆炸半径调整大小，基准半径50.0f对应scale 1.0
+        explosion->setScale(radius / 50.0f);
         explosion->setGlobalZOrder(Constants::ZOrder::PROJECTILE + 1);
         parent->addChild(explosion);
         
