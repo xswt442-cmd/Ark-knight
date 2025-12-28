@@ -163,7 +163,7 @@ bool KuiLongBoss::init()
     if (!Enemy::init()) return false;
 
     setEnemyType(EnemyType::MELEE);
-    setMaxHP(120000);
+    setMaxHP(300000);
     setHP(getMaxHP());
     setMoveSpeed(30.0f);
     setAttack(1800);
@@ -174,7 +174,7 @@ bool KuiLongBoss::init()
 
     _phase = PHASE_A;
     _phaseTimer = 0.0f;
-    _phaseADuration = 10.0f; // 2.2: 确保初始化也为60秒
+    _phaseADuration = 60.0f; // 2.2: 确保初始化也为60秒
 
     loadAnimations();
 

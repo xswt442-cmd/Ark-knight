@@ -98,8 +98,8 @@ bool IronLance::init()
     setEnemyType(EnemyType::MELEE);
 
     // »ù´¡ÊôÐÔ
-    setMaxHP(20);
-    setHP(20);
+    setMaxHP(15);
+    setHP(15);
 
     setAttack(0);
     setMoveSpeed(60.0f);

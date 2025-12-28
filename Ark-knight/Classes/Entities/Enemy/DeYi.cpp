@@ -9,7 +9,7 @@ USING_NS_CC;
 static const int DEYI_MOVE_ACTION_TAG = 0xD001;
 static const int DEYI_DIE_ACTION_TAG  = 0xD002;
 
-static const int DEYI_EXPLOSION_DAMAGE = 200; // 爆炸造成的“大量伤害”，可根据需要调整
+static const int DEYI_EXPLOSION_DAMAGE = 1200; // 爆炸造成的“大量伤害”，可根据需要调整
 static const float DEYI_EXPLOSION_RADIUS = 80.0f; // 爆炸半径（和判定距离）
 
 DeYi::DeYi()
@@ -64,13 +64,13 @@ void DeYi::setRoomBounds(const cocos2d::Rect& bounds)
 void DeYi::setupDeYiAttributes()
 {
     // 基础属性（根据需要调整）
-    setMaxHP(120);
-    setHP(120);
+    setMaxHP(1000);
+    setHP(1000);
     setAttack(0); // 不使用常规近战攻击
-    setMoveSpeed(110.0f);
+    setMoveSpeed(140.0f);
 
     // AI 参数
-    setSightRange(250.0f);
+    setSightRange(350.0f);
     setAttackRange(40.0f); // 接近到该范围即触发自爆
 
     // 攻击/前摇冷却不适用于 DeYi，但仍设置安全值

@@ -64,10 +64,10 @@ bool TangHuang::init()
 void TangHuang::setupAttributes()
 {
     // 默认属性（可根据游戏平衡调整）
-    setMaxHP(1600);
-    setHP(1600);
+    setMaxHP(5000);
+    setHP(5000);
 
-    setAttack(50);
+    setAttack(750);
     setMoveSpeed(70.0f);
 
     setSightRange(200.0f);

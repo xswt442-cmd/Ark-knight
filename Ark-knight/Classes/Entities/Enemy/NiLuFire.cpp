@@ -70,7 +70,7 @@ bool NiLuFire::init()
     if (!Enemy::init()) return false;
 
     setEnemyType(EnemyType::MELEE);
-    setMaxHP(1000);    // 最高 1000
+    setMaxHP(2000);    // 修改：血量上限设为 2000
     setHP(0);          // 初始血量为 0（如设计要求）
     setMoveSpeed(0.0f);
     setAttack(0);      // 物理攻击值不用于 NiLu，使用 performAttackImmediate 的参数

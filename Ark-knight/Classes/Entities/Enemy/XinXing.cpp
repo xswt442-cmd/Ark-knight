@@ -72,9 +72,9 @@ bool XinXing::init()
 void XinXing::setupAttributes()
 {
     // 基础属性（可按需微调）
-    setMaxHP(400);
-    setHP(400);
-    setAttack(60);            // 高伤害
+    setMaxHP(6000);
+    setHP(6000);
+    setAttack(2000);            // 高伤害
     setMoveSpeed(120.0f);
 
     setSightRange(320.0f);

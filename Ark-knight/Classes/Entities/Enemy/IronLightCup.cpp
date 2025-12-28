@@ -32,7 +32,7 @@ bool IronLightCup::init()
     setEnemyType(EnemyType::MELEE);
 
     // 设置为“35 次击中死亡”（通过单次扣血实现）
-    setMaxHP(15);
+    setMaxHP(10);
     setHP(getMaxHP());
 
     setMoveSpeed(40.0f);

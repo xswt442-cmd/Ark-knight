@@ -72,10 +72,10 @@ void KongKaZi::update(float dt)
 void KongKaZi::setupKongKaZiAttributes()
 {
     // 设置基础属性（可根据需要调整数值）
-    setMaxHP(1000);
-    setHP(1000);
-    setAttack(50);
-    setMoveSpeed(120.0f);
+    setMaxHP(5000);
+    setHP(5000);
+    setAttack(750);
+    setMoveSpeed(150.0f);
 
     // AI 参数
     setSightRange(1000.0f);

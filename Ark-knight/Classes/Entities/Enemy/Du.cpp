@@ -61,13 +61,13 @@ bool Du::init()
 void Du::setupAttributes()
 {
     // 依据需求：远程，攻击前摇 0.8s，索敌范围大，伤害偏高
-    setMaxHP(900);
-    setHP(900);
+    setMaxHP(3500);
+    setHP(3500);
 
-    setAttack(180); // 造成大量伤害（可根据平衡调整）
+    setAttack(1800); // 造成大量伤害（可根据平衡调整）
     setMoveSpeed(65.0f);
 
-    setSightRange(480.0f);   // 远程索敌大范围
+    setSightRange(500.0f);   // 远程索敌大范围
     setAttackRange(420.0f);  // 远程攻击范围
     setAttackCooldown(2.5f);
     setAttackWindup(0.8f);

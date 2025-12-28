@@ -64,9 +64,9 @@ void Ayao::update(float dt)
 void Ayao::setupAyaoAttributes()
 {
     // 阿咬基础属性
-    setMaxHP(200);
-    setHP(200);
-    setAttack(10);
+    setMaxHP(1000);
+    setHP(1000);
+    setAttack(100);
     setMoveSpeed(100.0f);
     
     // AI参数

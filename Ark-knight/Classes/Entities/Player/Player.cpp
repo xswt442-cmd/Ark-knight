@@ -1,5 +1,7 @@
 ﻿#include "Player.h"
 #include "UI/FloatingText.h"
+#include "Scenes/GameScene.h"
+#include "Entities/Enemy/NiLuFire.h"
 
 Player::Player()
     : _keyW(false)
@@ -313,7 +315,11 @@ void Player::useHeal()
     
     // 回复血量（应用治疗加成）
     int oldHP = _hp;
-    int healValue = static_cast<int>(_healAmount * _healPowerMultiplier);
+    
+    // 修改：治疗量为最大生命值的 10%
+    int baseHeal = static_cast<int>(_maxHP * 0.10f);
+    int healValue = static_cast<int>(baseHeal * _healPowerMultiplier);
+    
     _hp += healValue;
     if (_hp > _maxHP)
     {
@@ -334,6 +340,39 @@ void Player::useHeal()
         if (healed > 0)
         {
             FloatingText::show(this->getParent(), this->getPosition(), std::to_string(healed), Color3B(50,200,50));
+        }
+    }
+
+    // 新增：同时治疗范围内的尼卢火
+    // 由于 GameScene 没有公开 getEnemies()，我们遍历父节点（GameLayer）的子节点来查找
+    if (auto parent = this->getParent())
+    {
+        // 修复崩溃：创建子节点列表的副本进行遍历 (Vector<Node*>)
+        // 避免因 onHealedByPlayer 内部调用 removeFromParent 导致原列表迭代器失效
+        auto children = parent->getChildren(); 
+        
+        Vec2 playerPos = this->getPosition();
+        float healRadiusSq = 600.0f * 600.0f; // 600r 半径的平方
+        int niluHealAmount = static_cast<int>(healValue * 0.20f); // 尼卢火恢复该次治疗量20%
+
+        if (niluHealAmount > 0)
+        {
+            for (auto node : children)
+            {
+                // 尝试转换为 NiLuFire
+                if (auto niluFire = dynamic_cast<NiLuFire*>(node))
+                {
+                    // 只要没死（状态不是DIE）就可以治疗
+                    if (niluFire->getState() != EntityState::DIE)
+                    {
+                        // 检查距离
+                        if (playerPos.distanceSquared(niluFire->getPosition()) <= healRadiusSq)
+                        {
+                            niluFire->onHealedByPlayer(niluHealAmount);
+                        }
+                    }
+                }
+            }
         }
     }
 }

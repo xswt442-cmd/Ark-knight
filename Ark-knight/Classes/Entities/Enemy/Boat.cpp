@@ -35,7 +35,7 @@ bool Boat::init()
     if (!Enemy::init()) return false;
 
     setEnemyType(EnemyType::MELEE);
-    setMaxHP(50000);
+    setMaxHP(600000);
     setHP(getMaxHP());
     setMoveSpeed(150.0f);
     setAttack(0);

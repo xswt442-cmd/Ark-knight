@@ -49,7 +49,7 @@ bool Cup::init()
     }
 
     setEnemyType(EnemyType::MELEE);
-    setMaxHP(10000);
+    setMaxHP(300000);
     setHP(getMaxHP());
     setMoveSpeed(80.0f);
 

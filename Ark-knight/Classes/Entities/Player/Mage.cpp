@@ -41,11 +41,11 @@ bool Mage::init()
     SoundManager::getInstance()->preload("SoundEffect/Nymph_Skill_Attack.mp3");
     
     // 设置妮芙属性
-    setMaxHP(100000);
-    setHP(100000);
+    setMaxHP(40000);
+    setHP(40000);
     setMaxMP(400);
     setMP(400);
-    setAttack(800);
+    setAttack(4250);
     setMoveSpeed(200.0f);
     
     // 设置技能冷却
