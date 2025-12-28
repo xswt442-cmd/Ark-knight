@@ -50,6 +50,8 @@ AppDelegate::AppDelegate()
 AppDelegate::~AppDelegate() 
 {
 #if USE_AUDIO_ENGINE
+    // 确保AudioEngine被正确清理（可能已在退出按钮中调用过）
+    // AudioEngine::end() 内部会检查是否已经 end 过
     AudioEngine::end();
 #endif
 }

@@ -60,8 +60,11 @@ public:
     float getBGMVolume() const { return _bgmVolume; }
     
     // ==================== 音效 ====================
-    /**
-     * 播放音效
+    /**     * 预加载音效
+     */
+    void preload(const std::string& filePath);
+
+    /**     * 播放音效
      * @param filePath 音频文件路径
      * @param loop 是否循环
      * @return 音效ID

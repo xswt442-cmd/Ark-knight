@@ -4,6 +4,7 @@
 #include "Map/Hallway.h"
 #include "UI/FloatingText.h"
 #include "audio/include/AudioEngine.h"
+#include "Managers/SoundManager.h"
 
 Mage::Mage()
     : _isEnhanced(false)
@@ -34,6 +35,10 @@ bool Mage::init()
     {
         return false;
     }
+    
+    // 预加载音效
+    SoundManager::getInstance()->preload("SoundEffect/Nymph_Attack.mp3");
+    SoundManager::getInstance()->preload("SoundEffect/Nymph_Skill_Attack.mp3");
     
     // 设置妮芙属性
     setMaxHP(100000);
@@ -347,11 +352,11 @@ void Mage::attack()
     // 播放攻击音效
     if (_isEnhanced)
     {
-        AudioEngine::play2d("SoundEffect/Nymph_Skill_Attack-1.wav");
+        SoundManager::getInstance()->playSFX("SoundEffect/Nymph_Skill_Attack.mp3");
     }
     else
     {
-        AudioEngine::play2d("SoundEffect/Nymph_Attack-1.wav");
+        SoundManager::getInstance()->playSFX("SoundEffect/Nymph_Attack.mp3");
     }
     
     // 发射子弹
