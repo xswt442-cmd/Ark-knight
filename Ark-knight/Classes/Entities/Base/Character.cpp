@@ -154,14 +154,14 @@ void Character::move(const Vec2& direction, float dt)
     // 计算新位置
     Vec2 newPos = this->getPosition() + normalizedDir * _moveSpeed * dt;
     
-    // 移除了旧的屏幕边界限制，现在由地图系统的Room和Hallway来处理边界
+    // 由地图系统的Room和Hallway来处理边界
     
     this->setPosition(newPos);
     
     // 更新面朝方向
     _facingDirection = normalizedDir;
     
-    // --- 新增：根据水平分量翻转精灵，使移动时角色能左右转向 ---
+    // 根据水平分量翻转精灵，使移动时角色能左右转向
     if (_sprite != nullptr)
     {
         // 使用一个小阈值避免垂直移动时频繁切换 flip
@@ -176,7 +176,6 @@ void Character::move(const Vec2& direction, float dt)
         }
         // 当水平分量在 [-threshold, threshold] 区间时，不改变当前 flip（保持原样）
     }
-    // ----------------------------------------------------------------
     
     // 更新状态
     if (_currentState == EntityState::IDLE)
@@ -195,7 +194,6 @@ void Character::faceToPosition(const Vec2& targetPos)
         // 翻转精灵
         if (_sprite != nullptr)
         {
-            //修改点：视角已经正确修正
             if (_facingDirection.x > 0)
             {
                 _sprite->setFlippedX(false);

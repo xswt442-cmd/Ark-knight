@@ -4,9 +4,7 @@
 #include "cocos2d.h"
 #include "Core/Constants.h"
 
-/**
- * Hallway - 连接房间的走廊
- */
+// 连接房间的走廊(Hallway)
 class Hallway : public cocos2d::Node {
 public:
     static Hallway* create(int direction);

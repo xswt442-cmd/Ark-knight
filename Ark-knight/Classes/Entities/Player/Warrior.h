@@ -3,15 +3,8 @@
 
 #include "Player.h"
 
-/**
- * 泥岩(Mudrock) - 战士职业
- * 特点：近战范围攻击、高血量、抡锤造成伤害
- * 
- * 属性：150HP, 80MP
- * 普攻：抡锤对范围内敌人造成伤害
- * 技能：恢复20%生命值，抡锤范围扩大，攻击+200%
- *       消耗60蓝，18秒CD
- */
+// 泥岩(Mudrock) - 战士职业
+// 特点：近战范围攻击、高血量、抡锤造成伤害
 class Warrior : public Player {
 public:
     Warrior();
@@ -22,72 +15,46 @@ public:
     
     CREATE_FUNC(Warrior);
     
-    // ==================== 实现抽象接口 ====================
-    /**
-     * 普通攻击：抡锤范围攻击
-     */
+    // 实现抽象接口
+    // 普通攻击：抡锤范围攻击
     void attack() override;
     
-    /**
-     * 使用技能：回血+强化状态
-     */
+    // 使用技能：回血+强化状态
     void useSkill() override;
     
-    /**
-     * 获取技能MP消耗
-     */
+    // 获取技能MP消耗
     int getSkillMPCost() const override { return 60; }
     
-    /**
-     * 是否处于强化状态
-     */
+    // 是否处于强化状态
     bool isEnhanced() const { return _isEnhanced; }
     
-    /**
-     * 重写受伤逻辑，优先扣除护盾
-     */
+    // 重写受伤逻辑，优先扣除护盾
     virtual void takeDamage(int damage) override;
 
 protected:
-    /**
-     * 重写状态切换，播放对应动画
-     */
+    // 重写状态切换，播放对应动画
     void setState(EntityState state) override;
     
 private:
-    /**
-     * 初始化动画
-     */
+    // 初始化动画
     void initAnimations();
     
-    /**
-     * 播放指定动画
-     */
+    // 播放指定动画
     void playAnimation(const std::string& name, bool loop = true);
     
-    /**
-     * 执行近战范围攻击
-     */
+    // 执行近战范围攻击
     void performMeleeAttack();
     
-    /**
-     * 进入强化状态
-     */
+    // 进入强化状态
     void enterEnhancedState();
     
-    /**
-     * 退出强化状态
-     */
+    // 退出强化状态
     void exitEnhancedState();
     
-    /**
-     * 增加护盾
-     */
+    // 增加护盾
     void addShield(int amount);
 
-    /**
-     * 更新护盾条显示（会同步位置到父节点）
-     */
+    // 更新护盾条显示（会同步位置到父节点）
     void updateShieldBar();
 
     // 强化状态相关

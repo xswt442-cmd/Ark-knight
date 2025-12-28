@@ -1,10 +1,13 @@
 #include "FloatingText.h"
 #include "Core/Constants.h"
 
+/*
+ *æœ¬æ–¹æ³•å®ç°è·³å­—åŠŸèƒ½ï¼ŒåŒ…æ‹¬ä¼¤å®³æ•°å­—ã€æ²»ç–—æ•°å­—ã€æˆ˜å£«æŠ¤ç›¾çš„æŠµæŒ¡æ ‡å¿—æ–‡å­—ç­‰
+ */
+
 USING_NS_CC;
 
 namespace {
-    // ½ö¼ÇÂ¼µ±Ç°»îÔ¾µÄ¸¡¶¯ÎÄ±¾ÊıÁ¿£¨±ÜÃâ±£´æÂãÖ¸Õëµ¼ÖÂĞü¹ÒÖ¸Õë·ÃÎÊ£©
     static size_t s_activeCount = 0;
     static const size_t MAX_ACTIVE = 15;
 }
@@ -13,13 +16,11 @@ void FloatingText::show(Node* parent, const Vec2& pos, const std::string& text, 
 {
     if (parent == nullptr) return;
 
-    // ÏŞÖÆÍ¬Ê±ÏÔÊ¾ÊıÁ¿£¬´ïµ½ÉÏÏŞÔòºöÂÔĞÂµÄ£¨±ÜÃâ¿¨¶Ù£©
     if (s_activeCount >= MAX_ACTIVE)
     {
         return;
     }
 
-    // ´´½¨Label£¨Ê¹ÓÃÏîÄ¿ÄÚ×ÖÌå»òÏµÍ³×ÖÌå»ØÍË£©
     Label* label = Label::createWithTTF(text, "fonts/msyh.ttf", fontSize);
     if (!label)
     {
@@ -30,16 +31,13 @@ void FloatingText::show(Node* parent, const Vec2& pos, const std::string& text, 
     label->setTextColor(Color4B(color));
     label->setAnchorPoint(Vec2(0.5f, 0.5f));
 
-    // pos ¼ÙÉèÎªÌí¼Óµ½ parent µÄ¾Ö²¿×ø±ê£¨Í¨³£ entity->getPosition() ¼´¿É£©
     label->setPosition(pos);
     label->setGlobalZOrder(Constants::ZOrder::EFFECT + 1);
 
     parent->addChild(label);
 
-    // Ôö¼Ó»îÔ¾¼ÆÊı
     ++s_activeCount;
 
-    // ¶¯×÷£ºÏòÉÏÒÆ¶¯²¢½¥Òş£¬È»ºóÒÆ³ı²¢¸üĞÂ¼ÆÊı
     Vec2 moveBy = Vec2(0, 30.0f);
     float fadeTime = duration * 0.6f;
     float totalTime = duration;
@@ -50,7 +48,6 @@ void FloatingText::show(Node* parent, const Vec2& pos, const std::string& text, 
     auto seq = Sequence::create(delay, fade, nullptr);
     auto spawn = Spawn::createWithTwoActions(move, seq);
 
-    // Íê³É»Øµ÷£ºÒÆ³ı label ²¢µİ¼õ»îÔ¾¼ÆÊı£¨Ğ¡ĞÄ²»ÒªÔ½½ç£©
     auto cleanup = CallFunc::create([label]() {
         if (label->getParent())
         {

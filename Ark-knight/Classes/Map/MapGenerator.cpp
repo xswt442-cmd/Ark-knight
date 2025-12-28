@@ -485,7 +485,6 @@ void MapGenerator::clearMap() {
  * 使用 BossFloor 类生成Boss层
  * 详细实现请查看 BossFloor.cpp
  * 
- * @see BossFloor - Boss层生成器类
  */
 void MapGenerator::generateBossFloor() {
     auto bossFloor = BossFloor::create();

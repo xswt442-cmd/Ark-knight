@@ -27,42 +27,28 @@ public:
     
     CREATE_FUNC(CharacterSelectLayer);
     
-    /**
-     * 设置关闭回调
-     */
+    // 设置关闭回调
     void setCloseCallback(const std::function<void()>& callback) {
         _closeCallback = callback;
     }
     
-    /**
-     * 获取当前选择的角色类型
-     */
+    // 获取当前选择的角色类型
     static CharacterType getSelectedCharacter() { return s_selectedCharacter; }
     
-    /**
-     * 设置选择的角色类型
-     */
+    // 设置选择的角色类型
     static void setSelectedCharacter(CharacterType type) { s_selectedCharacter = type; }
     
 private:
-    /**
-     * 创建UI元素
-     */
+    // 创建UI元素
     void createUI();
     
-    /**
-     * 选择角色
-     */
+    // 选择角色
     void selectCharacter(CharacterType type);
     
-    /**
-     * 确认选择并关闭
-     */
+    // 确认选择并关闭
     void confirmSelection();
     
-    /**
-     * 更新角色显示状态（选中高亮，其他变暗）
-     */
+    // 更新角色显示状态（选中高亮，其他变暗）
     void updateCharacterDisplay();
     
 private:

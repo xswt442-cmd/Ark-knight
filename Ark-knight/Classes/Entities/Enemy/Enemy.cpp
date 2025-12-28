@@ -88,12 +88,12 @@ void Enemy::update(float dt)
             _poisonTimer = 0.0f;
             _poisonTickAcc = 0.0f;
             _poisonSourceAttack = 0;
-            // 恢复颜色：如果当前处于隐身（存在 stealth 源），优先恢复为 stealth 原始色；否则恢复 poison 原始色
+            // 如果当前处于隐身优先恢复为 stealth 原始色
             if (_poisonColorSaved && _sprite)
             {
                 if (!_stealthSources.empty() && _stealthColorSaved)
                 {
-                    // 仍处于隐身，保持隐身色（不覆盖）
+                    // 仍处于隐身，保持隐身色
                 }
                 else
                 {
@@ -106,10 +106,10 @@ void Enemy::update(float dt)
     }
 }
 
-// ==================== Nymph 中毒逻辑实现 ====================
+// Nymph 中毒逻辑实现
 void Enemy::applyNymphPoison(int sourceAttack)
 {
-    // 新增：如果实体不允许被剧毒影响，则忽略（例如 Boss 在阶段 A）
+    // 如果实体不允许被剧毒影响，则忽略（例如 Boss 在阶段 A）
     if (!isPoisonable())
     {
         GAME_LOG("Enemy::applyNymphPoison ignored because entity is not poisonable");
@@ -154,7 +154,7 @@ void Enemy::applyNymphPoison(int sourceAttack)
     GAME_LOG("applyNymphPoison: stacks=%d, srcAtk=%d", _poisonStacks, _poisonSourceAttack);
 }
 
-// ==================== Stealth 源管理实现 ====================
+// Stealth 源管理实现
 void Enemy::addStealthSource(void* source)
 {
     if (!source) return;
@@ -231,7 +231,7 @@ void Enemy::executeAI(Player* player, float dt)
 
             if (canAttack())
             {
-                // 立即进入攻击状态并播放攻击前摇动画（子类 attack() 会处理）
+                // 立即进入攻击状态并播放攻击前摇动画
                 attack();
 
                 // 使用成员 _attackWindup 作为风箱时长，风箱结束时再判断是否命中
@@ -321,7 +321,7 @@ void Enemy::patrol(float dt)
     }
     else
     {
-        // 明确告诉 move 停止（以便停止移动动画）
+        // 明确停止移动
         move(Vec2::ZERO, dt);
     }
 }
@@ -338,7 +338,7 @@ void Enemy::attack()
 
     GAME_LOG("Enemy attacks!");
 
-    // 攻击动画结束后返回IDLE（子类可以覆盖视觉行为）
+    // 攻击动画结束后返回IDLE
     auto delay = DelayTime::create(this->_attackWindup);
     auto callback = CallFunc::create([this]() {
         if (_currentState == EntityState::ATTACK)
@@ -376,10 +376,10 @@ void Enemy::attackPlayer(Player* player)
 
 void Enemy::playAttackAnimation()
 {
-    // 默认空实现，子类可覆盖以播放具体动画（不改变冷却/状态）
+    // 默认空实现，子类可覆盖以播放具体动画
 }
 
-// ==================== 红色标记与 KongKaZi 生成功能（不改变实体状态） ============
+// 红色标记与 KongKaZi 生成功能（不改变实体状态）
 void Enemy::tryApplyRedMark(float chance)
 {
     if (chance <= 0.0f) return;
@@ -401,7 +401,7 @@ void Enemy::tryApplyRedMark(float chance)
 void Enemy::die()
 {
     // 仅处理“红色标记导致的紫圈 + 延迟生成 KongKaZi”视觉/生成逻辑
-    // 不改变实体状态、不调用基类的 Character::die()，以免干扰子类自定义的死亡动画流程
+    // 不改变实体状态、不调用基类，以免干扰子类自定义的死亡动画流程
     if (_isRedMarked && canSpawnKongKaZiOnDeath())
     {
         // 优先把紫色圆圈添加到敌人的父节点（通常为 gameLayer），使其位于地板之上、实体之下，行为类似 Cup 的范围圈
@@ -428,14 +428,14 @@ void Enemy::die()
             circle->setPosition(worldPos);
         }
 
-        // 在圆自身上运行淡出与移除动作（避免对 running scene 调度）
+        // 在圆自身上运行淡出与移除动作
         auto fade = FadeOut::create(0.5f);
         auto removeCircle = CallFunc::create([circle]() {
             if (circle->getParent()) circle->removeFromParent();
         });
         circle->runAction(Sequence::create(DelayTime::create(0.25f), fade, removeCircle, nullptr));
 
-        // 延迟生成 KongKaZi（生成时使用本节点的本地坐标，相对通常为 gameLayer）
+        // 延迟生成 KongKaZi
         Vec2 localSpawnPos = this->getPosition();
         auto spawnFunc = [localSpawnPos]() {
             auto kk = KongKaZi::create();
@@ -473,7 +473,7 @@ void Enemy::die()
             }
         };
 
-        // 使用运行场景来调度延迟（若不存在则用 Director）
+        // 使用运行场景来调度延迟
         if (running)
         {
             running->runAction(Sequence::create(DelayTime::create(0.28f), CallFunc::create(spawnFunc), nullptr));
@@ -483,23 +483,17 @@ void Enemy::die()
             Director::getInstance()->getRunningScene()->runAction(Sequence::create(DelayTime::create(0.28f), CallFunc::create(spawnFunc), nullptr));
         }
     }
-
-    // 注意：不在这里调用 Character::die()，子类（例如 Ayao）会在自己的 die() 中执行完整的死亡动画与移除流程
 }
 
-/**
- * Enemy::takeDamage - 覆写以支持 Cup 的伤害分担逻辑
- * 旧的无返回值接口仍保留（向后兼容），其实现现在委托给 takeDamageReported
- */
+// 伤害逻辑
+// 无返回值接口保留
+
 void Enemy::takeDamage(int damage)
 {
-    // 向后兼容：调用有返回值的实现，忽略返回值
+    // 调用有返回值的实现，忽略返回值
     takeDamageReported(damage);
 }
 
-/**
- * Enemy::takeDamageReported - 新实现，返回“实际对该敌人 HP 造成的减少值”
- */
 int Enemy::takeDamageReported(int damage)
 {
     // 复用GameEntity的基本过滤逻辑，但在分担场景下拆分伤害
@@ -508,13 +502,13 @@ int Enemy::takeDamageReported(int damage)
         return 0;
     }
 
-    // 处于短暂无敌时忽略（与 GameEntity::takeDamage 一致）
+    // 处于短暂无敌时忽略
     if (_hitInvulTimer > 0.0f)
     {
         return 0;
     }
 
-    // 如果自身就是 Cup，则不再做分担检测，直接调用基类处理（遵循默认流程）
+    // 如果自身就是 Cup，则不再做分担检测，直接调用基类处理
     Cup* selfCup = dynamic_cast<Cup*>(this);
     if (selfCup)
     {
@@ -546,14 +540,13 @@ int Enemy::takeDamageReported(int damage)
 
         int appliedToSelf = 0;
 
-        // 先对受击者应用剩余伤害（保持 GameEntity 的受击显示与死亡逻辑）
+        // 先对受击者应用剩余伤害
         if (remain > 0)
         {
             appliedToSelf = GameEntity::takeDamageReported(remain);
         }
         else
         {
-            // remain == 0 则我们仍然应该触发闪烁与 invul（保持最小的 visual feedback）
             _hitInvulTimer = GameEntity::HIT_INVUL_DURATION;
             if (_sprite)
             {
@@ -561,7 +554,7 @@ int Enemy::takeDamageReported(int damage)
                 _sprite->setColor(Color3B::WHITE);  // 立即重置颜色
                 _sprite->setVisible(true);
                 _sprite->setOpacity(255);
-                // 使用CallFunc+setColor瞬时设置颜色，避免TintTo渐变被中断导致的颜色卡住
+                // 使用CallFunc+setColor瞬时设置颜色，避免TintTo渐变卡顿
                 auto setRed = CallFunc::create([this]() { _sprite->setColor(Color3B(255, 100, 100)); });
                 auto setWhite = CallFunc::create([this]() { _sprite->setColor(Color3B::WHITE); });
                 auto seq = Sequence::create(
@@ -576,7 +569,7 @@ int Enemy::takeDamageReported(int damage)
             appliedToSelf = 0;
         }
 
-        // 将分担的伤害给 Cup（Cup::absorbDamage 会直接减少 HP 并处理死亡）
+        // 将分担的伤害给 Cup
         chosenCup->absorbDamage(share);
 
         GAME_LOG("Enemy::takeDamage redirected %d->Cup, remain %d to self (applied=%d) (pos self=[%.1f,%.1f], cup=[%.1f,%.1f])",

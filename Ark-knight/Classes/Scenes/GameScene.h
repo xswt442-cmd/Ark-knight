@@ -19,13 +19,7 @@
 
 USING_NS_CC;
 
-/**
- * 游戏主场景
- * 核心战斗场景，包含：
- * - 游戏逻辑层
- * - 地图层
- * - UI层
- */
+// 游戏主场景
 class GameScene : public Scene {
 public:
     static Scene* createScene();
@@ -42,136 +36,84 @@ public:
     static int s_savedMP;
     static std::vector<std::string> s_savedItems;  // 保存的道具ID列表
     
-    /**
-     * 获取玩家对象
-     */
+    // 获取玩家对象
     Player* getPlayer() const { return _player; }
     
-    /**
-     * 新增：由外部注册新生成的敌人（例如 Enemy::die 生成的 KongKaZi）
-     */
+    // 由外部注册新生成的敌人（例如 Enemy::die 生成的 KongKaZi）
     void addEnemy(Enemy* enemy);
     
-    /**
-     * 添加道具到UI显示
-     * @param itemDef 道具定义
-     */
+    // 添加道具到UI显示
     void addItemToUI(const ItemDef* itemDef);
     
-    /**
-     * 显示胜利界面（公开，供 Boss 死亡时调用）
-     */
+    // 显示胜利界面（公开，供 Boss 死亡时调用）
     void showVictory();
     
 private:
-    /**
-     * 初始化层级
-     */
+    // 初始化层级
     void initLayers();
     
-    /**
-     * 创建玩家
-     */
+    // 创建玩家
     void createPlayer();
     
-    /**
-     * 创建测试敌人
-     */
+    // 创建测试敌人
     void createTestEnemies();
     
-    /**
-     * 在指定房间生成敌人
-     * @param room 目标房间
-     */
+    // 在指定房间生成敌人
     void spawnEnemiesInRoom(Room* room);
     
-    /**
-     * 初始化地图系统
-     */
+    // 初始化地图系统
     void initMapSystem();
     
-    /**
-     * 初始化相机系统
-     */
+    // 初始化相机系统
     void initCamera();
     
-    /**
-     * 更新相机位置（跟随玩家）
-     */
+    // 更新相机位置（跟随玩家）
     void updateCamera(float dt);
     
-    /**
-     * 更新地图和房间
-     */
+    // 更新地图和房间
     void updateMapSystem(float dt);
     
-    /**
-     * 创建HUD
-     */
+    // 创建HUD
     void createHUD();
     
-    /**
-     * 创建菜单系统
-     */
+    // 创建菜单系统
     void createMenus();
     
-    /**
-     * 更新玩家
-     */
+    // 更新玩家
     void updatePlayer(float dt);
     
-    /**
-     * 更新敌人
-     */
+    // 更新敌人
     void updateEnemies(float dt);
     void updateSpikes(float dt);
     
-    /**
-     * 更新交互系统
-     */
+    // 更新交互系统
     void updateInteraction(float dt);
     
-    /**
-     * 更新HUD
-     */
+    // 更新HUD
     void updateHUD(float dt);
     
-    /**
-     * 检测碰撞
-     */
+    // 检测碰撞
     void checkCollisions();
     
-    /**
-     * 检测并解决实体与障碍物的碰撞
-     */
+    // 检测并解决实体与障碍物的碰撞
     void checkBarrierCollisions();
     
-    /**
-     * 暂停游戏
-     */
+    // 暂停游戏
     void pauseGame();
     
-    /**
-     * 继续游戏
-     */
+    // 继续游戏
     void resumeGame();
     
-    /**
-     * 显示设置菜单
-     */
+    // 显示设置菜单
     void showSettings();
     
-    /**
-     * 显示游戏结束界面
-     */
+    // 显示游戏结束界面
     void showGameOver();
     
-    /**
-     * 切换到下一关
-     */
+    // 切换到下一关
     void goToNextLevel();
     
-    // ==================== 按键回调 ====================
+    // 按键回调
     void setupKeyboardListener();
     
 private:

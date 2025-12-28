@@ -316,7 +316,7 @@ void Player::useHeal()
     // 回复血量（应用治疗加成）
     int oldHP = _hp;
     
-    // 修改：治疗量为最大生命值的 10%
+    // 治疗量为最大生命值的 10%
     int baseHeal = static_cast<int>(_maxHP * 0.10f);
     int healValue = static_cast<int>(baseHeal * _healPowerMultiplier);
     
@@ -331,7 +331,7 @@ void Player::useHeal()
     
     GAME_LOG("Player healed! HP: %d -> %d, MP: %d/%d", oldHP, _hp, _mp, _maxMP);
     
-    // TODO: 播放治疗特效
+    // 可以考虑再添加：播放治疗特效
 
     // 在 useHeal() 恢复血量后：
     if (this->getParent())
@@ -343,12 +343,9 @@ void Player::useHeal()
         }
     }
 
-    // 新增：同时治疗范围内的尼卢火
-    // 由于 GameScene 没有公开 getEnemies()，我们遍历父节点（GameLayer）的子节点来查找
+    // 同时治疗范围内的尼卢火
     if (auto parent = this->getParent())
     {
-        // 修复崩溃：创建子节点列表的副本进行遍历 (Vector<Node*>)
-        // 避免因 onHealedByPlayer 内部调用 removeFromParent 导致原列表迭代器失效
         auto children = parent->getChildren(); 
         
         Vec2 playerPos = this->getPosition();
@@ -509,7 +506,7 @@ void Player::takeDamage(int damage)
                 _sprite->stopActionByTag(100);
                 _sprite->setColor(Color3B::WHITE);  // 立即重置颜色
                 
-                // 使用CallFunc+setColor瞬时设置颜色，避免TintTo渐变被中断导致的颜色卡住
+                // 使用CallFunc+setColor瞬时设置颜色，避免TintTo渐变卡顿
                 auto setRed = CallFunc::create([this]() { _sprite->setColor(Color3B(255, 100, 100)); });
                 auto setWhite = CallFunc::create([this]() { _sprite->setColor(Color3B::WHITE); });
                 auto seq = Sequence::create(
@@ -544,7 +541,7 @@ void Player::takeDamage(int damage)
         FloatingText::show(this->getParent(), this->getPosition(), std::to_string(damage), Color3B(220,20,20));
     }
 }
-// ==================== 道具增益实现 ====================
+// 道具增益实现
 void Player::addDamageReduction(float percent)
 {
     _damageReductionPct += percent;

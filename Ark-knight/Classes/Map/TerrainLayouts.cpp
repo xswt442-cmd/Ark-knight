@@ -90,7 +90,7 @@ void TerrainLayoutHelper::addPillarCluster(Room* room, int centerTileX, int cent
     default: type = Pillar::PillarType::CLEAR; break;
     }
     
-    // 根据width和height放置石柱堆（以centerTileX, centerTileY为中心）
+    // 根据width和height放置石柱堆
     int halfW = width / 2;
     int halfH = height / 2;
     int startX = centerTileX - halfW + (width % 2 == 0 ? 0 : 0);
@@ -113,7 +113,7 @@ void TerrainLayoutHelper::layoutFiveBoxes(Room* room)
     int centerX = tilesWidth / 2;
     int centerY = tilesHeight / 2;
     
-    // 角落堆紧挨禁止放置区，3x3堆的中心在(4,4)使得最角落方块在(3,3)
+    // 角落堆紧挨禁止放置区
     int leftX = 4;
     int rightX = tilesWidth - 5;
     int topY = tilesHeight - 5;

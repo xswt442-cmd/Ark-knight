@@ -8,64 +8,33 @@
 
 USING_NS_CC;
 
-/**
- * 主菜单场景
- * 游戏启动后的第一个场景
- * 包含：开始游戏、选择角色、设置、退出等功能
- */
+// 主菜单场景 - 游戏启动后的第一个场景
 class MainMenuScene : public Scene {
 public:
     static Scene* createScene();
-    
     virtual bool init() override;
-    
     CREATE_FUNC(MainMenuScene);
     
 private:
-    /**
-     * 创建UI元素
-     */
+    // UI创建方法
     void createUI();
-    
-    /**
-     * 创建背景
-     */
     void createBackground();
-    
-    /**
-     * 创建按钮
-     */
     void createButtons();
     
-    // ==================== 回调函数 ====================
-    /**
-     * 开始游戏回调
-     */
-    void onStartGame(Ref* sender);
+    // 按钮回调函数
+    void onStartGame(Ref* sender);           // 开始游戏
+    void onStartBossLevel(Ref* sender);      // 开始boss关卡
     
-    /**
-     * 开始boss关卡回调
-     */
-    void onStartBossLevel(Ref* sender);
-    
-    /**
-     * 选择角色回调
-     */
+    // 选择角色回调
     void onSelectCharacter(Ref* sender);
     
-    /**
-     * 设置回调
-     */
+    // 设置回调
     void onSettings(Ref* sender);
     
-    /**
-     * 退出游戏回调
-     */
+    // 退出游戏回调
     void onExit(Ref* sender);
     
-    /**
-     * 显示设置菜单
-     */
+    // 显示设置菜单
     void showSettings();
     
 private:

@@ -83,7 +83,7 @@ void SettingsLayer::createVolumeSliders()
     auto soundManager = SoundManager::getInstance();
     float sliderWidth = 300.0f;
     
-    // ========== 背景音乐音量 ==========
+    // 背景音乐音量设置
     // 标签
     auto bgmLabel = Label::createWithTTF(u8"背景音乐：", "fonts/msyh.ttf", 32);
     bgmLabel->setPosition(Vec2(SCREEN_CENTER.x - 200, SCREEN_CENTER.y + 120));
@@ -155,7 +155,7 @@ void SettingsLayer::createVolumeSliders()
         this->addChild(bgmPlus);
     }
     
-    // ========== 音效音量 ==========
+    // 音效音量设置
     // 标签
     auto sfxLabel = Label::createWithTTF(u8"音效音量：", "fonts/msyh.ttf", 32);
     sfxLabel->setPosition(Vec2(SCREEN_CENTER.x - 200, SCREEN_CENTER.y + 50));

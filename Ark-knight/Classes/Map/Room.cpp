@@ -85,7 +85,6 @@ void Room::createMap() {
             // boss房间大小设为两倍
             _tilesWidth = Constants::ROOM_TILES_W * 2;
             _tilesHeight = Constants::ROOM_TILES_H * 2;
-            // Boss房间会在generateFloor中随机生成火焰地板
             break;
         case Constants::RoomType::REWARD:
         case Constants::RoomType::END:
@@ -100,7 +99,6 @@ void Room::createMap() {
     
     float tileSize = Constants::FLOOR_TILE_SIZE;
     // 对于偶数瓦片，中心在两个瓦片之间
-    // 第0列瓦片中心 = centerX - tileSize * (width/2 - 0.5)
     float startX = _centerX - tileSize * (_tilesWidth / 2.0f - 0.5f);
     float startY = _centerY + tileSize * (_tilesHeight / 2.0f - 0.5f);
     
@@ -175,7 +173,6 @@ void Room::createMap() {
 void Room::generateFloor(float x, float y) {
     int chosenIndex = _floorTextureIndex; // 默认使用房间的纹理索引
     
-    // Boss房间使用普通地板，火焰地板通过 generateBossFloorTiles() 单独生成
     // 普通房间的地板选择逻辑
     if (_floorTextureIndex >= 1 && _floorTextureIndex <= 3) {
         // 组 A: Floor1, Floor2, Floor3 -> 权重 75%,15%,10% (总和100)
@@ -539,7 +536,7 @@ bool Room::checkPlayerPosition(Player* player, float& speedX, float& speedY) {
     return false;  // 玩家不在房间范围内
 }
 
-// ==================== 地形布局系统 ====================
+// 地形布局系统
 
 void Room::applyTerrainLayout(TerrainLayout layout)
 {
@@ -547,7 +544,7 @@ void Room::applyTerrainLayout(TerrainLayout layout)
     TerrainLayoutHelper::applyLayout(this, layout);
 }
 
-// ==================== 宝箱生成 ====================
+// 宝箱生成
 
 void Room::createChest()
 {
@@ -662,7 +659,7 @@ const ItemDef* Room::pickupItemDrop(Player* player)
     return nullptr;
 }
 
-// ==================== 传送门生成 ====================
+// 传送门生成
 
 void Room::createPortal()
 {
@@ -774,14 +771,7 @@ bool Room::canInteractWithPortal(Player* player) const
  * 生成Boss房间的火焰地板装饰
  * 
  * 此方法会在Boss房间的地板上随机放置火焰纹理
- * 火焰地板会覆盖原有地板，并带有轻微缩放动画
- * 
- * @param count 火焰地板数量，默认为30
- * 
- * 修改说明：
- * - 调整count参数可改变火焰地板密度
- * - 火焰纹理路径: Map/Floor/Floor_fire.png
- * - 当前使用2倍房间尺寸 (56x40 瓦片)
+ * 火焰地板会覆盖原有地板
  */
 void Room::generateBossFloorTiles(int count) {
     // 使用房间实际尺寸（createMap已设置）
@@ -790,7 +780,6 @@ void Room::generateBossFloorTiles(int count) {
     float tileSize = Constants::FLOOR_TILE_SIZE;
     
     // 使用与createMap相同的坐标计算方式
-    // 第0列瓦片中心 = centerX - tileSize * (width/2 - 0.5)
     float baseX = _centerX - tileSize * (roomWidth / 2.0f - 0.5f);
     float baseY = _centerY + tileSize * (roomHeight / 2.0f - 0.5f);  // 从顶部开始
     

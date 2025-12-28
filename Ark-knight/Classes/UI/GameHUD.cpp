@@ -57,7 +57,7 @@ void GameHUD::createStatusBars()
     float barWidth = 120.0f;
     float barHeight = 12.0f;
     
-    // ==================== 血条 ====================
+    // 血条创建
     // 爱心图标
     _hpIcon = Sprite::create("UIs/StatusBars/Bars/Heart.png");
     _hpIcon->setPosition(Vec2(barStartX, barStartY));
@@ -91,7 +91,7 @@ void GameHUD::createStatusBars()
     _hpLabel->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL + 10);
     this->addChild(_hpLabel);
     
-    // ==================== 蓝条 ====================
+    // 蓝条创建
     float mpBarY = barStartY - 35;
     
     // 闪电图标
@@ -127,7 +127,7 @@ void GameHUD::createStatusBars()
     _mpLabel->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL + 10);
     this->addChild(_mpLabel);
     
-    // ==================== 攻击力 ====================
+    // 攻击力显示
     float atkY = mpBarY - 25;
     _attackLabel = Label::createWithSystemFont("ATK: 0", "Arial", 14);
     _attackLabel->setAnchorPoint(Vec2(0, 0.5f));
@@ -147,7 +147,7 @@ void GameHUD::createSkillIcons()
     float skillIconY = origin.y + skillIconSize / 2 + 40;
     float skillIconY2 = skillIconY + skillIconSize + 10;
     
-    // ====== 上方：角色特殊技能（K键） ======
+    // 角色特殊技能（K键）
     _skillIcon = Sprite::create("UIs/Skills/Mage/Nymph_skillicon.png");
     _skillIcon->setPosition(Vec2(skillIconX, skillIconY2));
     _skillIcon->setScale(skillIconSize / _skillIcon->getContentSize().width);
@@ -180,7 +180,7 @@ void GameHUD::createSkillIcons()
     _skillCDProgress->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL + 2);
     this->addChild(_skillCDProgress);
     
-    // ====== 下方：治疗技能（L键） ======
+    // 治疗技能（L键）
     _healIcon = Sprite::create("UIs/Skills/Healing.png");
     _healIcon->setPosition(Vec2(skillIconX, skillIconY));
     _healIcon->setScale(skillIconSize / _healIcon->getContentSize().width);

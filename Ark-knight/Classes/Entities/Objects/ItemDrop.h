@@ -6,37 +6,22 @@
 
 class Player;
 
-/**
- * 掉落道具类：地上可拾取的道具物品
- */
+// 掉落道具类：地上可拾取的道具物品
 class ItemDrop : public cocos2d::Node
 {
 public:
-    /**
-     * 创建掉落道具
-     * @param itemDef 道具定义
-     */
+    // 创建掉落道具
     static ItemDrop* create(const ItemDef* itemDef);
     
     virtual bool init(const ItemDef* itemDef);
     
-    /**
-     * 检测玩家是否可以拾取
-     * @param player 玩家指针
-     * @param interactionDistance 交互距离（默认2倍地板砖大小）
-     */
+    // 检测玩家是否可以拾取 (interactionDistance 交互距离，默认2倍地板砖大小)
     bool canPickup(Player* player, float interactionDistance = 0.0f) const;
     
-    /**
-     * 拾取道具：应用效果并移除自身
-     * @param player 玩家指针
-     * @return 返回道具定义，用于在UI显示
-     */
+    // 拾取道具：应用效果并移除自身，返回道具定义用于在UI显示
     const ItemDef* pickup(Player* player);
     
-    /**
-     * 应用道具效果到玩家
-     */
+    // 应用道具效果到玩家
     void applyEffect(Player* player);
     
     // Getter

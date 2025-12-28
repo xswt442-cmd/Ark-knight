@@ -9,7 +9,6 @@ class Room;
 
 /**
  * 普通战斗房间的地形布局类型
- * (从 Room.h 移动到此处，Room.h 中仍保留 include 本头文件)
  */
 enum class TerrainLayout {
     NONE = 0,           // 无特殊地形
@@ -31,11 +30,7 @@ enum class TerrainLayout {
  */
 class TerrainLayoutHelper {
 public:
-    /**
-     * 应用地形布局到房间
-     * @param room 目标房间
-     * @param layout 布局类型
-     */
+    // 应用地形布局到房
     static void applyLayout(Room* room, TerrainLayout layout);
     
 private:

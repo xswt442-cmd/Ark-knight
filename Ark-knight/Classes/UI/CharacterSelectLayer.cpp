@@ -53,7 +53,7 @@ void CharacterSelectLayer::createUI()
     // 角色缩放（使角色看起来差不多大）
     float characterScale = 3.0f;
     
-    // ==================== 法师（妮芙）====================
+    // 法师（妮芙）
     _mageSprite = Sprite::create("Player/Nymph/Nymph_Idle/Nymph_Idle_0001.png");
     if (_mageSprite)
     {
@@ -86,7 +86,7 @@ void CharacterSelectLayer::createUI()
     _mageLabel->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL + 25);  // 高于角色图片
     this->addChild(_mageLabel);
     
-    // ==================== 炮手（维什戴尔）====================
+    // 炮手（维什戴尔）
     _gunnerSprite = Sprite::create("Player/Wisdael/Wisdael_Idle/Wisdael_Idle_0001.png");
     if (_gunnerSprite)
     {
@@ -119,7 +119,7 @@ void CharacterSelectLayer::createUI()
     _gunnerLabel->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL + 25);  // 高于角色图片
     this->addChild(_gunnerLabel);
     
-    // ==================== 战士（泥岩）====================
+    // 战士（泥岩）
     _warriorSprite = Sprite::create("Player/Mudrock/MudRock_Idle/MudRock_Idle_0001.png");
     if (_warriorSprite)
     {
@@ -152,7 +152,7 @@ void CharacterSelectLayer::createUI()
     _warriorLabel->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL + 25);  // 高于角色图片
     this->addChild(_warriorLabel);
     
-    // ==================== 确认按钮 ====================
+    // 确认按钮
     auto confirmButton = ui::Button::create();
     confirmButton->setTitleText(u8"确认");
     confirmButton->setTitleFontName("fonts/msyh.ttf");
@@ -164,7 +164,7 @@ void CharacterSelectLayer::createUI()
     });
     this->addChild(confirmButton);
     
-    // ==================== 返回按钮 ====================
+    // 返回按钮
     auto backButton = ui::Button::create();
     backButton->setTitleText(u8"返回");
     backButton->setTitleFontName("fonts/msyh.ttf");

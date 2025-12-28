@@ -82,7 +82,7 @@ void Ayao::setupAyaoAttributes()
 
 void Ayao::loadAnimations()
 {
-    // ==================== 移动动画 ====================
+    // 移动动画
     Vector<SpriteFrame*> moveFrames;
     for (int i = 1; i <= 5; i++)
     {
@@ -101,7 +101,7 @@ void Ayao::loadAnimations()
         _moveAnimation->retain();
     }
     
-    // ==================== 攻击动画 ====================
+    // 攻击动画
     Vector<SpriteFrame*> attackFrames;
     for (int i = 1; i <= 5; i++)
     {
@@ -120,7 +120,7 @@ void Ayao::loadAnimations()
         _attackAnimation->retain();
     }
     
-    // ==================== 死亡动画 ====================
+    // 死亡动画
     Vector<SpriteFrame*> dieFrames;
     for (int i = 1; i <= 5; i++)  // 加载全部5帧
     {
@@ -166,7 +166,7 @@ void Ayao::attack()
     // 播放攻击前摇动画（只停止移动循环，不停止其它潜在动作）
     if (_attackAnimation && _sprite)
     {
-        // 仅停止移动循环动作（避免 stopAllActions 导致其它视觉动作被中断）
+        // 仅停止移动循环动作
         auto moveAct = _sprite->getActionByTag(AYAO_MOVE_ACTION_TAG);
         if (moveAct)
         {
@@ -186,7 +186,7 @@ void Ayao::attack()
         animate->setTag(AYAO_WINDUP_ACTION_TAG);
         _sprite->runAction(animate);
 
-        // 使用 Enemy 中的 windup 时长保证状态同步（结束后回到 IDLE）
+        // 保证状态同步（结束后回到 IDLE）
         float windup = this->getAttackWindup();
         auto delay = DelayTime::create(windup);
         auto callback = CallFunc::create([this]() {
@@ -200,7 +200,7 @@ void Ayao::attack()
     }
     else
     {
-        // 没有动画时使用 windup 时长回退（避免硬编码）
+        // 没有动画时回退
         float windup = this->getAttackWindup();
         auto delay = DelayTime::create(windup);
         auto callback = CallFunc::create([this]() {
@@ -216,25 +216,20 @@ void Ayao::attack()
     GAME_LOG("Ayao attacks!");
 }
 
-/**
- * 重写 die() 以自定义死亡逻辑，主要是播放死亡动画并在结束后移除节点。
- */
+// 死亡逻辑
 void Ayao::die()
 {
-    // 先调用基类（Enemy）die 以触发可能的红色爆炸和 KongKaZi 生成功能
+    // 先调用基类（Enemy）die
     Enemy::die();
 
-    // 不再因 _currentState 已经为 DIE 就直接返回，
-    // 保持后续 Ayao 特有的死亡动画流程正常执行（避免视觉被跳过）
-
-    // 防止重复调用（如果子类或基类已经多次调用）
+    // 防止重复调用
     if (_currentState == EntityState::DIE && !_isAlive)
     {
         GAME_LOG("Ayao::die() - already dead, skipping duplicate processing");
         return;
     }
 
-    // 标记死亡状态并停止行为（保留以防某些地方依赖于 _isAlive）
+    // 标记死亡状态并停止行为
     setState(EntityState::DIE);
     _isAlive = false;
 
@@ -287,16 +282,14 @@ void Ayao::die()
     }
 }
 
-/**
- * 重写移动：控制移动动画开始/停止，以及根据水平分量设置左右朝向（flipX）。
- * 注意：保留你已设置的朝向判断，不做修改。
- */
+// 移动逻辑
+
 void Ayao::move(const Vec2& direction, float dt)
 {
-    // 在攻击阶段禁止移动（确保攻击前摇/命中动画不会被移动覆盖）
+    // 在攻击阶段禁止移动
     if (_currentState == EntityState::ATTACK || _currentState == EntityState::DIE)
     {
-        // 明确告诉基类停止逻辑（避免位置变化），直接返回
+        // 明确告诉基类停止逻辑，直接返回
         Character::move(Vec2::ZERO, dt);
         return;
     }
@@ -314,7 +307,7 @@ void Ayao::move(const Vec2& direction, float dt)
                 _sprite->stopAction(act);
             }
             
-            // 恢复到移动动画的第一帧（通常为站立/闭嘴状态）
+            // 恢复到移动动画的第一帧
             if (_moveAnimation)
             {
                 auto frames = _moveAnimation->getFrames();
@@ -329,7 +322,7 @@ void Ayao::move(const Vec2& direction, float dt)
             }
         }
         
-        // 调用基类移动以保持状态一致（基类可能处理速度、状态机等）
+        // 调用基类移动以保持状态一致
         Character::move(Vec2::ZERO, dt);
         return;
     }
@@ -355,9 +348,7 @@ void Ayao::move(const Vec2& direction, float dt)
     }
 }
 
-/**
- * 每次真正造成伤害时播放一次命中/攻击动画（不改变冷却/状态）
- */
+// 每次真正造成伤害时播放一次命中/攻击动画
 void Ayao::playAttackAnimation()
 {
     if (!_sprite)
