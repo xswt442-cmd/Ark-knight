@@ -48,11 +48,11 @@ bool Warrior::init()
     SoundManager::getInstance()->preload("SoundEffect/MudRock_Skill_Attack.mp3");
     
     // 设置泥岩属性（高血量，低蓝）
-    setMaxHP(50000);
-    setHP(50000);
-    setMaxMP(150);
-    setMP(150);
-    setAttack(450);
+    setMaxHP(150000);
+    setHP(150000);
+    setMaxMP(200);
+    setMP(200);
+    setAttack(800);
     setMoveSpeed(180.0f);  // 战士移速较慢
     
     // 设置技能冷却

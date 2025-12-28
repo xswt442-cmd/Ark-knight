@@ -41,12 +41,12 @@ bool Gunner::init()
     SoundManager::getInstance()->preload("SoundEffect/Wisdael_Skill_Attack.mp3");
     
     // 设置维什戴尔属性
-    setMaxHP(30000);
-    setHP(30000);
-    setMaxMP(250);
-    setMP(250);
-    setAttack(500);
-    setMoveSpeed(185.0f);
+    setMaxHP(100000);
+    setHP(100000);
+    setMaxMP(300);
+    setMP(300);
+    setAttack(1000);
+    setMoveSpeed(190.0f);
     
     // 设置技能冷却
     _skillCooldown = 15.0f;
