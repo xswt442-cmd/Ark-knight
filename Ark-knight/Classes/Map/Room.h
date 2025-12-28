@@ -10,12 +10,12 @@ class Enemy;
 class Player;
 class Chest;
 class ItemDrop;
-struct ItemDef;  // 前置声明ItemDef结构体
+class Portal;
+struct ItemDef;
 
-// TerrainLayout 枚举已在 TerrainLayouts.h 中定义
+// TerrainLayout在TerrainLayouts.h中定义
 
-// Room游戏房间类
-
+// 游戏房间类
 class Room : public cocos2d::Node {
 public:
     static Room* create();
@@ -64,7 +64,7 @@ public:
     cocos2d::Rect getWalkableArea() const;
     void moveBy(float dx, float dy);
     
-    // 检查玩家位置并修改速度（参考学长实现）
+    // 检查玩家位置并修改速度
     bool checkPlayerPosition(Player* player, float& speedX, float& speedY);
     
     void setVisited(bool visited) { _visited = visited; }
@@ -77,13 +77,6 @@ public:
     // 地形布局
     void applyTerrainLayout(TerrainLayout layout);
     
-    /**
-     * 生成Boss房间的火焰地板
-     * 在房间内随机位置放置指定数量的火焰地板装饰
-     * PS：可以修改此方法来自定义Boss房间的地板装饰
-     */
-    void generateBossFloorTiles(int count = 30);
-    
     // 宝箱管理
     void createChest();
     Chest* getChest() const { return _chest; }
@@ -95,16 +88,20 @@ public:
     const cocos2d::Vector<ItemDrop*>& getItemDrops() const { return _itemDrops; }
     bool canInteractWithItemDrop(Player* player) const;
     const ItemDef* pickupItemDrop(Player* player);
+    void addItemDrop(ItemDrop* drop);
     
     // 传送门管理
     void createPortal();
-    cocos2d::Sprite* getPortal() const { return _portal; }
+    Portal* getPortal() const { return _portal; }
     bool canInteractWithPortal(Player* player) const;
     
 protected:
     void generateFloor(float x, float y);
     void generateWall(float x, float y, int zOrder);
     void generateDoor(float x, float y, int direction);
+    
+    // 将瓦片坐标转换为世界坐标
+    cocos2d::Vec2 tileToWorldPos(int tileX, int tileY) const;
     
 private:
     float _centerX;
@@ -131,9 +128,8 @@ private:
     cocos2d::Vector<Spike*> _spikes;
     cocos2d::Vector<Barrier*> _barriers;  // 所有障碍物(Box和Pillar)
     Chest* _chest;  // 奖励房间的宝箱
-    cocos2d::Vector<ItemDrop*> _itemDrops;  // 房间中的道具掉落物列表
-    cocos2d::Sprite* _portal;  // 传送门主体
-    cocos2d::Sprite* _portalLighting;  // 传送门闪电特效
+    cocos2d::Vector<ItemDrop*> _itemDrops;  // 房间中的道具掉落物
+    Portal* _portal;  // 传送门
 };
 
 #endif // __ROOM_H__

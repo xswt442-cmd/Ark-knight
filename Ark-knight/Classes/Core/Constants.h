@@ -3,7 +3,7 @@
 
 #include <string>
 
-// 各种常量
+// 全局常量定义
 namespace Constants {
     // 游戏配置
     constexpr float DESIGN_WIDTH = 1280.0f;
@@ -103,6 +103,7 @@ namespace Constants {
         constexpr int FLOOR = 10;
         constexpr int DOOR = 12;
         constexpr int WALL_BELOW = 15;     // 玩家下方的墙
+        constexpr int ITEMS = 18;          // 道具掉落物
         constexpr int PROP = 20;
         constexpr int SHADOW = 25;
         constexpr int ENTITY = 50;         // 玩家和敌人

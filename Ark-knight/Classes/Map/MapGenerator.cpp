@@ -3,6 +3,7 @@
 #include "Entities/Player/Player.h"
 #include "Hallway.h"
 #include <algorithm>
+#include <random>
 #include <ctime>
 #include <cstdlib>
 
@@ -11,6 +12,7 @@ USING_NS_CC;
 // 方向偏移数组
 static const int DIR_DX[] = {0, 1, 0, -1};
 static const int DIR_DY[] = {1, 0, -1, 0};
+static std::default_random_engine s_rng(std::random_device{}());
 
 MapGenerator* MapGenerator::create() {
     MapGenerator* generator = new (std::nothrow) MapGenerator();
@@ -183,7 +185,7 @@ void MapGenerator::expandFromRoom(int x, int y, Room* curRoom, std::queue<Room*>
     int expandCount = std::min(2, static_cast<int>(availableDirections.size()));
     expandCount = std::max(1, rand() % (expandCount + 1));
     
-    std::random_shuffle(availableDirections.begin(), availableDirections.end());
+    std::shuffle(availableDirections.begin(), availableDirections.end(), s_rng);
     
     for (int i = 0; i < expandCount && _roomCount < Constants::MAP_MAX_ROOMS; i++) {
         int dir = availableDirections[i];
@@ -251,7 +253,7 @@ void MapGenerator::assignRoomTypes() {
         }
     }
     
-    std::random_shuffle(normalRooms.begin(), normalRooms.end());
+    std::shuffle(normalRooms.begin(), normalRooms.end(), s_rng);
     
     if (normalRooms.size() >= 1) {
         normalRooms[0]->setRoomType(Constants::RoomType::REWARD);
@@ -479,13 +481,7 @@ void MapGenerator::clearMap() {
     _currentRoom = nullptr;
 }
 
-/**
- * 生成Boss层地图
- * 
- * 使用 BossFloor 类生成Boss层
- * 详细实现请查看 BossFloor.cpp
- * 
- */
+// 生成Boss层地图
 void MapGenerator::generateBossFloor() {
     auto bossFloor = BossFloor::create();
     bossFloor->generate(_roomMatrix, _hallways, _beginRoom, _endRoom, _roomCount);

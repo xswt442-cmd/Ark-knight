@@ -22,16 +22,7 @@ bool BossFloor::init() {
     return true;
 }
 
-/**
- * 生成Boss层地图
- * 
- * Boss层结构：
- * ┌─────────┐    ┌───────────────────┐      ┌─────────┐
- * │  起始   │════│      Boss房间      │      │ 三阶段  │
- * │  房间   │    │    (2倍大小)       │      │  房间   │
- * └─────────┘    └───────────────────┘      └─────────┘
- *                                            (无走廊连接)
- */
+// 生成Boss层地图
 void BossFloor::generate(
     Room* (&roomMatrix)[Constants::MAP_GRID_SIZE][Constants::MAP_GRID_SIZE],
     std::vector<Hallway*>& hallways,
@@ -68,7 +59,8 @@ void BossFloor::generate(
     float bossRoomRightEdge = bossRoomCenterX + bossRoomWidth / 2;
 
     _phase3Room = createPhase3Room(phase3GridX, phase3GridY, bossRoomRightEdge);
-    // 为了方便管理，放入矩阵，不自动生成走廊
+    // PS: 这里不一定要放入 roomMatrix，或者放入但 MapGenerator 不会为其生成常规走廊
+    // 为了方便管理，我们放入矩阵，但因为 generateHallway 是手动调用的，所以不会自动生成走廊
     if (phase3GridX < Constants::MAP_GRID_SIZE) {
         roomMatrix[phase3GridX][phase3GridY] = _phase3Room;
     }
@@ -126,10 +118,7 @@ Room* BossFloor::createBossRoom(int gridX, int gridY, float startRoomRightEdge) 
     return room;
 }
 
-/*
- * 创建三阶段房间
- * 大小为Boss房间的一半 (即普通房间大小)
- */
+// 创建三阶段房间，大小为普通房间大小
 Room* BossFloor::createPhase3Room(int gridX, int gridY, float bossRoomRightEdge) {
     Size visibleSize = Director::getInstance()->getVisibleSize();
     
@@ -142,7 +131,7 @@ Room* BossFloor::createPhase3Room(int gridX, int gridY, float bossRoomRightEdge)
     Room* room = Room::create();
     room->setGridPosition(gridX, gridY);
     room->setCenter(roomCenterX, visibleSize.height / 2);
-    // 不需要特殊生成逻辑，只是作为场地
+    // 设置为普通类型或特殊类型，这里用 NORMAL 即可，因为不需要特殊生成逻辑，只是作为场地
     // 或者可以定义一个新的 RoomType::PHASE3 如果需要特殊处理
     room->setRoomType(Constants::RoomType::NORMAL); 
     
@@ -225,5 +214,6 @@ void BossFloor::generateHallway(std::vector<Hallway*>& hallways) {
         
         log("Generated hallway between start room and boss room, gap=%.1f", gapSize);
     }
-    // 不再生成走廊
+    
+    // 注意：这里不生成 BossRoom 和 Phase3Room 之间的走廊
 }

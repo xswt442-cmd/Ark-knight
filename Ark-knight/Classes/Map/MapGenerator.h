@@ -8,10 +8,7 @@
 #include <queue>
 #include <vector>
 
-/**
- * MapGenerator - 地图生成器
- * 使用BFS算法随机生成Roguelike风格的房间布局
- */
+// 地图生成器：使用BFS算法随机生成Roguelike风格的房间布局
 class MapGenerator : public cocos2d::Node {
 public:
     static MapGenerator* create();
@@ -80,10 +77,7 @@ private:
     // 生成走廊
     void generateHallways();
     
-    /**
-     * 生成Boss层地图
-     * 具体实现请查看BossFloor.cpp/h
-     */
+    // 生成Boss层地图，具体实现请查看BossFloor.cpp/h
     void generateBossFloor();
     
     // 随机选择普通战斗房间地形布局（概率：空10%，其余各9%）

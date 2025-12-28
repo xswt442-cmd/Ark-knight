@@ -3,7 +3,8 @@
 
 USING_NS_CC;
 
-// Spike 地刺陷阱
+// Spike 尖刺陷阱实现
+
 Spike* Spike::create(const std::string& texturePath)
 {
     Spike* spike = new (std::nothrow) Spike();
@@ -97,7 +98,8 @@ void Spike::updateState(float dt, Player* player)
     }
 }
 
-// Box木箱
+// Box 箱子障碍物实现
+
 Box* Box::create(BoxType type)
 {
     Box* box = new (std::nothrow) Box();
@@ -133,7 +135,7 @@ bool Box::initWithType(BoxType type)
         return false;
     }
     
-    // 缩放到地砖大小
+    // 缩放到地砖大小（分别设置宽高确保精确对齐）
     float targetSize = Constants::FLOOR_TILE_SIZE;
     Size contentSize = this->getContentSize();
     float scaleX = targetSize / contentSize.width;
@@ -147,7 +149,8 @@ bool Box::initWithType(BoxType type)
     return true;
 }
 
-// Pillar石柱
+// ==================== Pillar ====================
+
 Pillar* Pillar::create(PillarType type)
 {
     Pillar* pillar = new (std::nothrow) Pillar();

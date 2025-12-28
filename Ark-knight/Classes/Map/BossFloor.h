@@ -41,10 +41,9 @@ private:
     void generateHallway(std::vector<Hallway*>& hallways);
     
     // 成员变量
-    
     Room* _startRoom;
     Room* _bossRoom;
-    Room* _phase3Room; // 三阶段房间
+    Room* _phase3Room; // 新增：三阶段房间
     cocos2d::Vector<cocos2d::Sprite*> _fireFloors;
 };
 

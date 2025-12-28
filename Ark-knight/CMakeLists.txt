@@ -73,6 +73,7 @@ list(APPEND GAME_SOURCE
      Classes/Entities/Objects/Item.cpp
      Classes/Entities/Objects/Chest.cpp
      Classes/Entities/Objects/ItemDrop.cpp
+     Classes/Entities/Objects/Portal.cpp
      # Entities/Enemy
      Classes/Entities/Enemy/Enemy.cpp
      Classes/Entities/Enemy/Ayao.cpp
@@ -127,6 +128,7 @@ list(APPEND GAME_HEADER
      Classes/Entities/Objects/Item.h
      Classes/Entities/Objects/Chest.h
      Classes/Entities/Objects/ItemDrop.h
+     Classes/Entities/Objects/Portal.h
      # Entities/Enemy
      Classes/Entities/Enemy/Enemy.h
      Classes/Entities/Enemy/Ayao.h

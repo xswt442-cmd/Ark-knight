@@ -15,6 +15,7 @@
 #include "Entities/Enemy/KuiLongBoss.h"
 #include "Entities/Objects/Chest.h"
 #include "Entities/Objects/ItemDrop.h"
+#include "Entities/Objects/Portal.h"
 #include "ui/CocosGUI.h"
 #include "audio/include/AudioEngine.h"
 #include "Managers/SoundManager.h"
@@ -815,7 +816,7 @@ void GameScene::updateInteraction(float dt)
     bool canInteractPortal = _currentRoom->canInteractWithPortal(_player);
     if (canInteractPortal)
     {
-        Sprite* portal = _currentRoom->getPortal();
+        Portal* portal = _currentRoom->getPortal();
         if (portal)
         {
             Vec2 portalWorldPos = portal->getParent()->convertToWorldSpace(portal->getPosition());

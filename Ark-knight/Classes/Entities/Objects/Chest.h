@@ -39,4 +39,38 @@ private:
     ChestType _chestType;      // 宝箱类型
 };
 
+// 房间对象管理器 - 管理房间内的宝箱、道具掉落、传送门等
+class RoomObjectManager {
+public:
+    RoomObjectManager();
+    ~RoomObjectManager();
+    
+    // 宝箱管理
+    void createChest(cocos2d::Node* parent, const cocos2d::Vec2& pos);
+    bool isChestOpened() const;
+    bool canInteractWithChest(Player* player) const;
+    void openChest(Player* player = nullptr);
+    Chest* getChest() const { return _chest; }
+    
+    // 道具掉落管理
+    const cocos2d::Vector<class ItemDrop*>& getItemDrops() const { return _itemDrops; }
+    bool canInteractWithItemDrop(Player* player) const;
+    const ItemDef* pickupItemDrop(Player* player);
+    void addItemDrop(class ItemDrop* itemDrop) { _itemDrops.pushBack(itemDrop); }
+    
+    // 传送门管理
+    void createPortal(cocos2d::Node* parent, const cocos2d::Vec2& pos);
+    bool canInteractWithPortal(Player* player) const;
+    cocos2d::Sprite* getPortal() const { return _portal; }
+    
+    // 清理所有对象
+    void clear();
+    
+private:
+    Chest* _chest;
+    cocos2d::Vector<class ItemDrop*> _itemDrops;
+    cocos2d::Sprite* _portal;
+    cocos2d::Sprite* _portalLighting;
+};
+
 #endif // __CHEST_H__

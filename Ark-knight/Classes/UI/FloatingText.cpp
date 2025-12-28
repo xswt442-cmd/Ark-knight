@@ -1,9 +1,5 @@
-#include "FloatingText.h"
+﻿#include "FloatingText.h"
 #include "Core/Constants.h"
-
-/*
- *本方法实现跳字功能，包括伤害数字、治疗数字、战士护盾的抵挡标志文字等
- */
 
 USING_NS_CC;
 
@@ -12,6 +8,7 @@ namespace {
     static const size_t MAX_ACTIVE = 15;
 }
 
+// 跳字功能实现：包括伤害数字、治疗数字、战士护盾的抵挡标志文字等
 void FloatingText::show(Node* parent, const Vec2& pos, const std::string& text, const Color3B& color, int fontSize, float duration)
 {
     if (parent == nullptr) return;

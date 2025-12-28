@@ -28,8 +28,7 @@ static Vector<SpriteFrame*> tryLoadFramesFromPatterns(const std::vector<std::str
             }
             else
             {
-                char basename[128];
-                // 试图从路径中提取 basename 模式
+                // 加载失败
                 GAME_LOG("tryLoadFramesFromPatterns - failed to create sprite from file: %s", fn.c_str());
             }
         }
