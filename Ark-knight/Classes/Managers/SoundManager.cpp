@@ -132,12 +132,43 @@ void SoundManager::setBGMVolume(float volume)
     GAME_LOG("BGM volume set to %.2f", _bgmVolume);
 }
 
+void SoundManager::preload(const std::string& filePath)
+{
+    if (!FileUtils::getInstance()->isFileExist(filePath))
+    {
+        GAME_LOG_ERROR("Preload failed: file not found %s", filePath.c_str());
+        return;
+    }
+
+    AudioEngine::preload(filePath, [filePath](bool isSuccess){
+        if (isSuccess)
+        {
+            GAME_LOG("Preload success: %s", filePath.c_str());
+        }
+        else
+        {
+            GAME_LOG_ERROR("Preload failed: %s", filePath.c_str());
+        }
+    });
+    GAME_LOG("Preloading: %s", filePath.c_str());
+}
+
 int SoundManager::playSFX(const std::string& filePath, bool loop)
 {
     if (_isMuted)
     {
         return AudioEngine::INVALID_AUDIO_ID;
     }
+
+    // 检查文件是否存在
+    if (!FileUtils::getInstance()->isFileExist(filePath))
+    {
+        GAME_LOG_ERROR("SFX file not found: %s", filePath.c_str());
+        return AudioEngine::INVALID_AUDIO_ID;
+    }
+
+    // 如果没有预加载，先预加载一次（同步等待）
+    AudioEngine::preload(filePath);
 
     int audioID = AudioEngine::play2d(filePath, loop, _sfxVolume);
 
@@ -153,11 +184,11 @@ int SoundManager::playSFX(const std::string& filePath, bool loop)
             }
         });
 
-        GAME_LOG("Playing SFX: %s (ID: %d)", filePath.c_str(), audioID);
+        GAME_LOG("Playing SFX: %s (ID: %d, Vol: %.2f)", filePath.c_str(), audioID, _sfxVolume);
     }
     else
     {
-        GAME_LOG_ERROR("Failed to play SFX: %s", filePath.c_str());
+        GAME_LOG_ERROR("Failed to play SFX: %s (AudioEngine returned INVALID_ID)", filePath.c_str());
     }
 
     return audioID;

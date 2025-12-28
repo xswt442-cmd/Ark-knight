@@ -40,6 +40,14 @@ bool GameScene::init()
         return false;
     }
     
+    // 预加载所有玩家音效（在场景初始化最开始，给足时间加载）
+    SoundManager::getInstance()->preload("SoundEffect/Nymph_Attack-1.mp3");
+    SoundManager::getInstance()->preload("SoundEffect/Nymph_Skill_Attack-1.mp3");
+    SoundManager::getInstance()->preload("SoundEffect/Wisdael_Attack-1.mp3");
+    SoundManager::getInstance()->preload("SoundEffect/Wisdael_Skill_Attack-1.mp3");
+    SoundManager::getInstance()->preload("SoundEffect/MudRock_Attack-1.mp3");
+    SoundManager::getInstance()->preload("SoundEffect/MudRock_Skill_Attack-1.mp3");
+    
     _isPaused = false;
     _isGameOver = false;
     _keyE = false;

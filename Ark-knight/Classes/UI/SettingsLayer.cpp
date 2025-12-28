@@ -187,7 +187,7 @@ void SettingsLayer::createVolumeSliders()
         sprintf(buf, "%d%%", (int)(vol * 100));
         if (_sfxVolumeLabel) _sfxVolumeLabel->setString(buf);
         // 播放测试音效
-        sm->playSFX("SoundEffect/MudRock_Attack-1.wav");
+        sm->playSFX("SoundEffect/MudRock_Attack-1.mp3");
     });
     this->addChild(sfxMinus);
     
@@ -217,7 +217,7 @@ void SettingsLayer::createVolumeSliders()
         sprintf(buf, "%d%%", (int)(vol * 100));
         if (_sfxVolumeLabel) _sfxVolumeLabel->setString(buf);
         // 播放测试音效
-        sm->playSFX("SoundEffect/MudRock_Attack-1.wav");
+        sm->playSFX("SoundEffect/MudRock_Attack-1.mp3");
     });
     this->addChild(sfxPlus);
 }
