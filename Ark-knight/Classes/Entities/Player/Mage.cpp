@@ -37,8 +37,8 @@ bool Mage::init()
     }
     
     // 预加载音效
-    SoundManager::getInstance()->preload("SoundEffect/Nymph_Attack-1.mp3");
-    SoundManager::getInstance()->preload("SoundEffect/Nymph_Skill_Attack-1.mp3");
+    SoundManager::getInstance()->preload("SoundEffect/Nymph_Attack.mp3");
+    SoundManager::getInstance()->preload("SoundEffect/Nymph_Skill_Attack.mp3");
     
     // 设置妮芙属性
     setMaxHP(100000);
@@ -352,11 +352,11 @@ void Mage::attack()
     // 播放攻击音效
     if (_isEnhanced)
     {
-        SoundManager::getInstance()->playSFX("SoundEffect/Nymph_Skill_Attack-1.mp3");
+        SoundManager::getInstance()->playSFX("SoundEffect/Nymph_Skill_Attack.mp3");
     }
     else
     {
-        SoundManager::getInstance()->playSFX("SoundEffect/Nymph_Attack-1.mp3");
+        SoundManager::getInstance()->playSFX("SoundEffect/Nymph_Attack.mp3");
     }
     
     // 发射子弹

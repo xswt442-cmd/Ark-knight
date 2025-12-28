@@ -44,8 +44,8 @@ bool Warrior::init()
     }
     
     // 预加载音效
-    SoundManager::getInstance()->preload("SoundEffect/MudRock_Attack-1.mp3");
-    SoundManager::getInstance()->preload("SoundEffect/MudRock_Skill_Attack-1.mp3");
+    SoundManager::getInstance()->preload("SoundEffect/MudRock_Attack.mp3");
+    SoundManager::getInstance()->preload("SoundEffect/MudRock_Skill_Attack.mp3");
     
     // 设置泥岩属性（高血量，低蓝）
     setMaxHP(150000);
@@ -385,11 +385,11 @@ void Warrior::attack()
     // 使用 SoundManager 播放攻击音效
     if (_isEnhanced)
     {
-        SoundManager::getInstance()->playSFX("SoundEffect/MudRock_Skill_Attack-1.mp3");
+        SoundManager::getInstance()->playSFX("SoundEffect/MudRock_Skill_Attack.mp3");
     }
     else
     {
-        SoundManager::getInstance()->playSFX("SoundEffect/MudRock_Attack-1.mp3");
+        SoundManager::getInstance()->playSFX("SoundEffect/MudRock_Attack.mp3");
     }
     
     // 执行近战范围攻击

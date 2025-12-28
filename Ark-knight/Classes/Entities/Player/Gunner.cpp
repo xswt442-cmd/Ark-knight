@@ -37,8 +37,8 @@ bool Gunner::init()
     }
     
     // 预加载音效
-    SoundManager::getInstance()->preload("SoundEffect/Wisdael_Attack-1.mp3");
-    SoundManager::getInstance()->preload("SoundEffect/Wisdael_Skill_Attack-1.mp3");
+    SoundManager::getInstance()->preload("SoundEffect/Wisdael_Attack.mp3");
+    SoundManager::getInstance()->preload("SoundEffect/Wisdael_Skill_Attack.mp3");
     
     // 设置维什戴尔属性
     setMaxHP(100000);
@@ -343,11 +343,11 @@ void Gunner::attack()
     // 播放攻击音效
     if (_isEnhanced)
     {
-        SoundManager::getInstance()->playSFX("SoundEffect/Wisdael_Skill_Attack-1.mp3");
+        SoundManager::getInstance()->playSFX("SoundEffect/Wisdael_Skill_Attack.mp3");
     }
     else
     {
-        SoundManager::getInstance()->playSFX("SoundEffect/Wisdael_Attack-1.mp3");
+        SoundManager::getInstance()->playSFX("SoundEffect/Wisdael_Attack.mp3");
     }
     
     // 40% 概率触发被动：5连发
