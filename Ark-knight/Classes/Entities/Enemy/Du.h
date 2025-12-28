@@ -1,10 +1,10 @@
-#ifndef __DU_H__
+ï»¿#ifndef __DU_H__
 #define __DU_H__
 
 #include "Entities/Enemy/Enemy.h"
 #include "cocos2d.h"
 
-// Ç°ÏòÉùÃ÷
+// å‰å‘å£°æ˜
 class Player;
 
 class Du : public Enemy {
@@ -21,34 +21,34 @@ public:
     virtual void playAttackAnimation() override;
     virtual void die() override;
 
-    // ¸²Ğ´ÒÔ½ÓÊÕ·¿¼ä±ß½ç
+    // è¦†å†™ä»¥æ¥æ”¶æˆ¿é—´è¾¹ç•Œ
     virtual void setRoomBounds(const cocos2d::Rect& bounds) override;
 
-    // ¸²Ğ´ÒÆ¶¯ÒÔ¿ØÖÆ¶¯»­²¢ÔÚ·¢ÉäÊ±Í£Ö¹ÒÆ¶¯
+    // è¦†å†™ç§»åŠ¨ä»¥æ§åˆ¶åŠ¨ç”»å¹¶åœ¨å‘å°„æ—¶åœæ­¢ç§»åŠ¨
     virtual void move(const cocos2d::Vec2& direction, float dt) override;
 
 protected:
     void setupAttributes();
     void loadAnimations();
 
-    // ·¢Éä×Óµ¯£¨Ëø¶¨Ä¿±êÎ»ÖÃ²¢½øÈë·¢ÉäµÈ´ı×´Ì¬£©
+    // å‘å°„å­å¼¹ï¼ˆé”å®šç›®æ ‡ä½ç½®å¹¶è¿›å…¥å‘å°„ç­‰å¾…çŠ¶æ€ï¼‰
     void fireBullet(Player* target);
 
-    // ¶¯»­×ÊÔ´
+    // åŠ¨ç”»èµ„æº
     cocos2d::Animation* _moveAnimation;
     cocos2d::Animation* _attackAnimation;
     cocos2d::Animation* _dieAnimation;
     cocos2d::Animation* _bulletAnimation;
 
-    // ·¿¼ä±ß½ç
+    // æˆ¿é—´è¾¹ç•Œ
     cocos2d::Rect _roomBounds;
     bool _hasRoomBounds;
 
-    // ·¢Éä×´Ì¬£¨·¢ÉäÆÚ¼ä²»ÒÆ¶¯£©£¬ÒÔ¼°µ±Ç°×Óµ¯½Úµã
+    // å‘å°„çŠ¶æ€ï¼ˆå‘å°„æœŸé—´ä¸ç§»åŠ¨ï¼‰ï¼Œä»¥åŠå½“å‰å­å¼¹èŠ‚ç‚¹
     bool _isFiring;
     cocos2d::Node* _currentBullet;
 
-    // ³ÖÓĞµÄ¹¥»÷Ä¿±ê£¨ÓÃÓÚ windup ÑÓ³ÙÄÚ±£³ÖÄ¿±êÒıÓÃ£©
+    // æŒæœ‰çš„æ”»å‡»ç›®æ ‡ï¼ˆç”¨äº windup å»¶è¿Ÿå†…ä¿æŒç›®æ ‡å¼•ç”¨ï¼‰
     Player* _attackTarget;
 };
 

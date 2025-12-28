@@ -1,4 +1,4 @@
-#ifndef __CUP_H__
+ï»¿#ifndef __CUP_H__
 #define __CUP_H__
 
 #include "Enemy.h"
@@ -13,16 +13,16 @@ public:
     virtual bool init() override;
     CREATE_FUNC(Cup);
 
-    // Cup ²»½øĞĞ¹¥»÷
+    // Cup ä¸è¿›è¡Œæ”»å‡»
     virtual void attack() override {}
 
-    // update ±£³ÖÑ²Âß/»æÖÆĞĞÎª
+    // update ä¿æŒå·¡é€»/ç»˜åˆ¶è¡Œä¸º
     virtual void update(float dt) override;
 
-    // ¸²Ğ´ AI£º²»Ë÷µĞ¡¢²»Ö÷¶¯¿¿½üÍæ¼Ò
+    // è¦†å†™ AIï¼šä¸ç´¢æ•Œã€ä¸ä¸»åŠ¨é è¿‘ç©å®¶
     virtual void executeAI(Player* player, float dt) override;
 
-    // Cup ÉËº¦·Öµ£½Ó¿Ú
+    // Cup ä¼¤å®³åˆ†æ‹…æ¥å£
     void absorbDamage(int damage);
 
     virtual void die() override;

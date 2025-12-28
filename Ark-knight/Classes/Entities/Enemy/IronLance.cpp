@@ -1,4 +1,4 @@
-#include "IronLance.h"
+ï»¿#include "IronLance.h"
 #include "cocos2d.h"
 #include "Entities/Player/Player.h"
 #include <vector>
@@ -8,7 +8,7 @@ USING_NS_CC;
 
 static const int IRONL_MOVE_ACTION_TAG = 0xD201;
 
-// ¸¨Öú£º³¢ÊÔ¶à¸öÂ·¾¶ pattern ¼ÓÔØÖ¡£¨Óë XinXing µÄÊµÏÖ·ç¸ñ±£³ÖÒ»ÖÂ£©
+// è¾…åŠ©ï¼šå°è¯•å¤šä¸ªè·¯å¾„ pattern åŠ è½½å¸§ï¼ˆä¸ XinXing çš„å®ç°é£æ ¼ä¿æŒä¸€è‡´ï¼‰
 static Vector<SpriteFrame*> tryLoadFramesFromPatterns(const std::vector<std::string>& patterns, int count)
 {
     Vector<SpriteFrame*> frames;
@@ -28,15 +28,8 @@ static Vector<SpriteFrame*> tryLoadFramesFromPatterns(const std::vector<std::str
             }
             else
             {
-                // fallback to SpriteFrameCache by base name
                 char basename[128];
-                // ÊÔÍ¼´ÓÂ·¾¶ÖĞÌáÈ¡ basename Ä£Ê½£¨×îºóÒ»¶Î¸ñÊ½Èç Name_%04d.png£©
-                // ÓÉÓÚ pattern ÖĞÍ¨³£°üº¬ %04d£¬¹¹Ôì¼òµ¥ basename ÍÆ²â
-                // ÀıÈç "IronLance_Move_%04d.png"
-                // ÕâÀïÎÒÃÇ³¢ÊÔÖ±½ÓÓÃ¸ñÊ½»¯ºóµÄ×îºó²¿·Ö
-                // ÏÈ³¢ÊÔÓÃÄ¬ÈÏ basename Í¬Ñù±àºÅ
-                // ×÷Îª¼òµ¥·½°¸£¬³¢ÊÔ³£¼û basename£ºIronLance_Move / IronLance_Die
-                // ¾ßÌåÈÕÖ¾ÀûÓÚµ÷ÊÔ
+                // è¯•å›¾ä»è·¯å¾„ä¸­æå– basename æ¨¡å¼
                 GAME_LOG("tryLoadFramesFromPatterns - failed to create sprite from file: %s", fn.c_str());
             }
         }
@@ -48,10 +41,10 @@ static Vector<SpriteFrame*> tryLoadFramesFromPatterns(const std::vector<std::str
         }
     }
 
-    // Èç¹ûÈÔÎª¿Õ£¬³¢ÊÔÖ±½Ó´Ó SpriteFrameCache ÓÃ³£¼û basename ×÷Îª×îºóÊÖ¶Î
+    // å¦‚æœä»ä¸ºç©ºï¼Œå°è¯•ç›´æ¥ä» SpriteFrameCache ç”¨å¸¸è§ basename ä½œä¸ºæœ€åæ‰‹æ®µ
     if (frames.empty())
     {
-        // ³¢ÊÔ³£¼û»ùÃû×éºÏ
+        // å°è¯•å¸¸è§åŸºåç»„åˆ
         std::vector<std::string> basenames = {
             "IronLance_Move_%04d.png",
             "IronLance_Die_%04d.png"
@@ -97,19 +90,19 @@ bool IronLance::init()
 
     setEnemyType(EnemyType::MELEE);
 
-    // »ù´¡ÊôĞÔ
+    // åŸºç¡€å±æ€§
     setMaxHP(15);
     setHP(15);
 
     setAttack(0);
     setMoveSpeed(60.0f);
 
-    // ²»Ë÷µĞ¡¢²»¹¥»÷
+    // ä¸ç´¢æ•Œã€ä¸æ”»å‡»
     setSightRange(0.0f);
     setAttackRange(0.0f);
     setAttackCooldown(10.0f);
 
-    // ³¢ÊÔ·Ö±ğ¼ÓÔØ Move ºÍ Die ¶¯»­Ö¡£¨¸ü½¡×³µØ³¢ÊÔ¶à¸öÂ·¾¶£©
+    // å°è¯•åˆ†åˆ«åŠ è½½ Move å’Œ Die åŠ¨ç”»å¸§ï¼ˆæ›´å¥å£®åœ°å°è¯•å¤šä¸ªè·¯å¾„ï¼‰
     std::vector<std::string> movePatterns = {
         "Enemy/XinXing&&Iron Lance/Iron Lance/Iron Lance_Move/IronLance_Move_%04d.png",
         "Enemy/XinXing&&IronLance_Move/IronLance_Move_%04d.png",
@@ -138,7 +131,7 @@ bool IronLance::init()
         _dieAnimation->retain();
     }
 
-    // ³õÊ¼¾«Áé£ºÓÅÏÈÊ¹ÓÃ Move µÄµÚÒ»Ö¡£»ÈôÎŞ Move ÔòÊ¹ÓÃ Die µÄµÚÒ»Ö¡£»·ñÔò¶µµ×¼òµ¥¾«Áé
+    // åˆå§‹ç²¾çµï¼šä¼˜å…ˆä½¿ç”¨ Move çš„ç¬¬ä¸€å¸§ï¼›è‹¥æ—  Move åˆ™ä½¿ç”¨ Die çš„ç¬¬ä¸€å¸§ï¼›å¦åˆ™å…œåº•ç®€å•ç²¾çµ
     if (_moveAnimation)
     {
         auto frames = _moveAnimation->getFrames();
@@ -159,14 +152,14 @@ bool IronLance::init()
     }
     else
     {
-        // ¶µµ×£º¼òÒ×Ğ¡µã¾«Áé
+        // å…œåº•ï¼šç®€æ˜“å°ç‚¹ç²¾çµ
         auto sprite = Sprite::create();
         sprite->setTextureRect(Rect(0,0,16,16));
         sprite->setColor(Color3B::GRAY);
         this->bindSprite(sprite);
     }
 
-    // ³õÊ¼Ñ²ÂßÄ¿±êµÈ½»¸ø Enemy::init µÄÄ¬ÈÏÑ²ÂßÂß¼­
+    // åˆå§‹å·¡é€»ç›®æ ‡ç­‰äº¤ç»™ Enemy::init çš„é»˜è®¤å·¡é€»é€»è¾‘
     GAME_LOG("IronLance created (HP=45, single-damage per hit)");
     return true;
 }
@@ -177,7 +170,7 @@ void IronLance::update(float dt)
 
     Enemy::update(dt);
 
-    // ·¿¼ä±ß½çÏŞÖÆ
+    // æˆ¿é—´è¾¹ç•Œé™åˆ¶
     if (_hasRoomBounds)
     {
         Vec2 pos = this->getPosition();
@@ -189,7 +182,7 @@ void IronLance::update(float dt)
 
 void IronLance::executeAI(Player* , float dt)
 {
-    // Ö»Ñ²Âß/Æ¯ÒÆ£¬²»Ë÷µĞ¡¢²»¹¥»÷
+    // åªå·¡é€»/æ¼‚ç§»ï¼Œä¸ç´¢æ•Œã€ä¸æ”»å‡»
     patrol(dt);
 
     Vec2 dir = _patrolTarget - this->getPosition();
@@ -202,12 +195,12 @@ void IronLance::executeAI(Player* , float dt)
         move(Vec2::ZERO, dt);
     }
 
-    // ÒÆ¶¯¶¯»­ÓÉ move() ¹ÜÀí£¨×ñÑ­ Ayao µÄÂß¼­£©£¬Òò´Ë²»ÔÚ´Ë´¦Ç¿ÖÆÆô¶¯¶¯»­¡£
+    // ç§»åŠ¨åŠ¨ç”»ç”± move() ç®¡ç†ï¼ˆéµå¾ª Ayao çš„é€»è¾‘ï¼‰ï¼Œå› æ­¤ä¸åœ¨æ­¤å¤„å¼ºåˆ¶å¯åŠ¨åŠ¨ç”»ã€‚
 }
 
 void IronLance::move(const Vec2& direction, float dt)
 {
-    // IronLance ²»»á¹¥»÷£¬µ«ÈÔĞèÔÚËÀÍöÊ±Í£Ö¹ÒÆ¶¯
+    // IronLance ä¸ä¼šæ”»å‡»ï¼Œä½†ä»éœ€åœ¨æ­»äº¡æ—¶åœæ­¢ç§»åŠ¨
     if (_currentState == EntityState::DIE)
     {
         Character::move(Vec2::ZERO, dt);
@@ -217,7 +210,7 @@ void IronLance::move(const Vec2& direction, float dt)
     const float STOP_THRESHOLD_SQ = 1.0f;
     if (direction.lengthSquared() <= STOP_THRESHOLD_SQ)
     {
-        // Í£Ö¹ÒÆ¶¯¶¯×÷£¨Èç¹û´æÔÚ£©
+        // åœæ­¢ç§»åŠ¨åŠ¨ä½œï¼ˆå¦‚æœå­˜åœ¨ï¼‰
         if (_sprite)
         {
             auto act = _sprite->getActionByTag(IRONL_MOVE_ACTION_TAG);
@@ -226,7 +219,7 @@ void IronLance::move(const Vec2& direction, float dt)
                 _sprite->stopAction(act);
             }
 
-            // »Ö¸´µ½ÒÆ¶¯¶¯»­µÄµÚÒ»Ö¡£¨Í¨³£ÎªÕ¾Á¢/±Õ×ì×´Ì¬£©
+            // æ¢å¤åˆ°ç§»åŠ¨åŠ¨ç”»çš„ç¬¬ä¸€å¸§ï¼ˆé€šå¸¸ä¸ºç«™ç«‹/é—­å˜´çŠ¶æ€ï¼‰
             if (_moveAnimation)
             {
                 auto frames = _moveAnimation->getFrames();
@@ -241,21 +234,21 @@ void IronLance::move(const Vec2& direction, float dt)
             }
         }
 
-        // µ÷ÓÃ»ùÀàÒÆ¶¯ÒÔ±£³ÖËÙ¶È/×´Ì¬Ò»ÖÂ
+        // è°ƒç”¨åŸºç±»ç§»åŠ¨ä»¥ä¿æŒé€Ÿåº¦/çŠ¶æ€ä¸€è‡´
         Character::move(Vec2::ZERO, dt);
         return;
     }
 
-    // ÓĞÒÆ¶¯ÏòÁ¿£ºÏÈµ÷ÓÃ»ùÀàÒÔÊµ¼ÊÒÆ¶¯ÊµÌå
+    // æœ‰ç§»åŠ¨å‘é‡ï¼šå…ˆè°ƒç”¨åŸºç±»ä»¥å®é™…ç§»åŠ¨å®ä½“
     Vec2 dirNorm = direction.getNormalized();
     Character::move(dirNorm, dt);
 
-    // ÉèÖÃ³¯Ïò£¨×óÓÒ£©£¬²¢È·±£ÒÆ¶¯¶¯»­ÔÚÑ­»·²¥·Å
+    // è®¾ç½®æœå‘ï¼ˆå·¦å³ï¼‰ï¼Œå¹¶ç¡®ä¿ç§»åŠ¨åŠ¨ç”»åœ¨å¾ªç¯æ’­æ”¾
     if (_sprite && _moveAnimation)
     {
         _sprite->setFlippedX(dirNorm.x < 0.0f);
 
-        // Èç¹ûÒÆ¶¯¶¯»­Î´ÔÚ²¥·Å£¬ÔòÆô¶¯Ñ­»·²¥·Å²¢´òÉÏ tag
+        // å¦‚æœç§»åŠ¨åŠ¨ç”»æœªåœ¨æ’­æ”¾ï¼Œåˆ™å¯åŠ¨å¾ªç¯æ’­æ”¾å¹¶æ‰“ä¸Š tag
         if (!_sprite->getActionByTag(IRONL_MOVE_ACTION_TAG))
         {
             auto animate = Animate::create(_moveAnimation);
@@ -270,31 +263,28 @@ void IronLance::takeDamage(int damage)
 {
     if (!_isAlive || damage <= 0) return;
 
-    // Ç¿ÖÆÃ¿´ÎÖ»Ëã 1 µãÉËº¦¡£
-    // Ö±½Óµ÷ÓÃ GameEntity::takeDamageReported ÈÆ¹ı Enemy::takeDamageReported ÖĞµÄ Cup ·Öµ£Âß¼­£¬
-    // È·±£ IronLance ×ÔÉíÈ·Êµ¼õÉÙ HP£¨ÆÚÍû 45 ´ÎºóËÀÍö£©¡£
+    // å¼ºåˆ¶æ¯æ¬¡åªç®— 1 ç‚¹ä¼¤å®³ã€‚
     GameEntity::takeDamageReported(1);
 }
 
 int IronLance::takeDamageReported(int damage)
 {
-    // ¼á³Ö¡°ËùÓĞÉËº¦¶¼Ö»Ëã 1 µã¡±µÄÉè¼Æ
-    // ±£ÁôÊÜ»÷ÎŞµĞÓë»ùÀàÉÁË¸/ËÀÍöÂß¼­£¬Í¬Ê±ÈÆ¹ı Enemy::takeDamageReported µÄ Cup ·Öµ£Âß¼­
+    // ä¿ç•™å—å‡»æ— æ•Œä¸åŸºç±»é—ªçƒ/æ­»äº¡é€»è¾‘
     if (!_isAlive || damage <= 0) return 0;
 
-    // Óë GameEntity::takeDamageReported Ò»ÖÂµÄ¶ÌÔİÎŞµĞ¼ì²â£¨±ÜÃâÔÚÎŞµĞÆÚ¼äÖØ¸´ÊÜ»÷£©
+    // çŸ­æš‚æ— æ•Œæ£€æµ‹
     if (_hitInvulTimer > 0.0f) return 0;
 
-    // Ç¿ÖÆÖ»Ôì³É 1 µãÊµ¼ÊÉËº¦£¨µ÷ÓÃ GameEntity µÄÊµÏÖÒÔ»ñµÃÉÁË¸/ÎŞµĞ/ËÀÍö´¦Àí£©
+    // å¼ºåˆ¶åªé€ æˆ 1 ç‚¹å®é™…ä¼¤å®³
     return GameEntity::takeDamageReported(1);
 }
 
 void IronLance::die()
 {
-    // ÏÈµ÷ÓÃ Enemy::die() ÒÔ´¦ÀíºìÉ«±ê¼Ç / KongKaZi Éú³É¹¦ÄÜ£¨²»¸Ä±äÊµÌå×´Ì¬£©
+    // å…ˆè°ƒç”¨ Enemy::die() ä»¥å¤„ç†çº¢è‰²æ ‡è®°
     Enemy::die();
 
-    // ÉèÖÃÎªËÀÍö×´Ì¬²¢Í£Ö¹¶¯×÷
+    // è®¾ç½®ä¸ºæ­»äº¡çŠ¶æ€å¹¶åœæ­¢åŠ¨ä½œ
     setState(EntityState::DIE);
     this->stopAllActions();
     if (_sprite)
@@ -304,18 +294,17 @@ void IronLance::die()
         _sprite->setOpacity(255);
     }
 
-    // Èç¹û´æÔÚ¿ÉÓÃµÄËÀÍö¶¯»­Ö¡£¨ÓÅÏÈÊ¹ÓÃ _dieAnimation£©£¬°ÑËü²¥·ÅÎªÒ»´ÎĞÔÊÓ¾õ£¬È»ºóÒÆ³ı½Úµã
     Animation* deathAnim = _dieAnimation ? _dieAnimation : _moveAnimation;
 
     if (_sprite && deathAnim)
     {
-        // Í£Ö¹Ñ­»·ÒÆ¶¯¶¯»­
+        // åœæ­¢å¾ªç¯ç§»åŠ¨åŠ¨ç”»
         auto moveAct = _sprite->getActionByTag(IRONL_MOVE_ACTION_TAG);
         if (moveAct) _sprite->stopAction(moveAct);
 
-        // ²¥·ÅÒ»´ÎËÀÍö¶¯»­£¨ÈôÖ»ÓĞ Move Ö¡Ò²ÄÜÊÊÓÃ£©
+        // æ’­æ”¾ä¸€æ¬¡æ­»äº¡åŠ¨ç”»ï¼ˆè‹¥åªæœ‰ Move å¸§ä¹Ÿèƒ½é€‚ç”¨ï¼‰
         auto animate = Animate::create(deathAnim);
-        // ½áÎ²µ­³ö²¢É¾³ı½Úµã
+        // ç»“å°¾æ·¡å‡ºå¹¶åˆ é™¤èŠ‚ç‚¹
         auto fadeOut = FadeOut::create(0.5f);
         auto removeCallback = CallFunc::create([this]() {
             if (this->getParent()) this->removeFromParent();
@@ -325,12 +314,12 @@ void IronLance::die()
     }
     else
     {
-        // Ê¹ÓÃ»ùÀàµÄËÀÍöĞ§¹û²¢ÔÚ½áÊøºóÒÆ³ı½Úµã
-        Character::die(); // »áµ÷ÓÃ showDeathEffect()
+        // ä½¿ç”¨åŸºç±»çš„æ­»äº¡æ•ˆæœå¹¶åœ¨ç»“æŸåç§»é™¤èŠ‚ç‚¹
+        Character::die(); // ä¼šè°ƒç”¨ showDeathEffect()
         auto removeCallback = CallFunc::create([this]() {
             if (this->getParent()) this->removeFromParent();
         });
-        // showDeathEffect µÄ¶¯»­´óÔ¼ 0.5s£¬ÑÓ³ÙÉÔ³¤ÒÔÈ·±£ÊÓ¾õÍê³É
+        // showDeathEffect çš„åŠ¨ç”»å¤§çº¦ 0.5sï¼Œå»¶è¿Ÿç¨é•¿ä»¥ç¡®ä¿è§†è§‰å®Œæˆ
         this->runAction(Sequence::create(DelayTime::create(0.55f), removeCallback, nullptr));
     }
 }

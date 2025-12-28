@@ -1,4 +1,4 @@
-#include "IronLightCup.h"
+ï»¿#include "IronLightCup.h"
 #include "cocos2d.h"
 #include "Entities/Player/Player.h"
 #include <algorithm>
@@ -31,19 +31,19 @@ bool IronLightCup::init()
 
     setEnemyType(EnemyType::MELEE);
 
-    // ÉèÖÃÎª¡°35 ´Î»÷ÖĞËÀÍö¡±£¨Í¨¹ıµ¥´Î¿ÛÑªÊµÏÖ£©
+    // è®¾ç½®ä¸ºâ€œ35 æ¬¡å‡»ä¸­æ­»äº¡â€ï¼ˆé€šè¿‡å•æ¬¡æ‰£è¡€å®ç°ï¼‰
     setMaxHP(10);
     setHP(getMaxHP());
 
     setMoveSpeed(40.0f);
 
-    // ÎŞÊÓÒ°/¹¥»÷Ïà¹Ø£¨²»»áÖ÷¶¯Ñ°µĞ£©
+    // æ— è§†é‡/æ”»å‡»ç›¸å…³ï¼ˆä¸ä¼šä¸»åŠ¨å¯»æ•Œï¼‰
     setSightRange(0.0f);
     setAttackRange(0.0f);
 
     loadAnimations();
 
-    // °ó¶¨³õÊ¼¾«Áé£ºÓÅÏÈ move µÚÒ»Ö¡
+    // ç»‘å®šåˆå§‹ç²¾çµï¼šä¼˜å…ˆ move ç¬¬ä¸€å¸§
     if (_moveAnimation)
     {
         auto frames = _moveAnimation->getFrames();
@@ -64,14 +64,14 @@ bool IronLightCup::init()
     }
     else
     {
-        // ¶µµ×Õ¼Î»
+        // å…œåº•å ä½
         auto sprite = Sprite::create();
         sprite->setTextureRect(Rect(0,0,16,16));
         sprite->setColor(Color3B::GRAY);
         this->bindSprite(sprite);
     }
 
-    // ²¥·ÅÒÆ¶¯¶¯»­£¨Èô´æÔÚ£©
+    // æ’­æ”¾ç§»åŠ¨åŠ¨ç”»ï¼ˆè‹¥å­˜åœ¨ï¼‰
     if (_sprite && _moveAnimation)
     {
         auto animate = Animate::create(_moveAnimation);
@@ -80,7 +80,7 @@ bool IronLightCup::init()
         _sprite->runAction(repeat);
     }
 
-    // ³õÊ¼»¯Ñ²Âß½Ú×à
+    // åˆå§‹åŒ–å·¡é€»èŠ‚å¥
     _patrolInterval = 0.8f + CCRANDOM_0_1() * 1.2f;
     _patrolTimer = 0.0f;
     _patrolDirection = Vec2::ZERO;
@@ -92,7 +92,7 @@ bool IronLightCup::init()
 
 void IronLightCup::loadAnimations()
 {
-    // ÔØÈëÒÆ¶¯Ö¡£¨¼Ù¶¨ 6 Ö¡£¬ÕÒ²»µ½»á¼ÇÂ¼ÈÕÖ¾£©
+    // è½½å…¥ç§»åŠ¨å¸§ï¼ˆå‡å®š 6 å¸§ï¼Œæ‰¾ä¸åˆ°ä¼šè®°å½•æ—¥å¿—ï¼‰
     Vector<SpriteFrame*> moveFrames;
     for (int i = 1; i <= 7; ++i)
     {
@@ -120,7 +120,7 @@ void IronLightCup::loadAnimations()
         _moveAnimation->retain();
     }
 
-    // ÔØÈëËÀÍöÖ¡£¨¼Ù¶¨ 5 Ö¡£©
+    // è½½å…¥æ­»äº¡å¸§ï¼ˆå‡å®š 5 å¸§ï¼‰
     Vector<SpriteFrame*> dieFrames;
     for (int i = 1; i <= 5; ++i)
     {
@@ -155,7 +155,7 @@ void IronLightCup::update(float dt)
 
     Enemy::update(dt);
 
-    // ÏŞÖÆÔÚ·¿¼ä±ß½çÄÚ£¨Èç¹ûÓĞÉèÖÃ£©
+    // é™åˆ¶åœ¨æˆ¿é—´è¾¹ç•Œå†…ï¼ˆå¦‚æœæœ‰è®¾ç½®ï¼‰
     if (_hasRoomBounds)
     {
         Vec2 pos = this->getPosition();
@@ -164,19 +164,19 @@ void IronLightCup::update(float dt)
         this->setPosition(pos);
     }
 
-    // ÎŞÆäËü±»¶¯×´Ì¬
+    // æ— å…¶å®ƒè¢«åŠ¨çŠ¶æ€
 }
 
 void IronLightCup::executeAI(Player* /*player*/, float dt)
 {
-    // ²»Ë÷µĞ¡¢²»¹¥»÷£¬½öËæÒâÒÆ¶¯£¨Ëæ»úÑ²Âß£©
+    // ä¸ç´¢æ•Œã€ä¸æ”»å‡»ï¼Œä»…éšæ„ç§»åŠ¨ï¼ˆéšæœºå·¡é€»ï¼‰
     _patrolTimer += dt;
     if (_patrolTimer >= _patrolInterval)
     {
         _patrolTimer = 0.0f;
         _patrolInterval = 0.8f + CCRANDOM_0_1() * 1.2f;
 
-        // Ëæ»ú·½Ïò»ò¾²Ö¹
+        // éšæœºæ–¹å‘æˆ–é™æ­¢
         float r = CCRANDOM_0_1();
         if (r < 0.3f)
         {
@@ -190,7 +190,7 @@ void IronLightCup::executeAI(Player* /*player*/, float dt)
         }
     }
 
-    // µ÷ÓÃ»ùÀàÒÆ¶¯£¨»ùÀà»áÒÀ¾İ _moveSpeed ×öÊµ¼ÊÎ»ÒÆ£©
+    // è°ƒç”¨åŸºç±»ç§»åŠ¨ï¼ˆåŸºç±»ä¼šä¾æ® _moveSpeed åšå®é™…ä½ç§»ï¼‰
     if (_patrolDirection != Vec2::ZERO)
     {
         move(_patrolDirection, dt);
@@ -201,29 +201,28 @@ void IronLightCup::takeDamage(int damage)
 {
     if (isDead()) return;
 
-    // Ã¿´Î¹Ì¶¨¼Æ 1 µãÉËº¦¡£
-    // Ö±½Óµ÷ÓÃ»ùÀàµÄ takeDamageReported£¬±ÜÃâ±»¸½½ü Cup ÎüÊÕ£¨Enemy::takeDamageReported µÄ·Öµ£Âß¼­£©¡£
+    // æ¯æ¬¡å›ºå®šè®¡ 1 ç‚¹ä¼¤å®³ã€‚
     GameEntity::takeDamageReported(1);
 }
 
 int IronLightCup::takeDamageReported(int damage)
 {
-    // Ç¿ÖÆËùÓĞÀ´Ô´µÄÉËº¦¶Ô IronLightCup Ö»Ôì³É 1 µã
+    // å¼ºåˆ¶æ‰€æœ‰æ¥æºçš„ä¼¤å®³å¯¹ IronLightCup åªé€ æˆ 1 ç‚¹
     if (!_isAlive || damage <= 0) return 0;
 
-    // ±£³ÖÊÜ»÷ÎŞµĞÅĞ¶Ï£¬±ÜÃâ¶ÌÊ±¼äÖØ¸´ÊÜ»÷
+    // ä¿æŒå—å‡»æ— æ•Œåˆ¤æ–­ï¼Œé¿å…çŸ­æ—¶é—´é‡å¤å—å‡»
     if (_hitInvulTimer > 0.0f) return 0;
 
-    // Ö±½Ó×ß GameEntity µÄ´¦Àí£¬Ôì³É 1 µã²¢´¥·¢ÉÁË¸ / ÎŞµĞ / ËÀÍö´¦Àí
+    // ç›´æ¥èµ° GameEntity çš„å¤„ç†ï¼Œé€ æˆ 1 ç‚¹å¹¶è§¦å‘é—ªçƒ / æ— æ•Œ / æ­»äº¡å¤„ç†
     return GameEntity::takeDamageReported(1);
 }
 
 void IronLightCup::die()
 {
-    // ÏÈ´¥·¢»ùÀàÂß¼­£¨ºìÉ«±ê¼Ç / KongKaZi µÈ£©
+    // å…ˆè§¦å‘åŸºç±»é€»è¾‘ï¼ˆçº¢è‰²æ ‡è®° / KongKaZi ç­‰ï¼‰
     Enemy::die();
 
-    // Í£Ö¹ÒÆ¶¯¶¯»­²¢²¥·ÅËÀÍö¶¯»­Ò»´Î£¬È»ºóÒÆ³ı
+    // åœæ­¢ç§»åŠ¨åŠ¨ç”»å¹¶æ’­æ”¾æ­»äº¡åŠ¨ç”»ä¸€æ¬¡ï¼Œç„¶åç§»é™¤
     if (_sprite)
     {
         _sprite->stopActionByTag(IRONLIGHT_MOVE_ACTION_TAG);
@@ -233,7 +232,7 @@ void IronLightCup::die()
             auto animate = Animate::create(_dieAnimation);
             animate->setTag(IRONLIGHT_DIE_ACTION_TAG);
 
-            // ¼ÆËã×ÜÊ±³¤²¢ÔÚ½áÊøºóÒÆ³ı
+            // è®¡ç®—æ€»æ—¶é•¿å¹¶åœ¨ç»“æŸåç§»é™¤
             float total = _dieAnimation->getDelayPerUnit() * (float)_dieAnimation->getFrames().size();
             auto seq = Sequence::create(animate, DelayTime::create(0.0f), CallFunc::create([this]() {
                 this->removeFromParentAndCleanup(true);
@@ -243,6 +242,6 @@ void IronLightCup::die()
         }
     }
 
-    // Ã»ÓĞËÀÍö¶¯»­ÔòÖ±½ÓÒÆ³ı
+    // æ²¡æœ‰æ­»äº¡åŠ¨ç”»åˆ™ç›´æ¥ç§»é™¤
     this->removeFromParentAndCleanup(true);
 }

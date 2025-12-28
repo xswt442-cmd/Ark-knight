@@ -1,17 +1,16 @@
-// NiLuFire.cpp ¡ª¡ª ĞŞ¸´£ºÔÊĞí¿üÂ¡´¥·¢²¢ĞŞ¸´×Ô±¬»Øµ÷±ÀÀ££¨Ê¹ÓÃ retain/release ±£Ö¤»Øµ÷ÆÚ¼ä¶ÔÏó´æ»î£©
-// Í¬Ê±ÔÚÔì³ÉÉËº¦Ê±ÏÔÊ¾Ç³À¶ÂÌÉ«¸¡¶¯Êı×ÖÒÔ±ãµ÷ÊÔ
+ï»¿// å…è®¸å¥éš†è§¦å‘å¹¶ä¿®å¤è‡ªçˆ†å›è°ƒå´©æºƒ
+// åŒæ—¶åœ¨é€ æˆä¼¤å®³æ—¶æ˜¾ç¤ºæµ…è“ç»¿è‰²æµ®åŠ¨æ•°å­—
 #include "NiLuFire.h"
 #include "cocos2d.h"
 #include "Entities/Player/Player.h"
 #include "UI/FloatingText.h"
 #include "Scenes/GameScene.h"
-#include "Core/Constants.h" // ÓÃÓÚ ZOrder
+#include "Core/Constants.h" // ç”¨äº ZOrder
 
 USING_NS_CC;
 
 static const char* LOG_TAG_NILU = "NiLuFire";
 
-// µ÷ÊÔ¿ª¹Ø£º¿ªÆôºó»áÔÚ·¢Æğ¹¥»÷/×Ô±¬Ê±»æÖÆÊ®×Ö·¶Î§ÓÃÓÚµ÷ÊÔ
 #define NILU_DEBUG_DRAW 1
 
 static void showDebugCross(cocos2d::Node* attachTarget, const cocos2d::Vec2& worldPos, float arm, float halfWidth, float duration)
@@ -45,7 +44,7 @@ NiLuFire::NiLuFire()
     , _hpBar(nullptr)
     , _hpLabel(nullptr)
     , _lifetimeTimer(0.0f)
-    , _protectTimer(5.0f) // ³ö³¡±£»¤ÆÚ 5s
+    , _protectTimer(5.0f) // å‡ºåœºä¿æŠ¤æœŸ 5s
     , _isProtected(true)
     , _lifeLimit(60.0f)
     , _attackDamage(0)
@@ -70,17 +69,17 @@ bool NiLuFire::init()
     if (!Enemy::init()) return false;
 
     setEnemyType(EnemyType::MELEE);
-    setMaxHP(2000);    // ĞŞ¸Ä£ºÑªÁ¿ÉÏÏŞÉèÎª 2000
-    setHP(0);          // ³õÊ¼ÑªÁ¿Îª 0£¨ÈçÉè¼ÆÒªÇó£©
+    setMaxHP(2000);    // ä¿®æ”¹ï¼šè¡€é‡ä¸Šé™è®¾ä¸º 2000
+    setHP(0);          // åˆå§‹è¡€é‡ä¸º 0ï¼ˆå¦‚è®¾è®¡è¦æ±‚ï¼‰
     setMoveSpeed(0.0f);
-    setAttack(0);      // ÎïÀí¹¥»÷Öµ²»ÓÃÓÚ NiLu£¬Ê¹ÓÃ performAttackImmediate µÄ²ÎÊı
+    setAttack(0);      // ç‰©ç†æ”»å‡»å€¼ä¸ç”¨äº NiLuï¼Œä½¿ç”¨ performAttackImmediate çš„å‚æ•°
     setSightRange(300.0f);
     setAttackRange(120.0f);
 
-    // ÔØÈë¶¯»­×ÊÔ´£¨Attack / Burning£©
+    // è½½å…¥åŠ¨ç”»èµ„æºï¼ˆAttack / Burningï¼‰
     loadAnimations();
 
-    // °ó¶¨ Burning µÄµÚÒ»Ö¡ÎªÄ¬ÈÏ¾«Áé
+    // ç»‘å®š Burning çš„ç¬¬ä¸€å¸§ä¸ºé»˜è®¤ç²¾çµ
     if (_animBurn)
     {
         auto frames = _animBurn->getFrames();
@@ -98,7 +97,7 @@ bool NiLuFire::init()
         this->bindSprite(sprite);
     }
 
-    // Æô¶¯È¼ÉÕÑ­»·£¨Burning ×´Ì¬Ïàµ±ÓÚ Idle£¬²»»á×öÉËº¦ÅĞ¶¨£©
+    // å¯åŠ¨ç‡ƒçƒ§å¾ªç¯ï¼ˆBurning çŠ¶æ€ç›¸å½“äº Idleï¼Œä¸ä¼šåšä¼¤å®³åˆ¤å®šï¼‰
     if (_animBurn && _sprite)
     {
         auto anim = Animate::create(_animBurn);
@@ -108,10 +107,10 @@ bool NiLuFire::init()
         _sprite->runAction(repeat);
     }
 
-    // Ìí¼Ó stealth source£¬·ÀÖ¹ÎÒ·½ÆÕÍ¨×Óµ¯/¹¥»÷ÃüÖĞ£¨ÓëÔ­Âß¼­Ò»ÖÂ£©
+    // æ·»åŠ  stealth sourceï¼Œé˜²æ­¢æˆ‘æ–¹æ™®é€šå­å¼¹/æ”»å‡»å‘½ä¸­ï¼ˆä¸åŸé€»è¾‘ä¸€è‡´ï¼‰
     this->addStealthSource((void*)this);
 
-    // ´´½¨À¶É«ÑªÌõ²¢ÖÃÓÚµØ°å²ãÖ®ÉÏ£¨world-space£©
+    // åˆ›å»ºè“è‰²è¡€æ¡å¹¶ç½®äºåœ°æ¿å±‚ä¹‹ä¸Šï¼ˆworld-spaceï¼‰
     createHPBar();
 
     GAME_LOG("%s: NiLuFire initialized (HP=%d/%d)", LOG_TAG_NILU, getHP(), getMaxHP());
@@ -175,23 +174,23 @@ void NiLuFire::loadAnimations()
 
 void NiLuFire::createHPBar()
 {
-    // ÎªÁËÈ·±£ world-space µÄ¿É¼ûĞÔ£¬Ö±½Ó×÷Îª NiLuFire µÄ×Ó½Úµã£¬µ«ÉèÖÃ global z-order µ½µØ°åÖ®ÉÏ
+    // ä¸ºäº†ç¡®ä¿ world-space çš„å¯è§æ€§ï¼Œç›´æ¥ä½œä¸º NiLuFire çš„å­èŠ‚ç‚¹ï¼Œä½†è®¾ç½® global z-order åˆ°åœ°æ¿ä¹‹ä¸Š
     float barWidth = 48.0f;
     float barHeight = 6.0f;
     float bgGlobalZ = static_cast<float>(Constants::ZOrder::FLOOR + 1);
     float fillGlobalZ = static_cast<float>(Constants::ZOrder::FLOOR + 2);
     float labelGlobalZ = static_cast<float>(Constants::ZOrder::FLOOR + 3);
 
-    // Ê¹ÓÃ LoadingBar ×öÌî³ä
+    // ä½¿ç”¨ LoadingBar åšå¡«å……
     _hpBar = ui::LoadingBar::create("UIs/StatusBars/Bars/HealthFill.png");
     if (_hpBar)
     {
         _hpBar->setAnchorPoint(Vec2(0.5f, 0.5f));
         _hpBar->setScaleX(barWidth / _hpBar->getContentSize().width);
         _hpBar->setScaleY(barHeight / _hpBar->getContentSize().height);
-        // ÏòÉÏÒÆ¶¯Ò»Ğ©£¨¿¿½ü¾«Áé£©: Ô­ÏÈ -6£¬ÏÖÔÚ¸ÄÎª -2£¬ÈÃÑªÌõ¸ü¿¿½ü¾«Áé
+        // å‘ä¸Šç§»åŠ¨ä¸€äº›ï¼ˆé è¿‘ç²¾çµï¼‰: åŸå…ˆ -6ï¼Œç°åœ¨æ”¹ä¸º -2ï¼Œè®©è¡€æ¡æ›´é è¿‘ç²¾çµ
         _hpBar->setPosition(Vec2(0.0f, -(_sprite ? _sprite->getBoundingBox().size.height * 0.5f : 12.0f) - 2.0f));
-        _hpBar->setColor(Color3B(64, 128, 255)); // À¶É«ÑªÌõ
+        _hpBar->setColor(Color3B(64, 128, 255)); // è“è‰²è¡€æ¡
         _hpBar->setGlobalZOrder(fillGlobalZ);
         this->addChild(_hpBar, 1);
     }
@@ -203,7 +202,7 @@ void NiLuFire::createHPBar()
     {
         _hpLabel->setAnchorPoint(Vec2(0.5f, 0.5f));
         _hpLabel->setTextColor(Color4B::WHITE);
-        // ±êÇ©Ò²ÉÏÒÆÒ»µã£¨Ô­ -14 -> -10£©
+        // æ ‡ç­¾ä¹Ÿä¸Šç§»ä¸€ç‚¹ï¼ˆåŸ -14 -> -10ï¼‰
         _hpLabel->setPosition(Vec2(0.0f, -(_sprite ? _sprite->getBoundingBox().size.height * 0.5f : 12.0f) - 10.0f));
         _hpLabel->setGlobalZOrder(labelGlobalZ);
         this->addChild(_hpLabel, 2);
@@ -243,13 +242,13 @@ void NiLuFire::update(float dt)
     _lifetimeTimer += dt;
     if (_lifetimeTimer >= _lifeLimit)
     {
-        // µ½Ê±¼ä×Ô±¬£¨²¥·ÅÒ»´Î¹¥»÷¶¯»­²¢Ôì³ÉÊ®×ÖÉËº¦ºóÏûÊ§£©
+        // åˆ°æ—¶é—´è‡ªçˆ†ï¼ˆæ’­æ”¾ä¸€æ¬¡æ”»å‡»åŠ¨ç”»å¹¶é€ æˆåå­—ä¼¤å®³åæ¶ˆå¤±ï¼‰
         performSelfDestruct();
         return;
     }
 
-    // Burning ×´Ì¬£º²»Ö÷¶¯¹¥»÷ / ²»Ôì³ÉÉËº¦£¨¼´Ê¹Íæ¼ÒÔÚ·¶Î§ÄÚÒ²²»Ôì³É£©
-    // ÑªÌõ¸üĞÂ
+    // Burning çŠ¶æ€ï¼šä¸ä¸»åŠ¨æ”»å‡» / ä¸é€ æˆä¼¤å®³ï¼ˆå³ä½¿ç©å®¶åœ¨èŒƒå›´å†…ä¹Ÿä¸é€ æˆï¼‰
+    // è¡€æ¡æ›´æ–°
     updateHPBar();
 }
 
@@ -264,14 +263,14 @@ void NiLuFire::onHealedByPlayer(int healAmount)
 
     if (this->getParent())
     {
-        // ÏÔÊ¾À¶É«¸¡¶¯ÊıÖµ
+        // æ˜¾ç¤ºè“è‰²æµ®åŠ¨æ•°å€¼
         FloatingText::show(this->getParent(), this->getPosition(), std::to_string(healAmount), Color3B(100,180,255));
     }
 
-    // Á¢¼´Ë¢ĞÂÑªÌõÏÔÊ¾£¨ĞŞ¸´¡°»ØÑªÎ´ÄÜ¼´Ê±¿´µ½¡±µÄÎÊÌâ£©
+    // ç«‹å³åˆ·æ–°è¡€æ¡æ˜¾ç¤ºï¼ˆä¿®å¤â€œå›è¡€æœªèƒ½å³æ—¶çœ‹åˆ°â€çš„é—®é¢˜ï¼‰
     updateHPBar();
 
-    // Ğ¡µÄÊÓ¾õÌáÊ¾£¨¿ÉÑ¡£©£º¶ÌÔİ·Å´óÑªÌõÒÔÊ¾±ä»¯
+    // å°çš„è§†è§‰æç¤ºï¼ˆå¯é€‰ï¼‰ï¼šçŸ­æš‚æ”¾å¤§è¡€æ¡ä»¥ç¤ºå˜åŒ–
     if (_hpBar)
     {
         _hpBar->stopAllActions();
@@ -282,10 +281,10 @@ void NiLuFire::onHealedByPlayer(int healAmount)
         _hpBar->runAction(Sequence::create(s1, s2, nullptr));
     }
 
-    // Èç¹ûÑªÁ¿»ØÂú£¬ÔòÁ¢¼´ÒÆ³ı£¨²»´¥·¢×Ô±¬ÉËº¦£©
+    // å¦‚æœè¡€é‡å›æ»¡ï¼Œåˆ™ç«‹å³ç§»é™¤ï¼ˆä¸è§¦å‘è‡ªçˆ†ä¼¤å®³ï¼‰
     if (getHP() >= getMaxHP())
     {
-        // ÇåÀí²¢ÒÆ³ı
+        // æ¸…ç†å¹¶ç§»é™¤
         this->stopAllActions();
         this->unscheduleAllCallbacks();
         this->removeFromParentAndCleanup(true);
@@ -296,8 +295,8 @@ void NiLuFire::performAttackImmediate(int damage)
 {
     if (_currentState == EntityState::DIE) return;
 
-    // ½öµ±Ã»ÓĞÏÔÊ½´«Èë damage£¨damage <= 0£©Ê±£¬±£»¤ÆÚÉúĞ§¡£
-    // ÕâÑù KuiLong ÔÚµ÷ÓÃÊ±´«Èë·Ç0 damage ¿ÉÇ¿ÖÆ´¥·¢ÄáÂ¬»ğ¹¥»÷£¨·ûºÏĞèÇó£©¡£
+    // ä»…å½“æ²¡æœ‰æ˜¾å¼ä¼ å…¥ damageï¼ˆdamage <= 0ï¼‰æ—¶ï¼Œä¿æŠ¤æœŸç”Ÿæ•ˆã€‚
+    // è¿™æ · KuiLong åœ¨è°ƒç”¨æ—¶ä¼ å…¥é0 damage å¯å¼ºåˆ¶è§¦å‘å°¼å¢ç«æ”»å‡»ï¼ˆç¬¦åˆéœ€æ±‚ï¼‰ã€‚
     if (_isProtected && damage <= 0)
     {
         GAME_LOG("%s: performAttackImmediate ignored due to protect (incoming=%d)", LOG_TAG_NILU, damage);
@@ -319,13 +318,13 @@ void NiLuFire::performAttackImmediate(int damage)
         return;
     }
 
-    // ±ê¼ÇÕıÔÚ¹¥»÷£¨½ö×÷Îª×´Ì¬±ê¼Ç£©
+    // æ ‡è®°æ­£åœ¨æ”»å‡»ï¼ˆä»…ä½œä¸ºçŠ¶æ€æ ‡è®°ï¼‰
     _isPerformingAttack = true;
 
-    // ÎªÁËÔÚ»Øµ÷ÖĞ°²È«·ÃÎÊ this£¬±£Áô×ÔÉí£¬»Øµ÷½áÊøÊ± release
+    // ä¸ºäº†åœ¨å›è°ƒä¸­å®‰å…¨è®¿é—® thisï¼Œä¿ç•™è‡ªèº«ï¼Œå›è°ƒç»“æŸæ—¶ release
     this->retain();
 
-    // ²¶»ñµ±Ç°±ØÒªÊı¾İ
+    // æ•è·å½“å‰å¿…è¦æ•°æ®
     int usedDamage = (damage > 0) ? damage : (_attackDamage > 0 ? _attackDamage : this->getAttack());
     Node* attachTarget = this->getParent();
     if (!attachTarget) attachTarget = this;
@@ -336,7 +335,7 @@ void NiLuFire::performAttackImmediate(int damage)
     else
         worldPos = this->getPosition();
 
-    // ´´½¨ÁÙÊ±¹¥»÷¾«Áé²¢¹Òµ½¸¸½Úµã/³¡¾°²ãÒÔ±£Ö¤¿É¼û
+    // åˆ›å»ºä¸´æ—¶æ”»å‡»ç²¾çµå¹¶æŒ‚åˆ°çˆ¶èŠ‚ç‚¹/åœºæ™¯å±‚ä»¥ä¿è¯å¯è§
     Sprite* atkSprite = Sprite::createWithSpriteFrame(frames.front()->getSpriteFrame());
     if (!atkSprite)
     {
@@ -355,17 +354,17 @@ void NiLuFire::performAttackImmediate(int damage)
     atkSprite->setGlobalZOrder(atkGlobalZ);
     attachTarget->addChild(atkSprite, 10);
 
-    // debug ¿ÉÊÓ»¯ÓëÈÕÖ¾
+    // debug å¯è§†åŒ–ä¸æ—¥å¿—
     float animDuration = _animAttack->getDelayPerUnit() * static_cast<float>(_animAttack->getFrames().size());
     showDebugCross(attachTarget, worldPos, 100.0f, 20.0f, std::max(0.2f, animDuration));
     GAME_LOG("%s: performAttackImmediate spawn atkSprite at world(%.1f,%.1f) attach=%p frames=%zd duration=%.2f",
         LOG_TAG_NILU, worldPos.x, worldPos.y, (void*)attachTarget, frames.size(), animDuration);
 
-    // °²È«²¶»ñ£ºÓÃ self Ö¸Õë£¨ÒÑ retain£©
+    // å®‰å…¨æ•è·ï¼šç”¨ self æŒ‡é’ˆï¼ˆå·² retainï¼‰
     NiLuFire* self = this;
     auto animate = Animate::create(_animAttack);
     auto cb = CallFunc::create([self, atkSprite, usedDamage]() {
-        // ÔÚ»Øµ÷ÖĞ²»Òª¼Ù¶¨ self Î´±»É¾³ı£¨retain ±£Ö¤ÆäÆÚ¼äÓĞĞ§£©
+        // åœ¨å›è°ƒä¸­ä¸è¦å‡å®š self æœªè¢«åˆ é™¤ï¼ˆretain ä¿è¯å…¶æœŸé—´æœ‰æ•ˆï¼‰
         Scene* running = Director::getInstance()->getRunningScene();
         if (running)
         {
@@ -375,7 +374,7 @@ void NiLuFire::performAttackImmediate(int damage)
                 Player* player = gs->getPlayer();
                 if (player)
                 {
-                    // ÅĞ¶¨Ê¹ÓÃÊÀ½ç×ø±ê±È½Ï£¨player Î»ÖÃÓÃ world£©
+                    // åˆ¤å®šä½¿ç”¨ä¸–ç•Œåæ ‡æ¯”è¾ƒï¼ˆplayer ä½ç½®ç”¨ worldï¼‰
                     Vec2 pWorld = (player->getParent()) ? player->getParent()->convertToWorldSpace(player->getPosition()) : player->getPosition();
                     Vec2 cWorld = (self->getParent()) ? self->getParent()->convertToWorldSpace(self->getPosition()) : self->getPosition();
 
@@ -387,7 +386,7 @@ void NiLuFire::performAttackImmediate(int damage)
                     {
                         player->takeDamage(usedDamage);
 
-                        // ÏÔÊ¾Ç³À¶ÂÌÉ«¸¡¶¯Êı×ÖÒÔ±ãÇø·ÖÄáÂ¬»ğÉËº¦
+                        // æ˜¾ç¤ºæµ…è“ç»¿è‰²æµ®åŠ¨æ•°å­—ä»¥ä¾¿åŒºåˆ†å°¼å¢ç«ä¼¤å®³
                         Node* parentForText = player->getParent() ? player->getParent() : running;
                         if (parentForText)
                         {
@@ -400,7 +399,7 @@ void NiLuFire::performAttackImmediate(int damage)
 
         if (atkSprite) atkSprite->removeFromParentAndCleanup(true);
 
-        // ÇåÀí±ê¼Ç²¢ release self
+        // æ¸…ç†æ ‡è®°å¹¶ release self
         if (self) self->_isPerformingAttack = false;
         if (self) self->release();
     });
@@ -413,9 +412,9 @@ void NiLuFire::performSelfDestruct()
 {
     if (_currentState == EntityState::DIE) return;
 
-    // ×Ô±¬Ê¹ÓÃ¼ÇÂ¼µÄ¹¥»÷Á¦»ò fallback
+    // è‡ªçˆ†ä½¿ç”¨è®°å½•çš„æ”»å‡»åŠ›æˆ– fallback
     int dmg = (_attackDamage > 0) ? _attackDamage : this->getAttack();
-    if (dmg <= 0) dmg = 3500; // ¶µµ×Öµ
+    if (dmg <= 0) dmg = 3500; // å…œåº•å€¼
 
     if (_animAttack)
     {
@@ -425,7 +424,7 @@ void NiLuFire::performSelfDestruct()
             Sprite* atkSprite = Sprite::createWithSpriteFrame(frames.front()->getSpriteFrame());
             if (!atkSprite)
             {
-                // ÎŞ·¨´´½¨¾«Áé£¬Ö±½ÓÅĞÉË²¢Á¢¼´ÒÆ³ı
+                // æ— æ³•åˆ›å»ºç²¾çµï¼Œç›´æ¥åˆ¤ä¼¤å¹¶ç«‹å³ç§»é™¤
                 Scene* running = Director::getInstance()->getRunningScene();
                 if (running)
                 {
@@ -458,7 +457,7 @@ void NiLuFire::performSelfDestruct()
                 return;
             }
 
-            // retain self ±£Ö¤»Øµ÷ÆÚ¼äÓĞĞ§
+            // retain self ä¿è¯å›è°ƒæœŸé—´æœ‰æ•ˆ
             this->retain();
             NiLuFire* self = this;
 
@@ -513,7 +512,7 @@ void NiLuFire::performSelfDestruct()
                 }
                 if (atkSprite) atkSprite->removeFromParentAndCleanup(true);
 
-                // ÒÆ³ı×ÔÉí²¢ release£¨release ÔÚ remove Ö®ºóÒÀÈ»°²È«£©
+                // ç§»é™¤è‡ªèº«å¹¶ releaseï¼ˆrelease åœ¨ remove ä¹‹åä¾ç„¶å®‰å…¨ï¼‰
                 if (self)
                 {
                     self->removeFromParentAndCleanup(true);
@@ -526,7 +525,7 @@ void NiLuFire::performSelfDestruct()
         }
     }
 
-    // ÎŞ¶¯»­»ØÍË£ºÖ±½ÓÅĞ¶¨ÉËº¦²¢É¾³ı
+    // æ— åŠ¨ç”»å›é€€ï¼šç›´æ¥åˆ¤å®šä¼¤å®³å¹¶åˆ é™¤
     Scene* running = Director::getInstance()->getRunningScene();
     if (running)
     {
@@ -560,7 +559,7 @@ void NiLuFire::performSelfDestruct()
 
 void NiLuFire::takeDamage(int damage)
 {
-    // NiLuFire ¶ÔÎÒ·½ÆÕÍ¨¹¥»÷/×Óµ¯ÃâÒß£¨ÖÎÁÆ»ØÂúÓÉ onHealedByPlayer ´¦Àí£©
+    // NiLuFire å¯¹æˆ‘æ–¹æ™®é€šæ”»å‡»/å­å¼¹å…ç–«ï¼ˆæ²»ç–—å›æ»¡ç”± onHealedByPlayer å¤„ç†ï¼‰
     GAME_LOG("%s: takeDamage ignored (incoming=%d)", LOG_TAG_NILU, damage);
     (void)damage;
     return;

@@ -1,4 +1,4 @@
-#include "Du.h"
+ï»¿#include "Du.h"
 #include "cocos2d.h"
 #include "Entities/Player/Player.h"
 #include "Scenes/GameScene.h"
@@ -10,9 +10,9 @@ USING_NS_CC;
 
 static const int DU_MOVE_ACTION_TAG = 0xD201;
 static const int DU_WINDUP_ACTION_TAG = 0xD202;
-// Ô­À´µÄ¹Ì¶¨·ÉĞĞÊ±¼ä±£ÁôÎª»ØÍËÖµ
+// åŸæ¥çš„å›ºå®šé£è¡Œæ—¶é—´ä¿ç•™ä¸ºå›é€€å€¼
 static constexpr float DU_BULLET_FLIGHT_TIME = 3.0f;
-// ĞÂÔö£ºÒÔÏñËØ/ÃëÎªµ¥Î»µÄ×Óµ¯ËÙ¶È£¨µ÷Õû´ËÖµ¿ÉÖ±½Ó¸Ä±ä×Óµ¯ËÙ¶È£©
+// æ–°å¢ï¼šä»¥åƒç´ /ç§’ä¸ºå•ä½çš„å­å¼¹é€Ÿåº¦ï¼ˆè°ƒæ•´æ­¤å€¼å¯ç›´æ¥æ”¹å˜å­å¼¹é€Ÿåº¦ï¼‰
 static constexpr float DU_BULLET_SPEED = 700.0f;
 static const char* DU_BULLET_SCHEDULE_KEY = "DuBulletUpdate";
 
@@ -24,7 +24,7 @@ Du::Du()
     , _hasRoomBounds(false)
     , _isFiring(false)
     , _currentBullet(nullptr)
-    , _attackTarget(nullptr) // ĞÂÔö£º³õÊ¼»¯¹¥»÷Ä¿±êÖ¸Õë
+    , _attackTarget(nullptr) // æ–°å¢ï¼šåˆå§‹åŒ–æ”»å‡»ç›®æ ‡æŒ‡é’ˆ
 {
 }
 
@@ -45,11 +45,11 @@ bool Du::init()
     setupAttributes();
     loadAnimations();
 
-    // Ê¹ÓÃÒÆ¶¯¶¯»­µÚÒ»Ö¡×÷Îª³õÊ¼¾«Áé£¨Óë Ayao/TangHuang ·ç¸ñÒ»ÖÂ£©
+    // ä½¿ç”¨ç§»åŠ¨åŠ¨ç”»ç¬¬ä¸€å¸§ä½œä¸ºåˆå§‹ç²¾çµ
     if (_moveAnimation && !_moveAnimation->getFrames().empty())
     {
         auto sprite = Sprite::createWithSpriteFrame(_moveAnimation->getFrames().front()->getSpriteFrame());
-        // ·Å´ó 1.5 ±¶
+        // æ”¾å¤§ 1.5 å€
         sprite->setScale(1.3f);
         this->bindSprite(sprite);
     }
@@ -60,15 +60,15 @@ bool Du::init()
 
 void Du::setupAttributes()
 {
-    // ÒÀ¾İĞèÇó£ºÔ¶³Ì£¬¹¥»÷Ç°Ò¡ 0.8s£¬Ë÷µĞ·¶Î§´ó£¬ÉËº¦Æ«¸ß
+    // ä¾æ®éœ€æ±‚ï¼šè¿œç¨‹ï¼Œæ”»å‡»å‰æ‘‡ 0.8sï¼Œç´¢æ•ŒèŒƒå›´å¤§ï¼Œä¼¤å®³åé«˜
     setMaxHP(3500);
     setHP(3500);
 
-    setAttack(1800); // Ôì³É´óÁ¿ÉËº¦£¨¿É¸ù¾İÆ½ºâµ÷Õû£©
+    setAttack(1800); // é€ æˆå¤§é‡ä¼¤å®³ï¼ˆå¯æ ¹æ®å¹³è¡¡è°ƒæ•´ï¼‰
     setMoveSpeed(65.0f);
 
-    setSightRange(500.0f);   // Ô¶³ÌË÷µĞ´ó·¶Î§
-    setAttackRange(420.0f);  // Ô¶³Ì¹¥»÷·¶Î§
+    setSightRange(500.0f);   // è¿œç¨‹ç´¢æ•Œå¤§èŒƒå›´
+    setAttackRange(420.0f);  // è¿œç¨‹æ”»å‡»èŒƒå›´
     setAttackCooldown(2.5f);
     setAttackWindup(0.8f);
 }
@@ -101,7 +101,7 @@ void Du::loadAnimations()
         _moveAnimation->retain();
     }
 
-    // Attack (Ç°Ò¡/·¢Éä¶¯»­)
+    // Attack (å‰æ‘‡/å‘å°„åŠ¨ç”»)
     Vector<SpriteFrame*> attackFrames;
     for (int i = 1; i <= 6; ++i)
     {
@@ -127,7 +127,7 @@ void Du::loadAnimations()
         _attackAnimation->retain();
     }
 
-    // Bullet ·ÉĞĞ¶¯»­
+    // Bullet é£è¡ŒåŠ¨ç”»
     Vector<SpriteFrame*> bulletFrames;
     for (int i = 1; i <= 6; ++i)
     {
@@ -188,7 +188,7 @@ void Du::update(float dt)
 
     Enemy::update(dt);
 
-    // ÏŞÖÆ·¿¼ä±ß½ç
+    // é™åˆ¶æˆ¿é—´è¾¹ç•Œ
     if (_hasRoomBounds)
     {
         Vec2 pos = this->getPosition();
@@ -197,10 +197,10 @@ void Du::update(float dt)
         this->setPosition(pos);
     }
 
-    // Èç¹û´¦ÓÚ·¢ÉäµÈ´ıÖĞÔòÍ£Ö¹Ò»ÇĞÒÆ¶¯ĞĞÎª£¨Íâ²¿ move ²»Ó¦ÉúĞ§£©
+    // å¦‚æœå¤„äºå‘å°„ç­‰å¾…ä¸­åˆ™åœæ­¢ä¸€åˆ‡ç§»åŠ¨è¡Œä¸ºï¼ˆå¤–éƒ¨ move ä¸åº”ç”Ÿæ•ˆï¼‰
     if (_isFiring)
     {
-        // È·±£ÒÆ¶¯¶¯»­Í£Ö¹
+        // ç¡®ä¿ç§»åŠ¨åŠ¨ç”»åœæ­¢
         if (_sprite)
         {
             auto moveAct = _sprite->getActionByTag(DU_MOVE_ACTION_TAG);
@@ -213,7 +213,7 @@ void Du::executeAI(Player* player, float dt)
 {
     if (!player || player->isDead() || _currentState == EntityState::DIE) return;
 
-    // ÈôÕıÔÚ·¢ÉäÔò²»×öÆäËûAI£¨±£³ÖÍ£×¡Ö±µ½×Óµ¯½â¾ö£©
+    // è‹¥æ­£åœ¨å‘å°„åˆ™ä¸åšå…¶ä»–AIï¼ˆä¿æŒåœä½ç›´åˆ°å­å¼¹è§£å†³ï¼‰
     if (_isFiring) return;
 
     if (isPlayerInSight(player))
@@ -227,7 +227,7 @@ void Du::executeAI(Player* player, float dt)
         }
         else
         {
-            // ×·»÷Íæ¼Ò£¨Ö»ÓĞ²»ÔÚ·¢ÉäÆÚ¼ä²Å»á×·£©
+            // è¿½å‡»ç©å®¶ï¼ˆåªæœ‰ä¸åœ¨å‘å°„æœŸé—´æ‰ä¼šè¿½ï¼‰
             chasePlayer(player, dt);
         }
     }
@@ -246,17 +246,17 @@ void Du::attack()
     setState(EntityState::ATTACK);
     resetAttackCooldown();
 
-    // Í£Ö¹ÒÆ¶¯Ñ­»·¶¯×÷£¨½öÍ£Ö¹ÒÆ¶¯ action£©
+    // åœæ­¢ç§»åŠ¨å¾ªç¯åŠ¨ä½œï¼ˆä»…åœæ­¢ç§»åŠ¨ actionï¼‰
     if (_sprite)
     {
         auto moveAct = _sprite->getActionByTag(DU_MOVE_ACTION_TAG);
         if (moveAct) _sprite->stopAction(moveAct);
     }
 
-    // ²¥·ÅÇ°Ò¡£¨ÈôÓĞ attack ¶¯»­£©
+    // æ’­æ”¾å‰æ‘‡ï¼ˆè‹¥æœ‰ attack åŠ¨ç”»ï¼‰
     if (_attackAnimation && _sprite)
     {
-        // Èç¹ûÖ®Ç°ÓĞÇ°Ò¡£¬ÏÈÍ£Ö¹£¬±£³ÖĞĞÎªÒ»ÖÂ
+        // å¦‚æœä¹‹å‰æœ‰å‰æ‘‡ï¼Œå…ˆåœæ­¢ï¼Œä¿æŒè¡Œä¸ºä¸€è‡´
         auto prevWind = _sprite->getActionByTag(DU_WINDUP_ACTION_TAG);
         if (prevWind) _sprite->stopAction(prevWind);
 
@@ -268,11 +268,11 @@ void Du::attack()
         float windup = this->getAttackWindup();
         Player* target = _attackTarget;
         auto delay = DelayTime::create(windup);
-        // ÔÚ windup Íê³ÉÊ±Êµ¼Ê·¢Éä×Óµ¯£¨²¢½øÈë·¢ÉäµÈ´ı×´Ì¬Ö±µ½×Óµ¯½áÊø£©
+        // åœ¨ windup å®Œæˆæ—¶å®é™…å‘å°„å­å¼¹ï¼ˆå¹¶è¿›å…¥å‘å°„ç­‰å¾…çŠ¶æ€ç›´åˆ°å­å¼¹ç»“æŸï¼‰
         auto callback = CallFunc::create([this, target]() {
             if (_currentState == EntityState::ATTACK)
             {
-                // ÃæÏòÄ¿±ê²¢·¢Éä
+                // é¢å‘ç›®æ ‡å¹¶å‘å°„
                 if (target && !target->isDead())
                 {
                     this->faceToPosition(target->getPosition());
@@ -280,7 +280,7 @@ void Du::attack()
                 }
                 else
                 {
-                    // Ä¿±ê¶ªÊ§Ôò»Ö¸´Îª¿ÕÏĞ
+                    // ç›®æ ‡ä¸¢å¤±åˆ™æ¢å¤ä¸ºç©ºé—²
                     if (this->_currentState == EntityState::ATTACK) setState(EntityState::IDLE);
                 }
             }
@@ -290,7 +290,7 @@ void Du::attack()
     }
     else
     {
-        // ÎŞ¶¯»­Ê±Ê¹ÓÃ windup ¶¨Ê±²¢·¢Éä
+        // æ— åŠ¨ç”»æ—¶ä½¿ç”¨ windup å®šæ—¶å¹¶å‘å°„
         float windup = this->getAttackWindup();
         Player* target = _attackTarget;
         auto delay = DelayTime::create(windup);
@@ -318,15 +318,15 @@ void Du::fireBullet(Player* target)
 {
     if (!target)
     {
-        // »Ö¸´×´Ì¬
+        // æ¢å¤çŠ¶æ€
         setState(EntityState::IDLE);
         return;
     }
 
-    // ±ê¼ÇÕıÔÚ·¢Éä£¨ÆÚ¼ä²»ÒÆ¶¯£©
+    // æ ‡è®°æ­£åœ¨å‘å°„ï¼ˆæœŸé—´ä¸ç§»åŠ¨ï¼‰
     _isFiring = true;
 
-    // Éú³É×Óµ¯ sprite£¨ÓÅÏÈÍ¼Æ¬ÎÄ¼ş£¬ÔÙ fallback SpriteFrameCache£©
+    // ç”Ÿæˆå­å¼¹ sprite
     Sprite* bulletSprite = nullptr;
     auto s = Sprite::create("Enemy/Du/Du_Bullet/Du_Bullet_0001.png");
     if (s) bulletSprite = s;
@@ -343,13 +343,13 @@ void Du::fireBullet(Player* target)
     }
     else
     {
-        // ¶µµ×£º´´½¨Ò»¸öĞ¡Ô²ĞÎ DrawNode ±íÊ¾×Óµ¯£¨²»Ó¦·¢Éú£©
+        // å…œåº•ï¼šåˆ›å»ºä¸€ä¸ªå°åœ†å½¢ DrawNode è¡¨ç¤ºå­å¼¹ï¼ˆä¸åº”å‘ç”Ÿï¼‰
         auto dn = DrawNode::create();
         dn->drawSolidCircle(Vec2::ZERO, 6.0f, 0, 16, Color4F(1,0,0,1));
         bulletNode = dn;
     }
 
-    // Ìí¼Óµ½Óë½ÇÉ«ÏàÍ¬µÄ¸¸½Úµã£¨Í¨³£Îª gameLayer£©
+    // æ·»åŠ åˆ°ä¸è§’è‰²ç›¸åŒçš„çˆ¶èŠ‚ç‚¹ï¼ˆé€šå¸¸ä¸º gameLayerï¼‰
     Node* parent = this->getParent();
     if (parent)
     {
@@ -365,7 +365,7 @@ void Du::fireBullet(Player* target)
 
     _currentBullet = bulletNode;
 
-    // ²¥·Å×Óµ¯·ÉĞĞ¶¯»­£¨Ñ­»·£©£¬½öµ±ÊÇ Sprite Ê±
+    // æ’­æ”¾å­å¼¹é£è¡ŒåŠ¨ç”»ï¼ˆå¾ªç¯ï¼‰ï¼Œä»…å½“æ˜¯ Sprite æ—¶
     if (_bulletAnimation && bulletSprite)
     {
         auto animate = Animate::create(_bulletAnimation);
@@ -373,29 +373,29 @@ void Du::fireBullet(Player* target)
         bulletSprite->runAction(loop);
     }
 
-    // Ä¿±êµ±Ç°Î»ÖÃ£¨·¢ÉäÊ±Ëø¶¨£©
+    // ç›®æ ‡å½“å‰ä½ç½®ï¼ˆå‘å°„æ—¶é”å®šï¼‰
     Vec2 targetPos = target->getPosition();
     Vec2 startPos = bulletNode->getPosition();
     Vec2 dir = targetPos - startPos;
     if (dir.lengthSquared() > 0.0001f)
     {
         float angle = CC_RADIANS_TO_DEGREES(atan2(dir.y, dir.x));
-        // Cocos µÄ setRotation ÒÔÄæÊ±ÕëÎªÕı£¬µ÷Õû·ûºÅÒÔÊ¹³¯ÏòÕıÈ·
+        // Cocos çš„ setRotation ä»¥é€†æ—¶é’ˆä¸ºæ­£ï¼Œè°ƒæ•´ç¬¦å·ä»¥ä½¿æœå‘æ­£ç¡®
         bulletNode->setRotation(-angle);
     }
 
-    // ÉèÖÃ²ã¼¶£¨ÓëÆäËûÍ¶ÉäÎïÒ»ÖÂ£©
+    // è®¾ç½®å±‚çº§ï¼ˆä¸å…¶ä»–æŠ•å°„ç‰©ä¸€è‡´ï¼‰
     if (auto spr = dynamic_cast<Sprite*>(bulletNode))
     {
         spr->setGlobalZOrder(Constants::ZOrder::PROJECTILE);
     }
 
-    // Æô¶¯Ã¿Ö¡¼ì²â£¬´¦ÀíÃüÖĞÍæ¼Ò / Åö×²±ß½ç / ÕÏ°­£¨¸ÄÎª¸üÎÈ½¡µÄÊÀ½ç×ø±ê¾àÀë¼ì²â£¬±ÜÃâ´©Ç½»òÎŞ·¨ÃüÖĞ£©
+    // å¯åŠ¨æ¯å¸§æ£€æµ‹ï¼Œå¤„ç†å‘½ä¸­ç©å®¶ / ç¢°æ’è¾¹ç•Œ / éšœç¢ï¼ˆæ”¹ä¸ºæ›´ç¨³å¥çš„ä¸–ç•Œåæ ‡è·ç¦»æ£€æµ‹ï¼Œé¿å…ç©¿å¢™æˆ–æ— æ³•å‘½ä¸­ï¼‰
     bulletNode->schedule([this, bulletNode, targetPos](float dt) {
-        // Èô bullet ÒÑÒÆ³ı£¬ÖĞÖ¹
+        // è‹¥ bullet å·²ç§»é™¤ï¼Œä¸­æ­¢
         if (!bulletNode->getParent()) return;
 
-        // »ñÈ¡ÔËĞĞ³¡¾°Óë GameScene¡¢Íæ¼ÒÒıÓÃ
+        // è·å–è¿è¡Œåœºæ™¯ä¸ GameSceneã€ç©å®¶å¼•ç”¨
         Scene* running = Director::getInstance()->getRunningScene();
         GameScene* gs = nullptr;
         if (running)
@@ -412,14 +412,14 @@ void Du::fireBullet(Player* target)
         }
         Player* player = gs ? gs->getPlayer() : nullptr;
 
-        // ¼ÆËã×Óµ¯ÊÀ½ç×ø±ê
+        // è®¡ç®—å­å¼¹ä¸–ç•Œåæ ‡
         Vec2 bulletWorldPos;
         if (bulletNode->getParent())
             bulletWorldPos = bulletNode->getParent()->convertToWorldSpace(bulletNode->getPosition());
         else
             bulletWorldPos = bulletNode->getPosition();
 
-        // 1) ¼ì²âÓëÍæ¼ÒµÄÅö×²£¨Ê¹ÓÃÊÀ½ç×ø±ê°ë¾¶¼ì²â£¬¼æÈİ²»Í¬¸¸½Úµã£©
+        // 1) æ£€æµ‹ä¸ç©å®¶çš„ç¢°æ’ï¼ˆä½¿ç”¨ä¸–ç•Œåæ ‡åŠå¾„æ£€æµ‹ï¼Œå…¼å®¹ä¸åŒçˆ¶èŠ‚ç‚¹ï¼‰
         if (player && !player->isDead())
         {
             Vec2 playerWorldPos;
@@ -428,7 +428,7 @@ void Du::fireBullet(Player* target)
             else
                 playerWorldPos = player->getPosition();
 
-            // ÒÔÁ½¸ö°üÎ§ºĞµÄ°ë¾¶×÷ÎªÅö×²°ë¾¶
+            // ä»¥ä¸¤ä¸ªåŒ…å›´ç›’çš„åŠå¾„ä½œä¸ºç¢°æ’åŠå¾„
             float bulletRadius = 10.0f;
             Rect bb = bulletNode->getBoundingBox();
             if (bb.size.width > 0.0f) bulletRadius = std::max(6.0f, std::min(bb.size.width, bb.size.height) * 0.5f);
@@ -443,25 +443,25 @@ void Du::fireBullet(Player* target)
             float distToPlayer = bulletWorldPos.distance(playerWorldPos);
             if (distToPlayer <= (bulletRadius + playerRadius))
             {
-                // ÃüÖĞÔì³É´óÁ¿ÉËº¦£¨Ê¹ÓÃ Du µÄ¹¥»÷Á¦£©
+                // å‘½ä¸­é€ æˆå¤§é‡ä¼¤å®³ï¼ˆä½¿ç”¨ Du çš„æ”»å‡»åŠ›ï¼‰
                 int dmg = this->getAttack();
                 player->takeDamage(dmg);
                 FloatingText::show(bulletNode->getParent(), player->getPosition(), std::to_string(dmg), Color3B(220,20,20));
                 GAME_LOG("Du bullet hits player for %d damage!", dmg);
 
-                // ÒÆ³ı×Óµ¯K½áÊø·¢ÉäµÈ´ı
+                // ç§»é™¤å­å¼¹ä¸¦ç»“æŸå‘å°„ç­‰å¾…
                 bulletNode->unschedule(DU_BULLET_SCHEDULE_KEY);
                 if (bulletNode->getParent()) bulletNode->removeFromParent();
 
                 this->_currentBullet = nullptr;
                 this->_isFiring = false;
-                // »Ö¸´¹¥»÷×´Ì¬Îª¿ÕÏĞ
+                // æ¢å¤æ”»å‡»çŠ¶æ€ä¸ºç©ºé—²
                 if (this->_currentState == EntityState::ATTACK) setState(EntityState::IDLE);
                 return;
             }
         }
 
-        // 2) ¼ì²â·¿¼ä±ß½ç£¨ÈôÉèÖÃÁË·¿¼ä±ß½ç£¬×Óµ¯³ö½çÔòÏûÊ§£©
+        // 2) æ£€æµ‹æˆ¿é—´è¾¹ç•Œï¼ˆè‹¥è®¾ç½®äº†æˆ¿é—´è¾¹ç•Œï¼Œå­å¼¹å‡ºç•Œåˆ™æ¶ˆå¤±ï¼‰
         if (_hasRoomBounds)
         {
             Vec2 bpos;
@@ -482,20 +482,20 @@ void Du::fireBullet(Player* target)
             }
         }
 
-        // 3) ¼ì²âÓëÕÏ°­£¨tag == Constants::Tag::WALL£©Åö×²
-        // ¸üÈ«ÃæµØ±éÀú×Ó½Úµã£¨¿¼ÂÇ·¿¼ä²ã´Î½á¹¹£ºroom -> barrier sprite£©
+        // 3) æ£€æµ‹ä¸éšœç¢ç¢°æ’
+        // æ›´å…¨é¢åœ°éå†å­èŠ‚ç‚¹ï¼ˆè€ƒè™‘æˆ¿é—´å±‚æ¬¡ç»“æ„ï¼šroom -> barrier spriteï¼‰
         Node* p = bulletNode->getParent();
         if (p)
         {
-            // Åö×²¼ì²â°ë¾¶£ºÊ¹ÓÃµØ×©´óĞ¡Îª»ù×¼
+            // ç¢°æ’æ£€æµ‹åŠå¾„ï¼šä½¿ç”¨åœ°ç –å¤§å°ä¸ºåŸºå‡†
             float wallCollisionRadius = Constants::FLOOR_TILE_SIZE * 0.9f;
 
-            // ±éÀúµÚÒ»²ã×Ó½Úµã£¨Í¨³£ room ½ÚµãÔÚ gameLayer ÏÂ£©
+            // éå†ç¬¬ä¸€å±‚å­èŠ‚ç‚¹ï¼ˆé€šå¸¸ room èŠ‚ç‚¹åœ¨ gameLayer ä¸‹ï¼‰
             for (auto child : p->getChildren())
             {
                 if (!child) continue;
 
-                // Ö±½Ó×Ó½ÚµãÎªÇ½£¨ÓĞÊ±ÕÏ°­Ö±½Ó¹ÒÔÚ gameLayer£©
+                // ç›´æ¥å­èŠ‚ç‚¹ä¸ºå¢™ï¼ˆæœ‰æ—¶éšœç¢ç›´æ¥æŒ‚åœ¨ gameLayerï¼‰
                 if (child->getTag() == Constants::Tag::WALL)
                 {
                     Vec2 wallWorldPos = child->getParent()->convertToWorldSpace(child->getPosition());
@@ -511,7 +511,7 @@ void Du::fireBullet(Player* target)
                     }
                 }
 
-                // ¼ì²é child µÄ×Ó½Úµã£¨ÀıÈç room ÏÂµÄ barrier sprite£©
+                // æ£€æŸ¥ child çš„å­èŠ‚ç‚¹ï¼ˆä¾‹å¦‚ room ä¸‹çš„ barrier spriteï¼‰
                 for (auto subChild : child->getChildren())
                 {
                     if (!subChild) continue;
@@ -531,7 +531,7 @@ void Du::fireBullet(Player* target)
                         }
                     }
 
-                    // ÔÙÍùÉîÒ»²ã¼ì²é£¨ÉÙÊı²ã¼¶ÓĞÈı²ã£©
+                    // å†å¾€æ·±ä¸€å±‚æ£€æŸ¥ï¼ˆå°‘æ•°å±‚çº§æœ‰ä¸‰å±‚ï¼‰
                     for (auto deepChild : subChild->getChildren())
                     {
                         if (!deepChild) continue;
@@ -554,18 +554,18 @@ void Du::fireBullet(Player* target)
             }
         }
 
-        // ÆäËûÂß¼­¿É¼ÓÈë£¨ÀıÈç´©Í¸¡¢·´µ¯µÈ£©
+        // å…¶ä»–é€»è¾‘å¯åŠ å…¥ï¼ˆä¾‹å¦‚ç©¿é€ã€åå¼¹ç­‰ï¼‰
 
     }, DU_BULLET_SCHEDULE_KEY);
 
-    // ×Óµ¯ÒÆ¶¯¶¯×÷£¨°´ËÙ¶È¼ÆËã·ÉĞĞÊ±¼ä£¬Èô DU_BULLET_SPEED <= 0 Ôò»ØÍËµ½¹Ì¶¨Ê±¼ä£©
+    // å­å¼¹ç§»åŠ¨åŠ¨ä½œï¼ˆæŒ‰é€Ÿåº¦è®¡ç®—é£è¡Œæ—¶é—´ï¼Œè‹¥ DU_BULLET_SPEED <= 0 åˆ™å›é€€åˆ°å›ºå®šæ—¶é—´ï¼‰
     float distance = startPos.distance(targetPos);
     float duration = (DU_BULLET_SPEED > 0.0f) ? (distance / DU_BULLET_SPEED) : DU_BULLET_FLIGHT_TIME;
-    // ÏŞÖÆ×îĞ¡/×î´óÊ±³¤£¬±ÜÃâ¼«¶ËÖµ
+    // é™åˆ¶æœ€å°/æœ€å¤§æ—¶é•¿ï¼Œé¿å…æç«¯å€¼
     duration = std::max(0.05f, std::min(duration, 10.0f));
     auto moveTo = MoveTo::create(duration, targetPos);
     auto remove = CallFunc::create([this, bulletNode]() {
-        // ·ÉĞĞÊ±¼ä½áÊø -> ÒÆ³ı×Óµ¯£¨ÈôÈÔ´æÔÚ£©£¬½áÊø·¢Éä×´Ì¬
+        // é£è¡Œæ—¶é—´ç»“æŸ -> ç§»é™¤å­å¼¹ï¼ˆè‹¥ä»å­˜åœ¨ï¼‰ï¼Œç»“æŸå‘å°„çŠ¶æ€
         bulletNode->unschedule(DU_BULLET_SCHEDULE_KEY);
         if (bulletNode->getParent()) bulletNode->removeFromParent();
         this->_currentBullet = nullptr;
@@ -580,7 +580,7 @@ void Du::playAttackAnimation()
 {
     if (_attackAnimation && _sprite)
     {
-        // Í£Ö¹ÒÆ¶¯Ñ­»·¶¯×÷£¨½öÒÆ¶¯£¬²»Ó°ÏìÆäËû¶¯»­£©
+        // åœæ­¢ç§»åŠ¨å¾ªç¯åŠ¨ä½œï¼ˆä»…ç§»åŠ¨ï¼Œä¸å½±å“å…¶ä»–åŠ¨ç”»ï¼‰
         auto moveAct = _sprite->getActionByTag(DU_MOVE_ACTION_TAG);
         if (moveAct) _sprite->stopAction(moveAct);
 
@@ -593,20 +593,20 @@ void Du::playAttackAnimation()
 
 void Du::die()
 {
-    // ÏÈµ÷ÓÃ»ùÀàÂß¼­£¨´¦ÀíºìÉ«±ê¼Ç / KongKaZi µÈ£©
+    // å…ˆè°ƒç”¨åŸºç±»é€»è¾‘ï¼ˆå¤„ç†çº¢è‰²æ ‡è®° / KongKaZi ç­‰ï¼‰
     Enemy::die();
 
-    // ·ÀÖØÈë
+    // é˜²é‡å…¥
     if (_currentState == EntityState::DIE && !_isAlive) return;
     setState(EntityState::DIE);
     _isAlive = false;
 
-    // Í£Ö¹¶¯×÷²¢²¥·ÅËÀÍö¶¯»­
+    // åœæ­¢åŠ¨ä½œå¹¶æ’­æ”¾æ­»äº¡åŠ¨ç”»
     this->stopAllActions();
     if (_sprite) { _sprite->stopAllActions(); _sprite->setVisible(true); _sprite->setOpacity(255); }
 
     auto finalizeRemove = [this]() {
-        // Èç¹û»¹ÓĞÎ´¾ö×Óµ¯£¬ÒÆ³ı²¢ÇåÀí
+        // å¦‚æœè¿˜æœ‰æœªå†³å­å¼¹ï¼Œç§»é™¤å¹¶æ¸…ç†
         if (_currentBullet)
         {
             _currentBullet->unschedule(DU_BULLET_SCHEDULE_KEY);
@@ -629,23 +629,23 @@ void Du::die()
 }
 
 /**
- * ¸²Ğ´ÒÆ¶¯£ºµ±´¦ÓÚ ATTACK/·¢ÉäÖĞ»òËÀÍöÊ±½ûÖ¹ÒÆ¶¯£¬²¢¿ØÖÆÒÆ¶¯¶¯»­²¥·Å/Í£Ö¹¡£
- * ÊµÏÖ·ç¸ñÓë Ayao::move ±£³ÖÒ»ÖÂ£¬Í¬Ê±¿¼ÂÇ _isFiring£¨·¢ÉäÆÚ¼ä²»ÒÆ¶¯£©¡£
+ * è¦†å†™ç§»åŠ¨ï¼šå½“å¤„äº ATTACK/å‘å°„ä¸­æˆ–æ­»äº¡æ—¶ç¦æ­¢ç§»åŠ¨ï¼Œå¹¶æ§åˆ¶ç§»åŠ¨åŠ¨ç”»æ’­æ”¾/åœæ­¢ã€‚
+ * å®ç°é£æ ¼ä¸ Ayao::move ä¿æŒä¸€è‡´ï¼ŒåŒæ—¶è€ƒè™‘ _isFiringï¼ˆå‘å°„æœŸé—´ä¸ç§»åŠ¨ï¼‰ã€‚
  */
 void Du::move(const Vec2& direction, float dt)
 {
-    // ÔÚ¹¥»÷½×¶Î»ò·¢ÉäÆÚ¼ä½ûÖ¹ÒÆ¶¯£¨È·±£¹¥»÷Ç°Ò¡/×Óµ¯¹ı³Ì²»±»ÒÆ¶¯¸²¸Ç£©
+    // åœ¨æ”»å‡»é˜¶æ®µæˆ–å‘å°„æœŸé—´ç¦æ­¢ç§»åŠ¨ï¼ˆç¡®ä¿æ”»å‡»å‰æ‘‡/å­å¼¹è¿‡ç¨‹ä¸è¢«ç§»åŠ¨è¦†ç›–ï¼‰
     if (_currentState == EntityState::ATTACK || _currentState == EntityState::DIE || _isFiring)
     {
         Character::move(Vec2::ZERO, dt);
         return;
     }
 
-    // Ğ¡ãĞÖµÅĞ¶ÏÎª¡°²»ÒÆ¶¯¡±
+    // å°é˜ˆå€¼åˆ¤æ–­ä¸ºâ€œä¸ç§»åŠ¨â€
     const float STOP_THRESHOLD_SQ = 1.0f;
     if (direction.lengthSquared() <= STOP_THRESHOLD_SQ)
     {
-        // Í£Ö¹ÒÆ¶¯¶¯×÷£¨Èç¹û´æÔÚ£©
+        // åœæ­¢ç§»åŠ¨åŠ¨ä½œï¼ˆå¦‚æœå­˜åœ¨ï¼‰
         if (_sprite)
         {
             auto act = _sprite->getActionByTag(DU_MOVE_ACTION_TAG);
@@ -654,7 +654,7 @@ void Du::move(const Vec2& direction, float dt)
                 _sprite->stopAction(act);
             }
 
-            // »Ö¸´µ½ÒÆ¶¯¶¯»­µÄµÚÒ»Ö¡£¨Í¨³£ÎªÕ¾Á¢/´ı»ú×´Ì¬£©
+            // æ¢å¤åˆ°ç§»åŠ¨åŠ¨ç”»çš„ç¬¬ä¸€å¸§ï¼ˆé€šå¸¸ä¸ºç«™ç«‹/å¾…æœºçŠ¶æ€ï¼‰
             if (_moveAnimation)
             {
                 auto frames = _moveAnimation->getFrames();
@@ -669,21 +669,21 @@ void Du::move(const Vec2& direction, float dt)
             }
         }
 
-        // µ÷ÓÃ»ùÀàÒÆ¶¯ÒÔ±£³Ö×´Ì¬Ò»ÖÂ
+        // è°ƒç”¨åŸºç±»ç§»åŠ¨ä»¥ä¿æŒçŠ¶æ€ä¸€è‡´
         Character::move(Vec2::ZERO, dt);
         return;
     }
 
-    // ÓĞÒÆ¶¯ÏòÁ¿£ºÏÈµ÷ÓÃ»ùÀàÒÔÊµ¼ÊÒÆ¶¯ÊµÌå
+    // æœ‰ç§»åŠ¨å‘é‡ï¼šå…ˆè°ƒç”¨åŸºç±»ä»¥å®é™…ç§»åŠ¨å®ä½“
     Vec2 dirNorm = direction.getNormalized();
     Character::move(dirNorm, dt);
 
-    // ÉèÖÃ³¯Ïò£¨×óÓÒ£©£¬²¢È·±£ÒÆ¶¯¶¯»­ÔÚÑ­»·²¥·Å
+    // è®¾ç½®æœå‘ï¼ˆå·¦å³ï¼‰ï¼Œå¹¶ç¡®ä¿ç§»åŠ¨åŠ¨ç”»åœ¨å¾ªç¯æ’­æ”¾
     if (_sprite && _moveAnimation)
     {
         _sprite->setFlippedX(dirNorm.x < 0.0f);
 
-        // Èç¹ûÒÆ¶¯¶¯»­Î´ÔÚ²¥·Å£¬ÔòÆô¶¯Ñ­»·²¥·Å²¢´òÉÏ tag
+        // å¦‚æœç§»åŠ¨åŠ¨ç”»æœªåœ¨æ’­æ”¾ï¼Œåˆ™å¯åŠ¨å¾ªç¯æ’­æ”¾å¹¶æ‰“ä¸Š tag
         if (!_sprite->getActionByTag(DU_MOVE_ACTION_TAG))
         {
             auto animate = Animate::create(_moveAnimation);

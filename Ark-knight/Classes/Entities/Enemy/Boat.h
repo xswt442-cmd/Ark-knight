@@ -1,4 +1,4 @@
-#ifndef __BOAT_H__
+ï»¿#ifndef __BOAT_H__
 #define __BOAT_H__
 
 #include "Entities/Enemy/Enemy.h"
@@ -11,33 +11,33 @@ public:
     virtual bool init() override;
     virtual void update(float dt) override;
     
-    // ÖØĞ´ÒÆ¶¯£ºÓöµ½ÕÏ°­»òÅö×²·¿¼ä±ß½ç·´µ¯
+    // é‡å†™ç§»åŠ¨ï¼šé‡åˆ°éšœç¢æˆ–ç¢°æ’æˆ¿é—´è¾¹ç•Œåå¼¹
     virtual void move(const cocos2d::Vec2& direction, float dt) override;
 
     CREATE_FUNC(Boat);
 
-    // ÉèÖÃ·¿¼ä±ß½ç
+    // è®¾ç½®æˆ¿é—´è¾¹ç•Œ
     virtual void setRoomBounds(const cocos2d::Rect& bounds) override;
 
-    // ÍĞÉúÁ«×ù²»¼ÆÈë·¿¼äÇåÀí¼ÆÊı
+    // æ‰˜ç”Ÿè²åº§ä¸è®¡å…¥æˆ¿é—´æ¸…ç†è®¡æ•°
     virtual bool countsForRoomClear() const override { return false; }
 
-    // Ç¿ÖÆÏûÊ§£¨Boss×ª½×¶ÎÊ±µ÷ÓÃ£©
+    // å¼ºåˆ¶æ¶ˆå¤±ï¼ˆBossè½¬é˜¶æ®µæ—¶è°ƒç”¨ï¼‰
     void forceDissipate();
 
-    // ÖØĞ´ takeDamage ÒÔ·ÀÖ¹ÉÁË¸»ò»÷ÍË£¨Èç¹ûĞèÒª£©
+    // é‡å†™ takeDamage ä»¥é˜²æ­¢é—ªçƒæˆ–å‡»é€€ï¼ˆå¦‚æœéœ€è¦ï¼‰
     virtual void takeDamage(int damage) override;
 
-    // ËÀÍöÂß¼­
+    // æ­»äº¡é€»è¾‘
     virtual void die() override;
 
-    // ÉèÖÃËÀÍö»Øµ÷
+    // è®¾ç½®æ­»äº¡å›è°ƒ
     void setDeathCallback(const std::function<void()>& callback) { _deathCallback = callback; }
     
-    // ÉèÖÃÎüÊÕÉúÃüÉÏÏŞµÄ»Øµ÷£¨Í¨ÖªBoss£©
+    // è®¾ç½®å¸æ”¶ç”Ÿå‘½ä¸Šé™çš„å›è°ƒï¼ˆé€šçŸ¥Bossï¼‰
     void setAbsorbCallback(const std::function<void(int)>& callback) { _absorbCallback = callback; }
 
-    // ÎŞ·¨Éú³É¿Ö¿¨×È
+    // æ— æ³•ç”Ÿæˆæå¡å…¹
     virtual bool canSpawnKongKaZiOnDeath() const override { return false; }
 
 protected:
@@ -46,32 +46,32 @@ protected:
     void checkPlayerCollision();
     void updateFacing();
 
-    // ×´Ì¬
+    // çŠ¶æ€
     bool _isMoving;
-    float _idleTimer;      // ³õÊ¼·¢´ô¼ÆÊ±
-    float _lifeTimer;      // 30ÃëÉúÃüÖÜÆÚ¼ÆÊ±
-    int _collisionCount;   // Åö×²´ÎÊı
-    int _absorbedCount;    // ÎüÊÕ×Ü´ÎÊı
+    float _idleTimer;      // åˆå§‹å‘å‘†è®¡æ—¶
+    float _lifeTimer;      // 30ç§’ç”Ÿå‘½å‘¨æœŸè®¡æ—¶
+    int _collisionCount;   // ç¢°æ’æ¬¡æ•°
+    int _absorbedCount;    // å¸æ”¶æ€»æ¬¡æ•°
     
-    // Åö×²ÀäÈ´
+    // ç¢°æ’å†·å´
     float _collisionCooldown;
     
-    // ÒÆ¶¯·½Ïò¸Ä±ä¼ÆÊ±
+    // ç§»åŠ¨æ–¹å‘æ”¹å˜è®¡æ—¶
     float _moveChangeTimer;
     
     cocos2d::Rect _roomBounds;
     cocos2d::Vec2 _currentMoveDir;
 
-    // ¶¯»­
+    // åŠ¨ç”»
     cocos2d::Animation* _animIdle;
     cocos2d::Animation* _animMove;
     cocos2d::Animation* _animDie;
 
-    // »Øµ÷
+    // å›è°ƒ
     std::function<void()> _deathCallback;
     std::function<void(int)> _absorbCallback;
 
-    // ¶¯×÷Tag
+    // åŠ¨ä½œTag
     static const int BOAT_ACTION_TAG = 0xB0A7;
 };
 

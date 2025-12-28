@@ -1,4 +1,4 @@
-#include "Boat.h"
+ï»¿#include "Boat.h"
 #include "Entities/Player/Player.h"
 #include "Scenes/GameScene.h"
 #include "UI/FloatingText.h"
@@ -40,9 +40,9 @@ bool Boat::init()
     setMoveSpeed(150.0f);
     setAttack(0);
 
-    // Í¼²ãÉèÖÃ£¬ÔÚÕÏ°­ÉÏ·½
+    // å›¾å±‚è®¾ç½®ï¼Œåœ¨éšœç¢ä¸Šæ–¹
     this->setLocalZOrder(100); 
-    // ·Å´ó1.5±¶
+    // æ”¾å¤§1.5å€
     this->setScale(1.5f);
 
     loadAnimations();
@@ -112,7 +112,7 @@ void Boat::update(float dt)
         _collisionCooldown -= dt;
     }
 
-    // 3. ÍĞÉúÁ«×ùÒÆ¶¯30ÃëºóÏûÊ§
+    // 3. æ‰˜ç”Ÿè²åº§ç§»åŠ¨30ç§’åæ¶ˆå¤±
     if (_isMoving) {
         _lifeTimer += dt;
         if (_lifeTimer >= 30.0f) {
@@ -121,7 +121,7 @@ void Boat::update(float dt)
         }
     }
 
-    // 1. ³õÊ¼ Idle 5Ãë
+    // 1. åˆå§‹ Idle 5ç§’
     if (!_isMoving)
     {
         _idleTimer += dt;
@@ -142,10 +142,10 @@ void Boat::update(float dt)
         return;
     }
 
-    // 2. ÒÆ¶¯Âß¼­
+    // 2. ç§»åŠ¨é€»è¾‘
     if (_isMoving)
     {
-        // AI: ¶¨Ê±¸Ä±ä·½Ïò (²¼ÀÊÔË¶¯)
+        // AI: å®šæ—¶æ”¹å˜æ–¹å‘ (å¸ƒæœ—è¿åŠ¨)
         _moveChangeTimer -= dt;
         if (_moveChangeTimer <= 0.0f) {
             pickNewDirection();
@@ -153,13 +153,13 @@ void Boat::update(float dt)
 
         Vec2 nextPos = getPosition() + _currentMoveDir * getMoveSpeed() * dt;
         
-        // ±ß½çÏŞÖÆ (Clamp)
+        // è¾¹ç•Œé™åˆ¶ (Clamp)
         if (!_roomBounds.equals(Rect::ZERO))
         {
             if (nextPos.x < _roomBounds.getMinX() || nextPos.x > _roomBounds.getMaxX() ||
                 nextPos.y < _roomBounds.getMinY() || nextPos.y > _roomBounds.getMaxY())
             {
-                // ×²µ½±ß½ç£¬ÏŞÖÆÎ»ÖÃ²¢·´µ¯
+                // æ’åˆ°è¾¹ç•Œï¼Œé™åˆ¶ä½ç½®å¹¶åå¼¹
                 nextPos.x = std::max(_roomBounds.getMinX(), std::min(nextPos.x, _roomBounds.getMaxX()));
                 nextPos.y = std::max(_roomBounds.getMinY(), std::min(nextPos.y, _roomBounds.getMaxY()));
                 
@@ -171,13 +171,13 @@ void Boat::update(float dt)
         updateFacing();
     }
 
-    // 3. Åö×²¼ì²â
+    // 3. ç¢°æ’æ£€æµ‹
     checkPlayerCollision();
 }
 
 void Boat::move(const Vec2& direction, float dt)
 {
-    // Áô¿Õ£¬ÓÉ update ½Ó¹Ü
+    // ç•™ç©ºï¼Œç”± update æ¥ç®¡
 }
 
 void Boat::pickNewDirection()
@@ -199,7 +199,7 @@ void Boat::updateFacing()
 {
     if (!_sprite) return;
     
-    // ¸ù¾İË®Æ½·½Ïò·­×ª
+    // æ ¹æ®æ°´å¹³æ–¹å‘ç¿»è½¬
     if (_currentMoveDir.x > 0) {
         _sprite->setFlippedX(false);
     } else if (_currentMoveDir.x < 0) {
@@ -231,7 +231,7 @@ void Boat::checkPlayerCollision()
 
         int oldMax = player->getMaxHP();
         int newMax = std::max(1, oldMax - 500);
-        int absorbed = oldMax - newMax; // ¼ÆËãÊµ¼Ê¿Û³ıÁ¿
+        int absorbed = oldMax - newMax; // è®¡ç®—å®é™…æ‰£é™¤é‡
         player->setMaxHP(newMax);
         
         if (player->getHP() > newMax)
@@ -241,7 +241,7 @@ void Boat::checkPlayerCollision()
 
         FloatingText::show(player->getParent(), player->getPosition(), "-500 MaxHP", Color3B::MAGENTA);
 
-        // ±¨¸æ¸ø Boss
+        // æŠ¥å‘Šç»™ Boss
         if (_absorbCallback) {
             _absorbCallback(absorbed);
         }
@@ -251,7 +251,7 @@ void Boat::checkPlayerCollision()
             setMoveSpeed(getMoveSpeed() * 0.5f);
         }
 
-        // Åö×²ºóÒÆ¶¯Ò»´Î¾àÀë
+        // ç¢°æ’åç§»åŠ¨ä¸€æ¬¡è·ç¦»
         _currentMoveDir = -_currentMoveDir;
         setPosition(getPosition() + _currentMoveDir * 60.0f); 
         updateFacing();
@@ -272,7 +272,7 @@ void Boat::takeDamage(int damage)
     }
 }
 
-// ËÀÍöÂß¼­
+// æ­»äº¡é€»è¾‘
 void Boat::die()
 {
     if (_currentState == EntityState::DIE) return;
@@ -281,12 +281,12 @@ void Boat::die()
     _isMoving = false;
     stopAllActions();
     
-    // ²¥·ÅËÀÍö¶¯»­
+    // æ’­æ”¾æ­»äº¡åŠ¨ç”»
     if (_sprite && _animDie)
     {
         auto animate = Animate::create(_animDie);
         auto callback = CallFunc::create([this](){
-            // ¶¯»­½áÊøºó´¥·¢»Øµ÷Í¨Öª Boss
+            // åŠ¨ç”»ç»“æŸåè§¦å‘å›è°ƒé€šçŸ¥ Boss
             if (_deathCallback) _deathCallback();
             this->removeFromParentAndCleanup(true);
         });
@@ -294,7 +294,7 @@ void Boat::die()
     }
     else
     {
-        // ÎŞ¶¯»­Ö±½Ó´¦Àí
+        // æ— åŠ¨ç”»ç›´æ¥å¤„ç†
         if (_deathCallback) _deathCallback();
         this->removeFromParentAndCleanup(true);
     }
@@ -304,7 +304,7 @@ void Boat::forceDissipate()
 {
     if (_currentState == EntityState::DIE) return;
     
-    // Ç¿ÖÆÏûÊ§Ê±²»´¥·¢ËÀÍö»Øµ÷£¨±ÜÃâ Boss ÖØ¸´´¦Àí£©
+    // å¼ºåˆ¶æ¶ˆå¤±æ—¶ä¸è§¦å‘æ­»äº¡å›è°ƒï¼ˆé¿å… Boss é‡å¤å¤„ç†ï¼‰
     _deathCallback = nullptr;
     
     setState(EntityState::DIE);
