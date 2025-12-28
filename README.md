@@ -161,3 +161,7 @@ Windows 11操作系统，使用cocos2d-x-4.0引擎。
 | 刘礼嘉 | 美术资源，核心类中敌人类，核心类中角色类的完善，地图类的完善，音频管理器类等 | Player中Mage、Warrior、Gunner角色特色的完善，Enemy中Ayao、Boat、Cup、DeYi等10余种敌人设计，KuiLongBoss的多阶段战斗，BossFloor特殊层，SoundManager音频管理器， | 40% |
 
 通过合理的模块化分工和现代软件工程实践，项目实现了高质量的代码架构和丰富的游戏功能，为玩家提供了完整的Roguelike游戏体验。
+
+## 实机演示
+
+见具体文档。
