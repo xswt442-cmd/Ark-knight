@@ -19,18 +19,21 @@ void SoundManager::destroyInstance()
 {
     if (_instance != nullptr)
     {
-        // 1. 停止当前所有由 SoundManager 管理的音频（不直接 end AudioEngine）
-        // 停止 BGM
+        // 1. 先清除所有回调，避免回调访问已释放的内存
         if (_instance->_bgmAudioID != AudioEngine::INVALID_AUDIO_ID)
         {
+            // 清除回调后再停止
+            AudioEngine::setFinishCallback(_instance->_bgmAudioID, nullptr);
             AudioEngine::stop(_instance->_bgmAudioID);
             _instance->_bgmAudioID = AudioEngine::INVALID_AUDIO_ID;
         }
-        // 停止 SFX
-        std::vector<int> ids;
-        ids.reserve(_instance->_sfxMap.size());
-        for (auto &kv : _instance->_sfxMap) ids.push_back(kv.first);
-        for (int id : ids) AudioEngine::stop(id);
+        
+        // 停止 SFX 并清除回调
+        for (auto &kv : _instance->_sfxMap)
+        {
+            AudioEngine::setFinishCallback(kv.first, nullptr);
+            AudioEngine::stop(kv.first);
+        }
         _instance->_sfxMap.clear();
 
         // 注意：不要在这里调用 AudioEngine::end() —— AppDelegate 负责在程序退出时调用它。

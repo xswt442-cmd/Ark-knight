@@ -17,6 +17,7 @@
 #include "Entities/Objects/ItemDrop.h"
 #include "ui/CocosGUI.h"
 #include "audio/include/AudioEngine.h"
+#include "Managers/SoundManager.h"
 #include <algorithm>
 #include "Map/Room.h"
 
@@ -118,17 +119,16 @@ bool GameScene::init()
     scheduleUpdate();
     
     // 播放战斗音乐
-    AudioEngine::stopAll();
     if (_currentStage == 0)
     {
         // Boss战斗音乐
-        AudioEngine::play2d("Music/Boss_Battle.mp3", true);
+        SoundManager::getInstance()->playBGM("Music/Boss_Battle.mp3", true);
         GAME_LOG("Playing Boss battle music");
     }
     else
     {
         // 普通战斗音乐
-        AudioEngine::play2d("Music/Game_Battle.mp3", true);
+        SoundManager::getInstance()->playBGM("Music/Game_Battle.mp3", true);
         GAME_LOG("Playing normal battle music");
     }
     

@@ -1,5 +1,9 @@
 ﻿#include "GameMenus.h"
 #include "Scenes/MainMenuScene.h"
+#include "audio/include/AudioEngine.h"
+#include "Managers/SoundManager.h"
+
+USING_NS_CC;
 
 GameMenus* GameMenus::create()
 {
@@ -126,6 +130,15 @@ void GameMenus::showPauseMenu()
     _exitBtn->setPosition(Vec2(SCREEN_CENTER.x, SCREEN_CENTER.y - 150));
     _exitBtn->setGlobalZOrder(Constants::ZOrder::UI_GLOBAL + 1);
     _exitBtn->addClickEventListener([](Ref* sender) {
+        // 先销毁SoundManager（会清除所有音频回调）
+        SoundManager::destroyInstance();
+        // 停止所有剩余音频
+        AudioEngine::stopAll();
+        // 清除所有音频缓存和回调
+        AudioEngine::uncacheAll();
+        // 完全关闭AudioEngine，避免退出时的回调问题
+        AudioEngine::end();
+        // 退出游戏
         Director::getInstance()->end();
     });
     this->addChild(_exitBtn);

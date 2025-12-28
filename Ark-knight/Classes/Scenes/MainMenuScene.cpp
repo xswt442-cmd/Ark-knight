@@ -3,6 +3,7 @@
 #include "UI/CharacterSelectLayer.h"
 #include "ui/CocosGUI.h"
 #include "audio/include/AudioEngine.h"
+#include "Managers/SoundManager.h"
 
 USING_NS_CC;
 using namespace ui;
@@ -23,8 +24,7 @@ bool MainMenuScene::init()
     createUI();
     
     // 播放主菜单背景音乐
-    AudioEngine::stopAll();
-    AudioEngine::play2d("Music/Menu.mp3", true);
+    SoundManager::getInstance()->playBGM("Music/Menu.mp3", true);
     
     GAME_LOG("MainMenuScene initialized");
     
@@ -173,6 +173,18 @@ void MainMenuScene::onSettings(Ref* sender)
 void MainMenuScene::onExit(Ref* sender)
 {
     GAME_LOG("Exit clicked");
+    
+    // 先销毁SoundManager（会清除所有音频回调）
+    SoundManager::destroyInstance();
+    
+    // 停止所有剩余音频
+    AudioEngine::stopAll();
+    
+    // 清除所有音频缓存和回调
+    AudioEngine::uncacheAll();
+    
+    // 完全关闭AudioEngine，避免退出时的回调问题
+    AudioEngine::end();
     
     // 退出游戏
     Director::getInstance()->end();

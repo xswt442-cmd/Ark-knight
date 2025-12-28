@@ -4,6 +4,7 @@
 #include "Map/Hallway.h"
 #include "UI/FloatingText.h"
 #include "audio/include/AudioEngine.h"
+#include "Managers/SoundManager.h"
 
 Gunner::Gunner()
     : _isEnhanced(false)
@@ -338,11 +339,11 @@ void Gunner::attack()
     // 播放攻击音效
     if (_isEnhanced)
     {
-        AudioEngine::play2d("SoundEffect/Wisdael_Skill_Attack-1.wav");
+        SoundManager::getInstance()->playSFX("SoundEffect/Wisdael_Skill_Attack-1.wav");
     }
     else
     {
-        AudioEngine::play2d("SoundEffect/Wisdael_Attack-1.wav");
+        SoundManager::getInstance()->playSFX("SoundEffect/Wisdael_Attack-1.wav");
     }
     
     // 40% 概率触发被动：5连发
