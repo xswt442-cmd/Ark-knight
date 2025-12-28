@@ -195,8 +195,6 @@ void GameScene::initCamera()
 {
     // 不创建自定义相机，使用默认相机
     // 通过移动游戏层来实现相机跟随效果
-    _camera = nullptr;
-    
     GAME_LOG("Camera system initialized (using default camera with layer movement)");
 }
 
@@ -817,10 +815,11 @@ void GameScene::updateInteraction(float dt)
     if (canInteractPortal)
     {
         Portal* portal = _currentRoom->getPortal();
-        if (portal)
+        if (portal && portal->getSprite())
         {
+            auto sprite = portal->getSprite();
             Vec2 portalWorldPos = portal->getParent()->convertToWorldSpace(portal->getPosition());
-            float portalHeight = portal->getContentSize().height * portal->getScale();
+            float portalHeight = sprite->getContentSize().height * sprite->getScale();
             _gameHUD->showInteractionHint(u8"[E] 进入传送门", portalWorldPos, portalHeight * 0.6f);
             return;
         }

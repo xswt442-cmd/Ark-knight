@@ -15,7 +15,6 @@
 #include "UI/GameHUD.h"
 #include "UI/GameMenus.h"
 #include "Map/Barriers.h"
-#include "Entities/Objects/Item.h"
 
 USING_NS_CC;
 
@@ -129,9 +128,6 @@ private:
     MapGenerator* _mapGenerator;
     MiniMap* _miniMap;
     Room* _currentRoom;
-    
-    // 相机系统
-    Camera* _camera;
     
     // HUD和菜单系统
     GameHUD* _gameHUD;
