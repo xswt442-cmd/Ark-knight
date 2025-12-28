@@ -1,16 +1,16 @@
-#ifndef __XINXING_H__
+ï»¿#ifndef __XINXING_H__
 #define __XINXING_H__
 
 #include "Enemy.h"
 #include "cocos2d.h"
 
 /**
- * ĞÂíÊ£¨XinXing£©
- * - µØÃæ½üÕ½¾«Ó¢£¨MELEE£©
- * - ·¢ÏÖÍæ¼Òºó×·»÷²¢½üÉí¹¥»÷£¨¸ß¹¥ËÙ¡¢¸ßÉËº¦£©
- * - ËÀÍöºóÉú³É 3 ¸ö IronLance
- * - ¾«ÁéÓëÅö×²Ìå·Å´ó 2 ±¶
- * - ×ñÊØ·¿¼ä±ß½ç
+ * æ–°ç¡ï¼ˆXinXingï¼‰
+ * - åœ°é¢è¿‘æˆ˜ç²¾è‹±ï¼ˆMELEEï¼‰
+ * - å‘ç°ç©å®¶åè¿½å‡»å¹¶è¿‘èº«æ”»å‡»ï¼ˆé«˜æ”»é€Ÿã€é«˜ä¼¤å®³ï¼‰
+ * - æ­»äº¡åç”Ÿæˆ 3 ä¸ª IronLance
+ * - ç²¾çµä¸ç¢°æ’ä½“æ”¾å¤§ 2 å€
+ * - éµå®ˆæˆ¿é—´è¾¹ç•Œ
  */
 class XinXing : public Enemy {
 public:
@@ -22,22 +22,22 @@ public:
 
     CREATE_FUNC(XinXing);
 
-    // AI ĞĞÎª£¨¸²¸Ç»ùÀà£©
+    // AI è¡Œä¸ºï¼ˆè¦†ç›–åŸºç±»ï¼‰
     virtual void executeAI(Player* player, float dt) override;
 
-    // ¶¯»­ÓëÊôĞÔ
+    // åŠ¨ç”»ä¸å±æ€§
     void setupAttributes();
     void loadAnimations();
 
-    // ¸²Ğ´ĞĞÎª
+    // è¦†å†™è¡Œä¸º
     virtual void attack() override;
     virtual void playAttackAnimation() override;
     virtual void die() override;
 
-    // ·¿¼ä±ß½ç
+    // æˆ¿é—´è¾¹ç•Œ
     virtual void setRoomBounds(const cocos2d::Rect& bounds) override { _roomBounds = bounds; _hasRoomBounds = true; }
 
-    // ¿ØÖÆÒÆ¶¯¶¯»­Óë³¯Ïò
+    // æ§åˆ¶ç§»åŠ¨åŠ¨ç”»ä¸æœå‘
     virtual void move(const cocos2d::Vec2& direction, float dt) override;
 
 protected:

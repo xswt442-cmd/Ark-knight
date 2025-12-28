@@ -1,13 +1,13 @@
-#ifndef __KUILONGBOSS_H__
+ï»¿#ifndef __KUILONGBOSS_H__
 #define __KUILONGBOSS_H__
 
 #include "Enemy.h"
 #include "cocos2d.h"
 #include "ui/CocosGUI.h"
 
-class NiLuFire; // Ç°ÏòÉùÃ÷
-class Boat;     // Ç°ÏòÉùÃ÷
-class Room;     // Ç°ÏòÉùÃ÷
+class NiLuFire; // å‰å‘å£°æ˜
+class Boat;     // å‰å‘å£°æ˜
+class Room;     // å‰å‘å£°æ˜
 
 class KuiLongBoss : public Enemy {
 public:
@@ -19,15 +19,15 @@ public:
 
     CREATE_FUNC(KuiLongBoss);
 
-    // AI ĞĞÎª
+    // AI è¡Œä¸º
     virtual void executeAI(Player* player, float dt) override;
     virtual void attack() override;
     virtual void playAttackAnimation() override;
 
-    // ÖØĞ´ÒÆ¶¯ÒÔ¿ØÖÆÒÆ¶¯¶¯»­
+    // é‡å†™ç§»åŠ¨ä»¥æ§åˆ¶ç§»åŠ¨åŠ¨ç”»
     virtual void move(const cocos2d::Vec2& direction, float dt) override;
 
-    // ÉËº¦´¦Àí
+    // ä¼¤å®³å¤„ç†
     virtual void takeDamage(int damage) override;
     virtual int takeDamageReported(int damage) override;
     virtual void die() override;
@@ -36,27 +36,27 @@ public:
     virtual bool isPoisonable() const override;
     virtual void setRoomBounds(const cocos2d::Rect& bounds) override;
     
-    // ÉèÖÃÈı½×¶Î·¿¼ä£¨ÓÉGameSceneÔÚÉú³ÉBossÊ±´«Èë£©
+    // è®¾ç½®ä¸‰é˜¶æ®µæˆ¿é—´ï¼ˆç”±GameSceneåœ¨ç”ŸæˆBossæ—¶ä¼ å…¥ï¼‰
     void setPhase3Room(Room* room) { _phase3Room = room; }
 
-    // ¹© Boat ËÀÍöÊ±µ÷ÓÃ
+    // ä¾› Boat æ­»äº¡æ—¶è°ƒç”¨
     void endChengSanShen();
     
-    // ¹© Boat ÎüÊÕÍæ¼ÒÑªÁ¿Ê±µ÷ÓÃ
+    // ä¾› Boat å¸æ”¶ç©å®¶è¡€é‡æ—¶è°ƒç”¨
     void reportBoatAbsorb(int amount);
 
 protected:
     void loadAnimations();
     cocos2d::Animation* loadAnimationFrames(const std::string& folder, const std::string& prefix, int maxFrames, float delayPerUnit);
 
-    // ========== ½×¶Î¶¨Òå ==========
+    // é˜¶æ®µå®šä¹‰
     enum Phase {
         PHASE_A,
         TRANSITION_A_TO_B,
         PHASE_B,
         TRANSITION_B_TO_C,
-        PHASE_C_IDLE, // ĞÂÔö£ºÈı½×¶Î³õÊ¼·¢´ô
-        PHASE_C,      // Èı½×¶ÎÕı³£Õ½¶·
+        PHASE_C_IDLE, // æ–°å¢ï¼šä¸‰é˜¶æ®µåˆå§‹å‘å‘†
+        PHASE_C,      // ä¸‰é˜¶æ®µæ­£å¸¸æˆ˜æ–—
         SKILL_CHENG_SAN_SHEN
     };
 
@@ -64,11 +64,11 @@ protected:
     float _phaseTimer;
     float _phaseADuration;
     
-    // ĞÂÔö£ºÈı½×¶Î·¢´ô¼ÆÊ±
+    // ä¸‰é˜¶æ®µå‘å‘†è®¡æ—¶
     float _phaseCIdleTimer;
     float _phaseCIdleDuration;
 
-    // ========== ÕÙ»½Óë»úÖÆ ==========
+    // å¬å”¤ä¸æœºåˆ¶
     bool _threshold75Triggered;
     bool _threshold50Triggered;
     bool _threshold25Triggered;
@@ -78,25 +78,25 @@ protected:
     bool _chengSanShenEnding; 
     Boat* _summonedBoat;
 
-    // 2.3: ¶ş½×¶ÎÕÙ»½Ïà¹Ø
+    // 2.3: äºŒé˜¶æ®µå¬å”¤ç›¸å…³
     float _phaseBSummonTimer;
     float _phaseBSummonInterval;
-    int _escalationLevel; // ¼ÇÂ¼³ĞÈıÉí´¥·¢´ÎÊı
-    int _phaseBSummonCount; // ¼ÇÂ¼¶ş½×¶Î¶¨ÆÚÕÙ»½´ÎÊı
-    int _totalBoatAbsorbed; // ¼ÇÂ¼ËùÓĞ Boat ÎüÊÕµÄÍæ¼ÒÉúÃüÉÏÏŞ
+    int _escalationLevel; // è®°å½•æ‰¿ä¸‰èº«è§¦å‘æ¬¡æ•°
+    int _phaseBSummonCount; // è®°å½•äºŒé˜¶æ®µå®šæœŸå¬å”¤æ¬¡æ•°
+    int _totalBoatAbsorbed; // è®°å½•æ‰€æœ‰ Boat å¸æ”¶çš„ç©å®¶ç”Ÿå‘½ä¸Šé™
 
     void checkChengSanShenTrigger();
     void startChengSanShen();
     void updateChengSanShen(float dt);
     
-    // ĞÂÔö¸¨Öúº¯Êı
+    // æ–°å¢è¾…åŠ©å‡½æ•°
     void spawnPhaseBMinions(bool isPeriodic);
     void spawnChengSanShenMinions();
     void spawnEnemyHelper(const std::string& type, int count, float radius);
-    void startTransitionBToC(); // ¿ªÊ¼¶ş×ªÈıÁ÷³Ì
-    void forceKillAllAndTransition(); // 2.4: Ç¿ÖÆ»÷É±²¢×ª½×¶Î
+    void startTransitionBToC(); // å¼€å§‹äºŒè½¬ä¸‰æµç¨‹
+    void forceKillAllAndTransition(); // 2.4: å¼ºåˆ¶å‡»æ€å¹¶è½¬é˜¶æ®µ
 
-    // ========== ¶¯»­×ÊÔ´ ==========
+    // åŠ¨ç”»èµ„æº
     cocos2d::Animation* _animAIdle;
     cocos2d::Animation* _animAChangeToB;
     cocos2d::Animation* _animBMove;
@@ -108,9 +108,9 @@ protected:
     cocos2d::Animation* _animCSS_Idle;
     cocos2d::Animation* _animCSS_End;
     
-    cocos2d::Animation* _animCDie; // Èı½×¶ÎËÀÍö¶¯»­
+    cocos2d::Animation* _animCDie; // ä¸‰é˜¶æ®µæ­»äº¡åŠ¨ç”»
 
-    // ========== ¶¯×÷ Tag ==========
+    // åŠ¨ä½œ Tag
     static const int KUI_LONG_MOVE_TAG = 0x7F01;
     static const int KUI_LONG_WINDUP_TAG = 0x7F02;
     static const int KUI_LONG_HIT_TAG = 0x7F03;
@@ -122,12 +122,12 @@ protected:
 
     bool _moveAnimPlaying;
 
-    // Boss ÑªÌõ UI
+    // Boss è¡€æ¡ UI
     cocos2d::ui::LoadingBar* _bossHPBar;
     cocos2d::Label* _bossHPLabel;
     float _bossBarOffsetY;
 
-    // ChengWuJie ¼¼ÄÜ²ÎÊı
+    // ChengWuJie æŠ€èƒ½å‚æ•°
     float _skillCooldown;
     float _skillCooldownTimer;
     float _skillRange;
@@ -140,9 +140,9 @@ protected:
     void startChengWuJie(Player* target);
     void resetChengWuJieCooldown();
 
-    // ========== NiLuFire Ïà¹Ø ==========
+    // NiLuFire ç›¸å…³ 
     cocos2d::Rect _roomBounds;
-    Room* _phase3Room; // Èı½×¶ÎÄ¿±ê·¿¼ä
+    Room* _phase3Room; // ä¸‰é˜¶æ®µç›®æ ‡æˆ¿é—´
     float _niluSpawnTimer;
     float _niluSpawnInterval;
     int _niluSpawnPerInterval;

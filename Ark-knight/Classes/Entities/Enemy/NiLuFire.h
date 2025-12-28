@@ -1,4 +1,4 @@
-#ifndef __NILU_FIRE_H__
+ï»¿#ifndef __NILU_FIRE_H__
 #define __NILU_FIRE_H__
 
 #include "Enemy.h"
@@ -14,59 +14,59 @@ public:
     virtual void update(float dt) override;
     CREATE_FUNC(NiLuFire);
 
-    // Íæ¼ÒÊ¹ÓÃÖÎÁÆÊõÊ±£¬»Ö¸´ NiLuFire µÄÑªÁ¿£¨ÓÉµ÷ÓÃ·½ÔÚ°ë¾¶200ÄÚµ÷ÓÃ£©
+    // ç©å®¶ä½¿ç”¨æ²»ç–—æœ¯æ—¶ï¼Œæ¢å¤ NiLuFire çš„è¡€é‡ï¼ˆç”±è°ƒç”¨æ–¹åœ¨åŠå¾„200å†…è°ƒç”¨ï¼‰
     void onHealedByPlayer(int healAmount);
 
-    // ÈÃ NiLuFire Á¢¼´Ö´ĞĞÒ»´Î¹¥»÷£¨ÓÃÓÚÓë KuiLong Í¬²½£©
-    // Ö»ÓĞ²¥·Å Attack ¶¯»­Ê±²ÅÔÚ¶¯»­»Øµ÷ÀïÕæÕıÔì³ÉÒ»´ÎÉËº¦
+    // è®© NiLuFire ç«‹å³æ‰§è¡Œä¸€æ¬¡æ”»å‡»ï¼ˆç”¨äºä¸ KuiLong åŒæ­¥ï¼‰
+    // åªæœ‰æ’­æ”¾ Attack åŠ¨ç”»æ—¶æ‰åœ¨åŠ¨ç”»å›è°ƒé‡ŒçœŸæ­£é€ æˆä¸€æ¬¡ä¼¤å®³
     void performAttackImmediate(int damage);
 
-    // ½ÓÊÕ·¿¼ä±ß½ç
+    // æ¥æ”¶æˆ¿é—´è¾¹ç•Œ
     virtual void setRoomBounds(const cocos2d::Rect& bounds) override;
 
-    // NiLuFire ²»Ó¦±»ÎÒ·½ÆÕÍ¨¹¥»÷ÉËº¦£¨ÓÉ´Ë¸²¸Ç£©
+    // NiLuFire ä¸åº”è¢«æˆ‘æ–¹æ™®é€šæ”»å‡»ä¼¤å®³ï¼ˆç”±æ­¤è¦†ç›–ï¼‰
     virtual void takeDamage(int damage) override;
 
-    // NiLuFire ²»¼ÆÈë·¿¼äÇå¹ÖÍ³¼Æ£¨¸²¸Ç£©
+    // NiLuFire ä¸è®¡å…¥æˆ¿é—´æ¸…æ€ªç»Ÿè®¡ï¼ˆè¦†ç›–ï¼‰
     virtual bool countsForRoomClear() const override { return false; }
 
-    // ½ûÖ¹±»¿Ö¿¨×È±ê¼Ç/¼ÄÉú£¨¸²¸Ç£©
+    // ç¦æ­¢è¢«æå¡å…¹æ ‡è®°/å¯„ç”Ÿï¼ˆè¦†ç›–ï¼‰
     virtual bool canSpawnKongKaZiOnDeath() const override { return false; }
 
-    // ²éÑ¯µ±Ç°ÊÇ·ñ´¦ÓÚ¡°ÕıÔÚ²¥·Å¹¥»÷¶¯»­/½«ÒªÔì³ÉÉËº¦¡±µÄ×´Ì¬
+    // æŸ¥è¯¢å½“å‰æ˜¯å¦å¤„äºâ€œæ­£åœ¨æ’­æ”¾æ”»å‡»åŠ¨ç”»/å°†è¦é€ æˆä¼¤å®³â€çš„çŠ¶æ€
     bool isPerformingAttack() const { return _isPerformingAttack; }
 
 protected:
     void loadAnimations();
 
-    // ×Ô±¬£¨60s µ½µã´¥·¢£©¡ª¡ª×Ô±¬»á²¥·Å¹¥»÷¶¯»­²¢Ôì³ÉÒ»´ÎÊ®×ÖÉËº¦ºóÏûÊ§
+    // è‡ªçˆ†ï¼ˆ60s åˆ°ç‚¹è§¦å‘ï¼‰â€”â€”è‡ªçˆ†ä¼šæ’­æ”¾æ”»å‡»åŠ¨ç”»å¹¶é€ æˆä¸€æ¬¡åå­—ä¼¤å®³åæ¶ˆå¤±
     void performSelfDestruct();
 
-    // HP UI ÏÔÊ¾
+    // HP UI æ˜¾ç¤º
     void createHPBar();
     void updateHPBar();
 
     cocos2d::Animation* _animAttack;
     cocos2d::Animation* _animBurn;
 
-    // HP UI£¨world-space£©
+    // HP UIï¼ˆworld-spaceï¼‰
     cocos2d::ui::LoadingBar* _hpBar;
     cocos2d::Label* _hpLabel;
 
-    // ¼ÆÊ±
-    float _lifetimeTimer;      // »îÔ¾¼ÆÊ±£¨60s£©
-    float _protectTimer;       // ³ö³¡±£»¤ÆÚ
+    // è®¡æ—¶
+    float _lifetimeTimer;      // æ´»è·ƒè®¡æ—¶ï¼ˆ60sï¼‰
+    float _protectTimer;       // å‡ºåœºä¿æŠ¤æœŸ
     bool  _isProtected;
 
-    float _lifeLimit;          // ÉúÃüÖÜÆÚ£¨60s£©
+    float _lifeLimit;          // ç”Ÿå‘½å‘¨æœŸï¼ˆ60sï¼‰
 
-    // ·¿¼ä±ß½ç
+    // æˆ¿é—´è¾¹ç•Œ
     cocos2d::Rect _roomBounds;
 
-    // ¹¥»÷Á¦£¨¿ÉÓÃ´«Èë²ÎÊı»ò getAttack()£©
+    // æ”»å‡»åŠ›
     int _attackDamage;
 
-    // µ±Ç°ÊÇ·ñÕıÔÚÖ´ĞĞÒ»´Î¹¥»÷£¨½öÔÚ²¥·Å Attack ¶¯»­²¢ÔÚ»Øµ÷ÖĞÔì³ÉÉËº¦Ê±Îª true£©
+    // å½“å‰æ˜¯å¦æ­£åœ¨æ‰§è¡Œä¸€æ¬¡æ”»å‡»
     bool _isPerformingAttack;
 };
 

@@ -80,7 +80,7 @@ bool Warrior::init()
         playAnimation("idle", true);
     }
     
-    // 初始化护盾条与数值文本，作为角色子节点（避免每帧 reparent 导致崩溃）
+    // 初始化护盾条与数值文本，作为角色子节点
     _shieldBarNode = DrawNode::create();
     _shieldLabel = Label::createWithSystemFont("", "Arial", 14);
     _shieldLabel->setAnchorPoint(Vec2(0.5f, 1.0f)); // 文本位于护盾条下方
@@ -211,7 +211,7 @@ void Warrior::initAnimations()
         }
     }
     
-    // Skill_Move动画 - 4帧 (注意文件名中SKill大小写)
+    // Skill_Move动画 - 4帧
     {
         Vector<SpriteFrame*> frames;
         for (int i = 1; i <= 4; i++)
@@ -232,7 +232,7 @@ void Warrior::initAnimations()
         }
     }
     
-    // Skill_Attack动画 - 5帧 (注意文件名是Attack_Skill)
+    // Skill_Attack动画 - 5帧 
     {
         Vector<SpriteFrame*> frames;
         for (int i = 1; i <= 5; i++)
@@ -353,14 +353,13 @@ void Warrior::update(float dt)
         }
     }
     
-    // ---- 替换 update() 中原来 reparent 的大块，改为只更新本地位置 ----
-    // 每帧同步护盾条位置（仅更新位置，不做 reparent）
+    // 每帧同步护盾条位置
     if (_shieldBarNode != nullptr && _shieldLabel != nullptr)
     {
-        // 护盾条局部偏移（相对于 Warrior）
+        // 护盾条局部偏移
         float offsetY = Constants::FLOOR_TILE_SIZE * 4.5f * 0.55f; // 可根据需要微调
         Vec2 localBarPos = Vec2(0, offsetY);
-        // 直接设置为子节点的本地位置（this 是它们父节点）
+        // 直接设置为子节点的本地位置
         _shieldBarNode->setPosition(localBarPos);
         // 文本位于护盾条下方
         float barHeight = 8.0f;
@@ -369,7 +368,6 @@ void Warrior::update(float dt)
         _shieldBarNode->setGlobalZOrder(1000000);
         _shieldLabel->setGlobalZOrder(1000000);
     }
-    // ---- update() 替换结束 ----
 }
 
 void Warrior::attack()
@@ -645,7 +643,7 @@ void Warrior::takeDamage(int damage)
     }
 }
 
-// ---- 微调 updateShieldBar()：只绘制与文本赋值（确保无父变更） ----
+// 绘制与文本赋值
 void Warrior::updateShieldBar()
 {
     if (!_shieldBarNode || !_shieldLabel) return;
@@ -678,4 +676,3 @@ void Warrior::updateShieldBar()
     _shieldLabel->setTextColor(Color4B(230, 230, 230, 255));
     _shieldLabel->setSystemFontSize(14);
 }
-// ---- updateShieldBar() 替换结束 ----

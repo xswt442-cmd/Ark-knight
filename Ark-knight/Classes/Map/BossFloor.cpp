@@ -22,16 +22,7 @@ bool BossFloor::init() {
     return true;
 }
 
-/**
- * 生成Boss层地图
- * 
- * Boss层结构：
- * ┌─────────┐    ┌───────────────────┐      ┌─────────┐
- * │  起始   │════│      Boss房间      │      │ 三阶段  │
- * │  房间   │    │    (2倍大小)       │      │  房间   │
- * └─────────┘    └───────────────────┘      └─────────┘
- *                                            (无走廊连接)
- */
+// 生成Boss层地图
 void BossFloor::generate(
     Room* (&roomMatrix)[Constants::MAP_GRID_SIZE][Constants::MAP_GRID_SIZE],
     std::vector<Hallway*>& hallways,
@@ -49,26 +40,26 @@ void BossFloor::generate(
     int phase3GridX = bossGridX + 1; // 三阶段房间在Boss房间右侧
     int phase3GridY = startGridY;
     
-    // ========== 创建起始房间 ==========
+    // 创建起始房间
     _startRoom = createStartRoom(startGridX, startGridY);
     roomMatrix[startGridX][startGridY] = _startRoom;
     beginRoom = _startRoom;
     
-    // ========== 创建Boss房间 ==========
+    // 创建Boss房间
     float startRoomRightEdge = visibleSize.width / 2 + 
         Constants::ROOM_TILES_W * Constants::FLOOR_TILE_SIZE / 2;
     _bossRoom = createBossRoom(bossGridX, bossGridY, startRoomRightEdge);
     roomMatrix[bossGridX][bossGridY] = _bossRoom;
-    endRoom = _bossRoom; // 逻辑上的终点仍是Boss房间
+    endRoom = _bossRoom; // PS: 逻辑上的终点仍是Boss房间
 
-    // ========== 创建三阶段房间 ==========
+    // 创建三阶段房间
     // 计算Boss房间右边缘
     float bossRoomWidth = Constants::ROOM_TILES_W * 2 * Constants::FLOOR_TILE_SIZE;
     float bossRoomCenterX = _bossRoom->getCenter().x;
     float bossRoomRightEdge = bossRoomCenterX + bossRoomWidth / 2;
 
     _phase3Room = createPhase3Room(phase3GridX, phase3GridY, bossRoomRightEdge);
-    // 注意：这里不一定要放入 roomMatrix，或者放入但 MapGenerator 不会为其生成常规走廊
+    // PS: 这里不一定要放入 roomMatrix，或者放入但 MapGenerator 不会为其生成常规走廊
     // 为了方便管理，我们放入矩阵，但因为 generateHallway 是手动调用的，所以不会自动生成走廊
     if (phase3GridX < Constants::MAP_GRID_SIZE) {
         roomMatrix[phase3GridX][phase3GridY] = _phase3Room;
@@ -76,24 +67,24 @@ void BossFloor::generate(
     
     roomCount = 3; // 增加房间计数
     
-    // ========== 连接两个房间的门 (起始 <-> Boss) ==========
+    // 连接房间门 (起始 <-> Boss)
     _startRoom->setDoorOpen(Constants::DIR_RIGHT, true);
     _bossRoom->setDoorOpen(Constants::DIR_LEFT, true);
-    // Boss房间与三阶段房间之间不设门，也不设走廊
+    // PS: Boss房间与三阶段房间之间不设门，也不设走廊
     
-    // ========== 创建房间地图 ==========
+    // 创建房间地图
     _startRoom->createMap();
     _bossRoom->createMap();
-    _phase3Room->createMap(); // 创建三阶段房间地图
+    _phase3Room->createMap();
     
     this->addChild(_startRoom);
     this->addChild(_bossRoom);
     this->addChild(_phase3Room);
     
-    // ========== 生成火焰地板装饰 ==========
+    // 生成火焰地板装饰
     generateFireTiles();
     
-    // ========== 生成连接走廊 (仅起始 <-> Boss) ==========
+    // 生成连接走廊 (仅起始 <-> Boss)
     generateHallway(hallways);
     
     log("Boss floor generated: Start(%d,%d), Boss(%d,%d), Phase3(%d,%d)", 
@@ -127,10 +118,7 @@ Room* BossFloor::createBossRoom(int gridX, int gridY, float startRoomRightEdge) 
     return room;
 }
 
-/**
- * 创建三阶段房间
- * 大小为Boss房间的一半 (即普通房间大小)
- */
+// 创建三阶段房间，大小为普通房间大小
 Room* BossFloor::createPhase3Room(int gridX, int gridY, float bossRoomRightEdge) {
     Size visibleSize = Director::getInstance()->getVisibleSize();
     

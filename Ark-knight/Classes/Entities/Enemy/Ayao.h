@@ -16,9 +16,6 @@ public:
     
     CREATE_FUNC(Ayao);
     
-    /**
-     * 更新（限制房间范围）
-     */
     virtual void update(float dt) override;
     
     /**

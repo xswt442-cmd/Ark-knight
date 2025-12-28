@@ -4,7 +4,9 @@
 #include "Entities/Objects/Item.h"
 #include "Entities/Objects/Chest.h"
 #include "Entities/Objects/ItemDrop.h"
+#include "Entities/Objects/Portal.h"
 #include "Map/TerrainLayouts.h"
+#include <cfloat>
 
 USING_NS_CC;
 
@@ -43,9 +45,8 @@ bool Room::init() {
     _enemiesSpawned = false;  // 初始化敌人生成标记
     _floorTextureIndex = (rand() % 5) + 1;  // 随机选择1-5号地板
     _chest = nullptr;  // 初始化宝箱指针
-    _itemDrops.clear();  // 初始化道具掉落列表
+    // _itemDrops 是 Vector，自动初始化为空
     _portal = nullptr;  // 初始化传送门指针
-    _portalLighting = nullptr;  // 初始化传送门闪电特效指针
     
     for (int i = 0; i < Constants::DIR_COUNT; i++) {
         _doorDirections[i] = false;
@@ -175,7 +176,7 @@ void Room::createMap() {
 void Room::generateFloor(float x, float y) {
     int chosenIndex = _floorTextureIndex; // 默认使用房间的纹理索引
     
-    // Boss房间使用普通地板，火焰地板通过 generateBossFloorTiles() 单独生成
+    // Boss房间使用普通地板，火焰地板由 BossFloor 单独生成
     // 普通房间的地板选择逻辑
     if (_floorTextureIndex >= 1 && _floorTextureIndex <= 3) {
         // 组 A: Floor1, Floor2, Floor3 -> 权重 75%,15%,10% (总和100)
@@ -271,6 +272,15 @@ void Room::generateDoor(float x, float y, int direction) {
     _doorsClosedSprites.pushBack(doorClosed);
 }
 
+// 将瓦片坐标转换为世界坐标
+Vec2 Room::tileToWorldPos(int tileX, int tileY) const
+{
+    float tileSize = Constants::FLOOR_TILE_SIZE;
+    float startX = _centerX - tileSize * (_tilesWidth / 2.0f - 0.5f);
+    float startY = _centerY + tileSize * (_tilesHeight / 2.0f - 0.5f);
+    return Vec2(startX + tileX * tileSize, startY - tileY * tileSize);
+}
+
 void Room::addSpikeAtPosition(const Vec2& pos)
 {
     auto spike = Spike::create();
@@ -287,14 +297,7 @@ void Room::addSpikeAtPosition(const Vec2& pos)
 
 void Room::addSpikeAtTile(int tileX, int tileY)
 {
-    float tileSize = Constants::FLOOR_TILE_SIZE;
-    float startX = _centerX - tileSize * (_tilesWidth / 2.0f - 0.5f);
-    float startY = _centerY + tileSize * (_tilesHeight / 2.0f - 0.5f);
-    
-    float spikeX = startX + tileX * tileSize;
-    float spikeY = startY - tileY * tileSize;
-    
-    addSpikeAtPosition(Vec2(spikeX, spikeY));
+    addSpikeAtPosition(tileToWorldPos(tileX, tileY));
 }
 
 void Room::addBoxAtPosition(const Vec2& pos, Box::BoxType type)
@@ -313,14 +316,7 @@ void Room::addBoxAtPosition(const Vec2& pos, Box::BoxType type)
 
 void Room::addBoxAtTile(int tileX, int tileY, Box::BoxType type)
 {
-    float tileSize = Constants::FLOOR_TILE_SIZE;
-    float startX = _centerX - tileSize * (_tilesWidth / 2.0f - 0.5f);
-    float startY = _centerY + tileSize * (_tilesHeight / 2.0f - 0.5f);
-    
-    float boxX = startX + tileX * tileSize;
-    float boxY = startY - tileY * tileSize;
-    
-    addBoxAtPosition(Vec2(boxX, boxY), type);
+    addBoxAtPosition(tileToWorldPos(tileX, tileY), type);
 }
 
 void Room::addPillarAtPosition(const Vec2& pos, Pillar::PillarType type)
@@ -339,14 +335,7 @@ void Room::addPillarAtPosition(const Vec2& pos, Pillar::PillarType type)
 
 void Room::addPillarAtTile(int tileX, int tileY, Pillar::PillarType type)
 {
-    float tileSize = Constants::FLOOR_TILE_SIZE;
-    float startX = _centerX - tileSize * (_tilesWidth / 2.0f - 0.5f);
-    float startY = _centerY + tileSize * (_tilesHeight / 2.0f - 0.5f);
-    
-    float pillarX = startX + tileX * tileSize;
-    float pillarY = startY - tileY * tileSize;
-    
-    addPillarAtPosition(Vec2(pillarX, pillarY), type);
+    addPillarAtPosition(tileToWorldPos(tileX, tileY), type);
 }
 
 void Room::setDoorOpen(int direction, bool open) {
@@ -398,23 +387,6 @@ void Room::openDoors() {
         sprite->setVisible(false);
         // 移除墙的Tag，允许通行
         sprite->setTag(0);
-    }
-    
-    // 战斗胜利奖励：如果是普通战斗房间，在中心生成一个随机道具
-    if (_roomType == Constants::RoomType::NORMAL) {
-        std::unordered_map<std::string, int> emptyMap;
-        const ItemDef* itemDef = ItemLibrary::pickRandom(emptyMap);
-        
-        if (itemDef) {
-            auto drop = ItemDrop::create(itemDef);
-            if (drop) {
-                drop->setPosition(Vec2(_centerX, _centerY));
-                drop->setGlobalZOrder(Constants::ZOrder::FLOOR + 2);
-                this->addChild(drop, Constants::ZOrder::FLOOR + 2);
-                _itemDrops.pushBack(drop);
-                GAME_LOG("Room cleared! Spawned reward item: %s", itemDef->name.c_str());
-            }
-        }
     }
     
     GAME_LOG("Room doors opened");
@@ -539,7 +511,7 @@ bool Room::checkPlayerPosition(Player* player, float& speedX, float& speedY) {
     return false;  // 玩家不在房间范围内
 }
 
-// ==================== 地形布局系统 ====================
+// 地形布局系统
 
 void Room::applyTerrainLayout(TerrainLayout layout)
 {
@@ -547,7 +519,7 @@ void Room::applyTerrainLayout(TerrainLayout layout)
     TerrainLayoutHelper::applyLayout(this, layout);
 }
 
-// ==================== 宝箱生成 ====================
+// 宝箱生成
 
 void Room::createChest()
 {
@@ -598,21 +570,21 @@ void Room::openChest(Player* player)
     
     // 使用空的道具计数（后续可以从Player中获取）
     std::unordered_map<std::string, int> ownedItems;
-    
-    // 获取所有掉落物（现在返回一个列表）
     auto drops = _chest->open(ownedItems);
     
-    if (!drops.empty())
+    for (auto drop : drops)
     {
-        for (auto drop : drops) {
-            this->addChild(drop, Constants::ZOrder::FLOOR + 2);
+        if (drop)
+        {
             _itemDrops.pushBack(drop);
+            // PS: 道具已经在 Chest::open 中被添加到父节点了，这里只需要记录引用
+            GAME_LOG("ItemDrop created in room at position (%.1f, %.1f)", drop->getPosition().x, drop->getPosition().y);
         }
-        GAME_LOG("Chest opened, spawned %d items", (int)drops.size());
     }
-    else
+    
+    if (_itemDrops.empty())
     {
-        GAME_LOG("Chest opened but no items dropped");
+        GAME_LOG("No items dropped from chest");
     }
 }
 
@@ -623,9 +595,10 @@ bool Room::canInteractWithItemDrop(Player* player) const
         return false;
     }
     
-    // 检查是否有任何一个道具在拾取范围内
-    for (auto drop : _itemDrops) {
-        if (drop->canPickup(player)) {
+    for (auto drop : _itemDrops)
+    {
+        if (drop && drop->canPickup(player))
+        {
             return true;
         }
     }
@@ -639,30 +612,43 @@ const ItemDef* Room::pickupItemDrop(Player* player)
         return nullptr;
     }
     
-    // 寻找最近的可拾取道具
-    ItemDrop* closestDrop = nullptr;
-    float minDistance = FLT_MAX;
+    // 找到最近的可拾取道具
+    ItemDrop* nearestDrop = nullptr;
+    float minDist = FLT_MAX;
     
-    for (auto drop : _itemDrops) {
-        if (drop->canPickup(player)) {
+    for (auto drop : _itemDrops)
+    {
+        if (drop && drop->canPickup(player))
+        {
             float dist = drop->getPosition().distance(player->getPosition());
-            if (dist < minDistance) {
-                minDistance = dist;
-                closestDrop = drop;
+            if (dist < minDist)
+            {
+                minDist = dist;
+                nearestDrop = drop;
             }
         }
     }
     
-    if (closestDrop) {
-        const ItemDef* itemDef = closestDrop->pickup(player);
-        _itemDrops.eraseObject(closestDrop);  // 从列表中移除，对象会自动从场景移除（在pickup动画结束后）
-        return itemDef;
+    if (!nearestDrop)
+    {
+        return nullptr;
     }
     
-    return nullptr;
+    const ItemDef* itemDef = nearestDrop->pickup(player);
+    _itemDrops.eraseObject(nearestDrop);
+    return itemDef;
 }
 
-// ==================== 传送门生成 ====================
+void Room::addItemDrop(ItemDrop* drop)
+{
+    if (drop)
+    {
+        _itemDrops.pushBack(drop);
+        this->addChild(drop, Constants::ZOrder::ITEMS);
+    }
+}
+
+// 传送门生成
 
 void Room::createPortal()
 {
@@ -672,86 +658,16 @@ void Room::createPortal()
         return;
     }
     
-    // 创建传送门主体动画（7帧）
-    cocos2d::Vector<cocos2d::SpriteFrame*> portalFrames;
-    for (int i = 1; i <= 7; i++)
-    {
-        std::string framePath = "Map/Portal/Portal_000" + std::to_string(i) + ".png";
-        auto texture = cocos2d::Director::getInstance()->getTextureCache()->addImage(framePath);
-        if (texture)
-        {
-            auto frame = cocos2d::SpriteFrame::createWithTexture(texture, cocos2d::Rect(0, 0, texture->getContentSize().width, texture->getContentSize().height));
-            if (frame)
-            {
-                portalFrames.pushBack(frame);
-            }
-        }
-    }
-    
-    if (portalFrames.empty())
-    {
-        GAME_LOG("Failed to load portal frames");
-        return;
-    }
-    
-    _portal = cocos2d::Sprite::createWithSpriteFrame(portalFrames.at(0));
+    _portal = Portal::create();
     if (!_portal)
     {
-        GAME_LOG("Failed to create portal sprite");
+        GAME_LOG("Failed to create portal");
         return;
     }
     
     // 放置在房间中央
-    _portal->setPosition(cocos2d::Vec2(_centerX, _centerY));
-    
-    // 缩放到合适大小（3倍地板砖大小）
-    float targetSize = Constants::FLOOR_TILE_SIZE * 3.0f;
-    float scale = targetSize / _portal->getContentSize().width;
-    _portal->setScale(scale);
-    
-    _portal->setGlobalZOrder(Constants::ZOrder::FLOOR + 2);
+    _portal->setPosition(Vec2(_centerX, _centerY));
     this->addChild(_portal, Constants::ZOrder::FLOOR + 2);
-    
-    // 播放传送门主体动画（循环）
-    auto portalAnimation = cocos2d::Animation::createWithSpriteFrames(portalFrames, 0.1f);
-    auto portalAnimate = cocos2d::Animate::create(portalAnimation);
-    auto portalRepeat = cocos2d::RepeatForever::create(portalAnimate);
-    _portal->runAction(portalRepeat);
-    
-    // 创建闪电特效动画（4帧）
-    cocos2d::Vector<cocos2d::SpriteFrame*> lightingFrames;
-    for (int i = 1; i <= 4; i++)
-    {
-        std::string framePath = "Map/Portal/Portallighting_000" + std::to_string(i) + ".png";
-        auto texture = cocos2d::Director::getInstance()->getTextureCache()->addImage(framePath);
-        if (texture)
-        {
-            auto frame = cocos2d::SpriteFrame::createWithTexture(texture, cocos2d::Rect(0, 0, texture->getContentSize().width, texture->getContentSize().height));
-            if (frame)
-            {
-                lightingFrames.pushBack(frame);
-            }
-        }
-    }
-    
-    if (!lightingFrames.empty())
-    {
-        _portalLighting = cocos2d::Sprite::createWithSpriteFrame(lightingFrames.at(0));
-        if (_portalLighting)
-        {
-            // 闪电特效放在传送门同一位置
-            _portalLighting->setPosition(cocos2d::Vec2(_centerX, _centerY));
-            _portalLighting->setScale(scale);
-            _portalLighting->setGlobalZOrder(Constants::ZOrder::FLOOR + 3);
-            this->addChild(_portalLighting, Constants::ZOrder::FLOOR + 3);
-            
-            // 播放闪电动画（循环，速度更快）
-            auto lightingAnimation = cocos2d::Animation::createWithSpriteFrames(lightingFrames, 0.08f);
-            auto lightingAnimate = cocos2d::Animate::create(lightingAnimation);
-            auto lightingRepeat = cocos2d::RepeatForever::create(lightingAnimate);
-            _portalLighting->runAction(lightingRepeat);
-        }
-    }
     
     GAME_LOG("Created portal at center of end room");
 }
@@ -763,98 +679,5 @@ bool Room::canInteractWithPortal(Player* player) const
         return false;
     }
     
-    // 检测玩家与传送门的距离
-    float interactionDistance = Constants::FLOOR_TILE_SIZE * 2.5f;
-    float distance = _portal->getPosition().distance(player->getPosition());
-    
-    return distance <= interactionDistance;
-}
-
-/**
- * 生成Boss房间的火焰地板装饰
- * 
- * 此方法会在Boss房间的地板上随机放置火焰纹理
- * 火焰地板会覆盖原有地板，并带有轻微缩放动画
- * 
- * @param count 火焰地板数量，默认为30
- * 
- * 修改说明：
- * - 调整count参数可改变火焰地板密度
- * - 火焰纹理路径: Map/Floor/Floor_fire.png
- * - 当前使用2倍房间尺寸 (56x40 瓦片)
- */
-void Room::generateBossFloorTiles(int count) {
-    // 使用房间实际尺寸（createMap已设置）
-    int roomWidth = _tilesWidth;
-    int roomHeight = _tilesHeight;
-    float tileSize = Constants::FLOOR_TILE_SIZE;
-    
-    // 使用与createMap相同的坐标计算方式
-    // 第0列瓦片中心 = centerX - tileSize * (width/2 - 0.5)
-    float baseX = _centerX - tileSize * (roomWidth / 2.0f - 0.5f);
-    float baseY = _centerY + tileSize * (roomHeight / 2.0f - 0.5f);  // 从顶部开始
-    
-    log("generateBossFloorTiles: center=(%.1f, %.1f), roomSize=(%d x %d), basePos=(%.1f, %.1f)",
-        _centerX, _centerY, roomWidth, roomHeight, baseX, baseY);
-    
-    // 收集所有可用的地板位置（排除边缘和中心Boss生成区域）
-    std::vector<std::pair<int, int>> availablePositions;
-    
-    // 房间中心区域（Boss生成位置）需要排除，半径5个瓦片
-    int centerTileX = roomWidth / 2;
-    int centerTileY = roomHeight / 2;
-    int exclusionRadius = 5;
-    
-    for (int y = 2; y < roomHeight - 2; ++y) {
-        for (int x = 2; x < roomWidth - 2; ++x) {
-            // 排除中心Boss区域
-            int dx = x - centerTileX;
-            int dy = y - centerTileY;
-            if (dx * dx + dy * dy <= exclusionRadius * exclusionRadius) {
-                continue;
-            }
-            availablePositions.push_back({x, y});
-        }
-    }
-    
-    // 随机打乱位置
-    for (int i = availablePositions.size() - 1; i > 0; --i) {
-        int j = rand() % (i + 1);
-        std::swap(availablePositions[i], availablePositions[j]);
-    }
-    
-    // 取前count个位置生成火焰地板
-    int actualCount = std::min(count, (int)availablePositions.size());
-    int successCount = 0;
-    
-    log("generateBossFloorTiles: availablePositions=%d, actualCount=%d", 
-        (int)availablePositions.size(), actualCount);
-    
-    for (int i = 0; i < actualCount; ++i) {
-        int tileX = availablePositions[i].first;
-        int tileY = availablePositions[i].second;
-        
-        // 与createMap相同的坐标计算：X向右增加，Y从上往下（所以要减）
-        float posX = baseX + tileX * tileSize;
-        float posY = baseY - tileY * tileSize;  // 注意：Y是从上往下，所以要减
-        
-        auto fireFloor = cocos2d::Sprite::create("Map/Floor/Floor_fire.png");
-        if (fireFloor) {
-            fireFloor->setPosition(posX, posY);
-            // 火焰地板层级设为DOOR级别，确保在普通地板之上
-            this->addChild(fireFloor, Constants::ZOrder::DOOR);
-            
-            // 添加轻微的缩放动画，增加视觉效果
-            auto scaleUp = cocos2d::ScaleTo::create(0.8f + (rand() % 100) / 200.0f, 1.05f);
-            auto scaleDown = cocos2d::ScaleTo::create(0.8f + (rand() % 100) / 200.0f, 0.95f);
-            auto sequence = cocos2d::Sequence::create(scaleUp, scaleDown, nullptr);
-            auto repeat = cocos2d::RepeatForever::create(sequence);
-            fireFloor->runAction(repeat);
-            successCount++;
-        } else {
-            log("WARNING: Failed to load Floor_fire.png at position (%.1f, %.1f)", posX, posY);
-        }
-    }
-    
-    log("Generated %d/%d fire floor tiles in boss room", successCount, actualCount);
+    return _portal->canInteract(player);
 }

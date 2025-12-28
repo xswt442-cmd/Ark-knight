@@ -371,7 +371,7 @@ void Gunner::attack()
     }
     else
     {
-        // 普通攻击：普通状态100%，强化状态300% (保持原有逻辑)
+        // 普通攻击：普通状态100%，强化状态300%
         float multiplier = _isEnhanced ? 3.0f : 1.0f;
         int damage = static_cast<int>(getAttack() * multiplier);
         shootBullet(damage);
@@ -641,7 +641,7 @@ void Gunner::shootSkillBomb()
 // 创建爆炸效果并造成范围伤害
 void Gunner::createExplosion(Node* parent, const Vec2& pos, int damage, float radius)
 {
-    // Debug可视化：绘制有色半透明圆圈
+    // 可视化：绘制有色半透明圆圈
     auto debugDraw = DrawNode::create();
     // 红色，透明度0.3
     debugDraw->drawSolidCircle(Vec2::ZERO, radius, 0.0f, 30, Color4F(1.0f, 0.0f, 0.0f, 0.3f));

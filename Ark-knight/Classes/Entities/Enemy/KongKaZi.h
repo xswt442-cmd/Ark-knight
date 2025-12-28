@@ -1,11 +1,11 @@
-#ifndef __KONGKAZI_H__
+ï»¿#ifndef __KONGKAZI_H__
 #define __KONGKAZI_H__
 
 #include "Enemy.h"
 
 /**
- * ¿Ö¿¨×È - ÓÉ±»±ê¼ÇµÄµĞÈËËÀÍöÊ±Éú³É
- * Éè¼Æ£ºÓë Ayao ÍêÈ«ÏàÍ¬µÄÊµÏÖ·½Ê½£¨¶¯»­¡¢ÒÆ¶¯¡¢¹¥»÷¡¢ËÀÍö£©
+ * æå¡å…¹ - ç”±è¢«æ ‡è®°çš„æ•Œäººæ­»äº¡æ—¶ç”Ÿæˆ
+ * è®¾è®¡ï¼šä¸ Ayao å®Œå…¨ç›¸åŒçš„å®ç°æ–¹å¼ï¼ˆåŠ¨ç”»ã€ç§»åŠ¨ã€æ”»å‡»ã€æ­»äº¡ï¼‰
  */
 class KongKaZi : public Enemy {
 public:
@@ -25,7 +25,7 @@ public:
     virtual void move(const cocos2d::Vec2& direction, float dt) override;
     virtual void playAttackAnimation() override;
 
-    // ¸²¸ÇÒÔ×èÖ¹´Ó×ÔÉíÉú³É¿Ö¿¨×È
+    // è¦†ç›–ä»¥é˜»æ­¢ä»è‡ªèº«ç”Ÿæˆæå¡å…¹
     virtual bool canSpawnKongKaZiOnDeath() const override { return false; }
 
     void setRoomBounds(const cocos2d::Rect& bounds) { _roomBounds = bounds; _hasRoomBounds = true; }

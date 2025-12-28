@@ -75,7 +75,7 @@ int GameEntity::takeDamageReported(int damage)
         return 0;
     }
 
-    // 如果处于短时间受击无敌期，则忽略本次伤害（避免多帧重复命中）
+    // 如果处于短时间受击无敌期，则忽略本次伤害，避免多帧重复命中
     if (_hitInvulTimer > 0.0f)
     {
         return 0;
@@ -104,7 +104,7 @@ int GameEntity::takeDamageReported(int damage)
         return applied;  // 死亡后不播放受击效果，但返回实际值
     }
     
-    // 受击效果 - 颜色闪烁（避免Blink导致消失）
+    // 受击效果 - 颜色闪烁
     if (_sprite != nullptr)
     {
         _sprite->stopActionByTag(100);
@@ -112,7 +112,7 @@ int GameEntity::takeDamageReported(int damage)
         _sprite->setVisible(true);
         _sprite->setOpacity(255);
         
-        // 使用CallFunc+setColor瞬时设置颜色，避免TintTo渐变被中断导致的颜色卡住
+        // 使用CallFunc+setColor瞬时设置颜色，避免TintTo渐变导致卡顿
         auto setRed = CallFunc::create([this]() { _sprite->setColor(Color3B(255, 100, 100)); });
         auto setWhite = CallFunc::create([this]() { _sprite->setColor(Color3B::WHITE); });
         auto sequence = Sequence::create(

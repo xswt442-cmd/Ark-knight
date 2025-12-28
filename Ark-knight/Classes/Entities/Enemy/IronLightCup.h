@@ -1,4 +1,4 @@
-#ifndef __IRONLIGHTCUP_H__
+ï»¿#ifndef __IRONLIGHTCUP_H__
 #define __IRONLIGHTCUP_H__
 
 #include "Enemy.h"
@@ -16,16 +16,15 @@ public:
 
     CREATE_FUNC(IronLightCup);
 
-    // ²»»áË÷µĞ/¹¥»÷£¬ËæÒâÒÆ¶¯
+    // ä¸ä¼šç´¢æ•Œ/æ”»å‡»ï¼Œéšæ„ç§»åŠ¨
     virtual void executeAI(Player* player, float dt) override;
-    virtual void attack() override { /* ²»¹¥»÷ */ }
+    virtual void attack() override { /* ä¸æ”»å‡» */ }
 
-    // Ã¿´ÎÖ»¼Æ×÷ 1 ´ÎÉËº¦£¬ĞèÒª 35 ´Î»÷ÖĞ²ÅËÀÍö
+    // æ¯æ¬¡åªè®¡ä½œ 1 æ¬¡ä¼¤å®³ï¼Œéœ€è¦ 35 æ¬¡å‡»ä¸­æ‰æ­»äº¡
     virtual void takeDamage(int damage) override;
 
-    // ---------- ĞÂÔö£ºÈ·±£ takeDamageReported Ò²Ö»Ôì³É 1 µã ----------
+    // ç¡®ä¿ takeDamageReported ä¹Ÿåªé€ æˆ 1 ç‚¹
     virtual int takeDamageReported(int damage) override;
-    // -----------------------------------------------------------------
 
     virtual void die() override;
 
@@ -40,7 +39,7 @@ protected:
     cocos2d::Rect _roomBounds;
     bool _hasRoomBounds;
 
-    // ¼òµ¥Ñ²ÂßÊı¾İ
+    // ç®€å•å·¡é€»æ•°æ®
     float _patrolTimer;
     float _patrolInterval;
     cocos2d::Vec2 _patrolDirection;

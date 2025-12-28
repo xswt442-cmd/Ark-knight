@@ -8,37 +8,26 @@
 
 USING_NS_CC;
 
-/**
- * 设置界面Layer
- * 可被任何场景复用的设置界面
- */
+// 设置界面Layer-可被任何场景复用的设置界面
 class SettingsLayer : public Layer {
 public:
     virtual bool init() override;
     
     CREATE_FUNC(SettingsLayer);
     
-    /**
-     * 设置关闭回调
-     */
+    // 设置关闭回调
     void setCloseCallback(const std::function<void()>& callback) {
         _closeCallback = callback;
     }
     
-    /**
-     * 关闭设置界面
-     */
+    // 关闭设置界面
     void close();
     
 private:
-    /**
-     * 创建UI元素
-     */
+    // 创建UI元素
     void createUI();
     
-    /**
-     * 创建音量滑块
-     */
+    // 创建音量滑块
     void createVolumeSliders();
     
     std::function<void()> _closeCallback;

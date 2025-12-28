@@ -108,9 +108,9 @@ void Hallway::createMap() {
         // 水平走廊：纵向排除上下墙，并考虑玩家尺寸
         _leftX = startX;
         _rightX = startX + tileSize * (_tilesWidth - 1);
-        // 上墙在h=0，其下边缘在 startY - tileSize/2，再往下缩playerHalfSize
+        // 上墙
         _topY = startY - tileSize / 2 - playerHalfSize;
-        // 下墙在h=_tilesHeight-1，其上边缘在 startY - (_tilesHeight-1)*tileSize + tileSize/2，再往上缩
+        // 下墙
         _bottomY = startY - (_tilesHeight - 1) * tileSize + tileSize / 2 + playerHalfSize;
     } else {
         // 垂直走廊：横向排除左右墙，并考虑玩家尺寸

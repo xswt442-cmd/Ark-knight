@@ -1,4 +1,4 @@
-#include "TangHuang.h"
+ï»¿#include "TangHuang.h"
 #include "cocos2d.h"
 #include "Entities/Player/Player.h"
 #include "Entities/Enemy/IronLightCup.h"
@@ -9,10 +9,10 @@ USING_NS_CC;
 static const int TANGHUANG_MOVE_ACTION_TAG = 0xF201;
 static const int TANGHUANG_WINDUP_ACTION_TAG = 0xF202;
 
-// ĞÂÔö£ºÑÌÎí³£Á¿
-static constexpr float TANGHUANG_SMOKE_DELAY = 0.5f;    // 0.5s ÑÓ³ÙÊÍ·Å
-static constexpr float TANGHUANG_SMOKE_DURATION = 5.0f; // ³ÖĞø 5s
-static constexpr float TANGHUANG_SMOKE_RADIUS = 250.0f; // °ë¾¶ 150
+// æ–°å¢ï¼šçƒŸé›¾å¸¸é‡
+static constexpr float TANGHUANG_SMOKE_DELAY = 0.5f;    // 0.5s å»¶è¿Ÿé‡Šæ”¾
+static constexpr float TANGHUANG_SMOKE_DURATION = 5.0f; // æŒç»­ 5s
+static constexpr float TANGHUANG_SMOKE_RADIUS = 250.0f; // åŠå¾„ 150
 
 TangHuang::TangHuang()
     : _moveAnimation(nullptr)
@@ -22,7 +22,7 @@ TangHuang::TangHuang()
     , _roomBounds(Rect::ZERO)
     , _hasRoomBounds(false)
     , _attackTarget(nullptr)
-    , _skillCooldown(15.0f)      // Ä¬ÈÏ¼¼ÄÜÀäÈ´ 15s
+    , _skillCooldown(15.0f)      // é»˜è®¤æŠ€èƒ½å†·å´ 15s
     , _skillCooldownTimer(0.0f)
 {
 }
@@ -44,7 +44,7 @@ bool TangHuang::init()
     setupAttributes();
     loadAnimations();
 
-    // Èç¹ûÓĞÒÆ¶¯¶¯»­£¬Ê¹ÓÃµÚÒ»Ö¡×÷Îª³õÊ¼¾«Áé
+    // å¦‚æœæœ‰ç§»åŠ¨åŠ¨ç”»ï¼Œä½¿ç”¨ç¬¬ä¸€å¸§ä½œä¸ºåˆå§‹ç²¾çµ
     if (_moveAnimation)
     {
         auto frames = _moveAnimation->getFrames();
@@ -52,7 +52,7 @@ bool TangHuang::init()
         {
             auto sprite = Sprite::createWithSpriteFrame(frames.front()->getSpriteFrame());
             this->bindSprite(sprite);
-            // ½«ÌÃ»Ê¾«ÁéÕûÌå·Å´ó 1.5 ±¶
+            // å°†å ‚çš‡ç²¾çµæ•´ä½“æ”¾å¤§ 1.5 å€
             if (this->_sprite) this->_sprite->setScale(1.8f);
         }
     }
@@ -63,7 +63,7 @@ bool TangHuang::init()
 
 void TangHuang::setupAttributes()
 {
-    // Ä¬ÈÏÊôĞÔ£¨¿É¸ù¾İÓÎÏ·Æ½ºâµ÷Õû£©
+    // é»˜è®¤å±æ€§ï¼ˆå¯æ ¹æ®æ¸¸æˆå¹³è¡¡è°ƒæ•´ï¼‰
     setMaxHP(5000);
     setHP(5000);
 
@@ -75,14 +75,14 @@ void TangHuang::setupAttributes()
     setAttackCooldown(1.8f);
     setAttackWindup(0.5f);
 
-    // ¼¼ÄÜÀäÈ´£º15 Ãë£¨Ã÷È·Ğ´ÔÚÕâÀïÒÔ±ãÒ»Ä¿ÁËÈ»£©
+    // æŠ€èƒ½å†·å´ï¼š15 ç§’ï¼ˆæ˜ç¡®å†™åœ¨è¿™é‡Œä»¥ä¾¿ä¸€ç›®äº†ç„¶ï¼‰
     setSkillCooldown(15.0f);
     _skillCooldownTimer = 0.0f;
 }
 
 void TangHuang::loadAnimations()
 {
-    // Í¨ÓÃ¼ÓÔØº¯Êı·ç¸ñÓëÏîÄ¿ÆäËûÀàÒ»ÖÂ£ºÏÈ³¢ÊÔÍ¨¹ıÎÄ¼ş´´½¨ Sprite ÔÙ fallback µ½ SpriteFrameCache
+    // é€šç”¨åŠ è½½å‡½æ•°é£æ ¼ä¸é¡¹ç›®å…¶ä»–ç±»ä¸€è‡´ï¼šå…ˆå°è¯•é€šè¿‡æ–‡ä»¶åˆ›å»º Sprite å† fallback åˆ° SpriteFrameCache
     Vector<SpriteFrame*> moveFrames;
     for (int i = 1; i <= 8; ++i)
     {
@@ -137,7 +137,7 @@ void TangHuang::loadAnimations()
         _attackAnimation->retain();
     }
 
-    // ĞÂÔö£º¼ÓÔØ Skill ¶¯»­£¨Â·¾¶ÓëÆäËû¶¯»­Ò»ÖÂ£¬Ö»½« Move ¸ÄÎª Skill£©
+    // æ–°å¢ï¼šåŠ è½½ Skill åŠ¨ç”»ï¼ˆè·¯å¾„ä¸å…¶ä»–åŠ¨ç”»ä¸€è‡´ï¼Œåªå°† Move æ”¹ä¸º Skillï¼‰
     Vector<SpriteFrame*> skillFrames;
     for (int i = 1; i <= 8; ++i) 
     {
@@ -192,12 +192,12 @@ void TangHuang::loadAnimations()
         _dieAnimation->retain();
     }
 
-    // Èç¹ûÒÑ°ó¶¨ sprite£¬È·±£ÆğÊ¼Ö¡´æÔÚ£¨Èç¹ûÃ»ÓĞ°ó¶¨£¬init() »áÓÃ move µÄµÚÒ»Ö¡°ó¶¨£©
+    // å¦‚æœå·²ç»‘å®š spriteï¼Œç¡®ä¿èµ·å§‹å¸§å­˜åœ¨ï¼ˆå¦‚æœæ²¡æœ‰ç»‘å®šï¼Œinit() ä¼šç”¨ move çš„ç¬¬ä¸€å¸§ç»‘å®šï¼‰
     if (_sprite == nullptr && _moveAnimation && !_moveAnimation->getFrames().empty())
     {
         auto sprite = Sprite::createWithSpriteFrame(_moveAnimation->getFrames().front()->getSpriteFrame());
         this->bindSprite(sprite);
-        // ½«ÌÃ»Ê¾«ÁéÕûÌå·Å´ó 1.5 ±¶£¨±ÜÃâÒÅÂ©ÈÎºÎ°ó¶¨·ÖÖ§£©
+        // å°†å ‚çš‡ç²¾çµæ•´ä½“æ”¾å¤§ 1.5 å€ï¼ˆé¿å…é—æ¼ä»»ä½•ç»‘å®šåˆ†æ”¯ï¼‰
         if (this->_sprite) this->_sprite->setScale(1.8f);
     }
 
@@ -208,13 +208,13 @@ void TangHuang::update(float dt)
 {
     Enemy::update(dt);
 
-    // ¼¼ÄÜÀäÈ´¼ÆÊ±
+    // æŠ€èƒ½å†·å´è®¡æ—¶
     if (_skillCooldownTimer > 0.0f)
     {
         _skillCooldownTimer = std::max(0.0f, _skillCooldownTimer - dt);
     }
 
-    // Èç¹ûÉèÖÃÁË·¿¼ä±ß½ç£¬ÔòÏŞÖÆÎ»ÖÃÔÚ·¿¼äÄÚ£¨Óë XinXing ±£³ÖÒ»ÖÂ£©
+    // å¦‚æœè®¾ç½®äº†æˆ¿é—´è¾¹ç•Œï¼Œåˆ™é™åˆ¶ä½ç½®åœ¨æˆ¿é—´å†…ï¼ˆä¸ XinXing ä¿æŒä¸€è‡´ï¼‰
     if (_hasRoomBounds)
     {
         Vec2 pos = this->getPosition();
@@ -223,7 +223,7 @@ void TangHuang::update(float dt)
         this->setPosition(pos);
     }
 
-    // ¿ÉÒÔ·ÅÖÃÌØÊâ×´Ì¬¸üĞÂ£¨Èç±»¶¯¼¼ÄÜ¡¢ÀäÈ´µÈ£©
+    // å¯ä»¥æ”¾ç½®ç‰¹æ®ŠçŠ¶æ€æ›´æ–°ï¼ˆå¦‚è¢«åŠ¨æŠ€èƒ½ã€å†·å´ç­‰ï¼‰
 }
 
 void TangHuang::executeAI(Player* player, float dt)
@@ -234,17 +234,17 @@ void TangHuang::executeAI(Player* player, float dt)
         return;
     }
 
-    // Èç¹û¼¼ÄÜ¿ÉÓÃ£¬ÔòÓÅÏÈÍ£Ö¹²¢ÊÍ·Å¼¼ÄÜ£¨²»¼ÌĞø×·»÷£©
+    // å¦‚æœæŠ€èƒ½å¯ç”¨ï¼Œåˆ™ä¼˜å…ˆåœæ­¢å¹¶é‡Šæ”¾æŠ€èƒ½ï¼ˆä¸ç»§ç»­è¿½å‡»ï¼‰
     if (canUseSkill() && _currentState != EntityState::ATTACK && _currentState != EntityState::DIE)
     {
-        // Í£Ö¹ÒÆ¶¯²¢ÊÍ·Å¼¼ÄÜ£¨useSmokeSkill ÄÚ»á´¦ÀíÑÓ³ÙÓëÀäÈ´£©
-        move(Vec2::ZERO, dt); // Í£Ö¹ÒÆ¶¯£¬±£³Ö×´Ì¬Ò»ÖÂ
+        // åœæ­¢ç§»åŠ¨å¹¶é‡Šæ”¾æŠ€èƒ½ï¼ˆuseSmokeSkill å†…ä¼šå¤„ç†å»¶è¿Ÿä¸å†·å´ï¼‰
+        move(Vec2::ZERO, dt); // åœæ­¢ç§»åŠ¨ï¼Œä¿æŒçŠ¶æ€ä¸€è‡´
         faceToPosition(player->getPosition());
         useSmokeSkill();
         return;
     }
 
-    // ÉèÖÃµ±Ç°¹¥»÷Ä¿±êÒıÓÃ£¬¹¥»÷»Øµ÷»áÊ¹ÓÃ´ËÒıÓÃ£¨·Ç owning£©
+    // è®¾ç½®å½“å‰æ”»å‡»ç›®æ ‡å¼•ç”¨ï¼Œæ”»å‡»å›è°ƒä¼šä½¿ç”¨æ­¤å¼•ç”¨ï¼ˆé owningï¼‰
     if (isPlayerInSight(player))
     {
         _attackTarget = player;
@@ -269,16 +269,16 @@ void TangHuang::move(const cocos2d::Vec2& direction, float dt)
 {
     if (!_sprite) return;
 
-    // ÃæÏòÔË¶¯·½Ïò
+    // é¢å‘è¿åŠ¨æ–¹å‘
     if (direction != Vec2::ZERO)
     {
         faceToPosition(this->getPosition() + direction);
     }
 
-    // ÒÆ¶¯Î»ÖÃ£¨µ÷ÓÃ»ùÀàÒÔ´¦ÀíÅö×²/×´Ì¬/ËÙ¶È£©
+    // ç§»åŠ¨ä½ç½®ï¼ˆè°ƒç”¨åŸºç±»ä»¥å¤„ç†ç¢°æ’/çŠ¶æ€/é€Ÿåº¦ï¼‰
     Enemy::move(direction, dt);
 
-    // Èç¹ûÒÑÓĞÒÆ¶¯¶¯»­ÇÒÎ´ÔÚ²¥·Å£¬Ôò¿ªÊ¼²¥·Å
+    // å¦‚æœå·²æœ‰ç§»åŠ¨åŠ¨ç”»ä¸”æœªåœ¨æ’­æ”¾ï¼Œåˆ™å¼€å§‹æ’­æ”¾
     auto existing = _sprite->getActionByTag(TANGHUANG_MOVE_ACTION_TAG);
     if (!_moveAnimation)
     {
@@ -301,14 +301,14 @@ void TangHuang::attack()
     setState(EntityState::ATTACK);
     resetAttackCooldown();
 
-    // Í£Ö¹ÒÆ¶¯Ñ­»·£¨Ö»Í£Ö¹ÒÆ¶¯ action£©
+    // åœæ­¢ç§»åŠ¨å¾ªç¯ï¼ˆåªåœæ­¢ç§»åŠ¨ actionï¼‰
     if (_sprite)
     {
         auto moveAct = _sprite->getActionByTag(TANGHUANG_MOVE_ACTION_TAG);
         if (moveAct) _sprite->stopAction(moveAct);
     }
 
-    // ²¥·ÅÇ°Ò¡¹¥»÷¶¯»­£¨ÈôÓĞ£©
+    // æ’­æ”¾å‰æ‘‡æ”»å‡»åŠ¨ç”»ï¼ˆè‹¥æœ‰ï¼‰
     if (_attackAnimation && _sprite)
     {
         _attackAnimation->setRestoreOriginalFrame(true);
@@ -317,13 +317,13 @@ void TangHuang::attack()
         _sprite->runAction(animate);
 
         float windup = this->getAttackWindup();
-        // ²¶»ñµ±Ç°Ä¿±êÖ¸Õë£¬ÔÚ windup Íê³ÉÊ±Ö´ĞĞÊµ¼ÊÉËº¦
+        // æ•è·å½“å‰ç›®æ ‡æŒ‡é’ˆï¼Œåœ¨ windup å®Œæˆæ—¶æ‰§è¡Œå®é™…ä¼¤å®³
         Player* target = _attackTarget;
         auto delay = DelayTime::create(windup);
         auto callback = CallFunc::create([this, target]() {
             if (_currentState == EntityState::ATTACK)
             {
-                // ´¥·¢Êµ¼ÊÉËº¦ÅĞ¶¨
+                // è§¦å‘å®é™…ä¼¤å®³åˆ¤å®š
                 if (target && !target->isDead() && isPlayerInAttackRange(target))
                 {
                     this->attackPlayer(target);
@@ -336,7 +336,7 @@ void TangHuang::attack()
     }
     else
     {
-        // ÎŞ¶¯»­Ê±½ö°´ windup »Ö¸´×´Ì¬²¢Ôì³ÉÉËº¦
+        // æ— åŠ¨ç”»æ—¶ä»…æŒ‰ windup æ¢å¤çŠ¶æ€å¹¶é€ æˆä¼¤å®³
         float windup = this->getAttackWindup();
         Player* target = _attackTarget;
         auto delay = DelayTime::create(windup);
@@ -365,10 +365,10 @@ void TangHuang::attackPlayer(Player* player)
 
     GAME_LOG("TangHuang dealt %d damage to player", dmg);
 
-    // ²¥·Å¹¥»÷¶¯»­£¨Èç¹ûĞèÒªÓëÉËº¦·ÖÀë£©
+    // æ’­æ”¾æ”»å‡»åŠ¨ç”»ï¼ˆå¦‚æœéœ€è¦ä¸ä¼¤å®³åˆ†ç¦»ï¼‰
     playAttackAnimation();
 
-    // Ê¹ÓÃ¼¼ÄÜ£¨ÄÚ²¿»á¼ì²éÀäÈ´²¢Ö´ĞĞÑÓ³Ù£©
+    // ä½¿ç”¨æŠ€èƒ½ï¼ˆå†…éƒ¨ä¼šæ£€æŸ¥å†·å´å¹¶æ‰§è¡Œå»¶è¿Ÿï¼‰
     useSmokeSkill();
 }
 
@@ -376,10 +376,10 @@ void TangHuang::useSmokeSkill()
 {
     if (!canUseSkill()) return;
 
-    // ¿ªÊ¼ÀäÈ´
+    // å¼€å§‹å†·å´
     _skillCooldownTimer = _skillCooldown;
 
-    // ÑÓ³ÙÊµ¼ÊÊÍ·Å£¨0.5s£©
+    // å»¶è¿Ÿå®é™…é‡Šæ”¾ï¼ˆ0.5sï¼‰
     this->runAction(Sequence::create(DelayTime::create(TANGHUANG_SMOKE_DELAY),
         CallFunc::create([this]() {
             this->spawnSmoke();
@@ -388,7 +388,7 @@ void TangHuang::useSmokeSkill()
 
 void TangHuang::spawnSmoke()
 {
-    // ÔÚÊÍ·Å¼¼ÄÜÊ±²¥·Å¼¼ÄÜ¶¯»­£¨Èô´æÔÚ£©
+    // åœ¨é‡Šæ”¾æŠ€èƒ½æ—¶æ’­æ”¾æŠ€èƒ½åŠ¨ç”»ï¼ˆè‹¥å­˜åœ¨ï¼‰
     if (_skillAnimation && _sprite)
     {
         _sprite->stopActionByTag(TANGHUANG_MOVE_ACTION_TAG);
@@ -397,33 +397,33 @@ void TangHuang::spawnSmoke()
         _sprite->runAction(animate);
     }
 
-    // ´´½¨ÑÌÎí DrawNode£¨ÊÓ¾õ£©²¢·ÅÔÚµØ°åÖ®ÉÏ£¨¶ø·Ç½ÇÉ«ÏÂ·½£©
+    // åˆ›å»ºçƒŸé›¾ DrawNodeï¼ˆè§†è§‰ï¼‰å¹¶æ”¾åœ¨åœ°æ¿ä¹‹ä¸Šï¼ˆè€Œéè§’è‰²ä¸‹æ–¹ï¼‰
     auto smoke = DrawNode::create();
-    Color4F smokeColor(0.85f, 0.85f, 0.85f, 0.6f); // Ç³»Ò°×£¬°ëÍ¸Ã÷
+    Color4F smokeColor(0.85f, 0.85f, 0.85f, 0.6f); // æµ…ç°ç™½ï¼ŒåŠé€æ˜
     smoke->drawSolidCircle(Vec2::ZERO, TANGHUANG_SMOKE_RADIUS, 0, 64, smokeColor);
 
-    // ½«ÑÌÎíÌí¼Óµ½Óë½ÇÉ«ÏàÍ¬µÄ¸¸½Úµã£¨Í¨³£Îª gameLayer£©£¬²¢ÉèÖÃÔÚµØ°åÖ®ÉÏ
+    // å°†çƒŸé›¾æ·»åŠ åˆ°ä¸è§’è‰²ç›¸åŒçš„çˆ¶èŠ‚ç‚¹ï¼ˆé€šå¸¸ä¸º gameLayerï¼‰ï¼Œå¹¶è®¾ç½®åœ¨åœ°æ¿ä¹‹ä¸Š
     Node* parent = this->getParent();
     if (parent)
     {
-        int smokeZ = Constants::ZOrder::FLOOR + 1; // ·ÅÔÚµØ°åÖ®ÉÏ
+        int smokeZ = Constants::ZOrder::FLOOR + 1; // æ”¾åœ¨åœ°æ¿ä¹‹ä¸Š
         parent->addChild(smoke, smokeZ);
         smoke->setPosition(this->getPosition());
         smoke->setGlobalZOrder(static_cast<float>(smokeZ));
     }
     else
     {
-        // ÍË»Ø¼æÈİĞĞÎª£º¸½¼Óµ½ self£¨ÈÔÈ»¿É¹¤×÷£©
+        // é€€å›å…¼å®¹è¡Œä¸ºï¼šé™„åŠ åˆ° selfï¼ˆä»ç„¶å¯å·¥ä½œï¼‰
         this->addChild(smoke, -1);
         smoke->setPosition(Vec2::ZERO);
     }
 
-    // ÓÃÒ»¸ö¶ÑÉÏ·ÖÅäµÄÈİÆ÷¼ÇÂ¼µ±Ç°Ô²ÄÚµÄµĞÈË£¨ÓÃÓÚ²î·Ö add/remove£©
+    // ç”¨ä¸€ä¸ªå †ä¸Šåˆ†é…çš„å®¹å™¨è®°å½•å½“å‰åœ†å†…çš„æ•Œäººï¼ˆç”¨äºå·®åˆ† add/removeï¼‰
     auto insideVec = new std::vector<Enemy*>();
 
-    // Ã¿Ö¡¸üĞÂ£º¼ì²é¸¸½Úµã£¨Í¨³£Îª gameLayer£©ÏÂµÄµĞÈË£¬Ìí¼Ó/ÒÆ³ı stealth Ô´
+    // æ¯å¸§æ›´æ–°ï¼šæ£€æŸ¥çˆ¶èŠ‚ç‚¹ï¼ˆé€šå¸¸ä¸º gameLayerï¼‰ä¸‹çš„æ•Œäººï¼Œæ·»åŠ /ç§»é™¤ stealth æº
     smoke->schedule([this, smoke, insideVec](float dt) {
-        // Ê¹ÑÌÎíÒ»Ö±¸úËæÌÃ»ÊÒÆ¶¯£¨±£Ö¤¼´±ã¸¸½ÚµãÔÚ world ¿Õ¼ä£¬Î»ÖÃÊ¼ÖÕÍ¬²½£©
+        // ä½¿çƒŸé›¾ä¸€ç›´è·Ÿéšå ‚çš‡ç§»åŠ¨ï¼ˆä¿è¯å³ä¾¿çˆ¶èŠ‚ç‚¹åœ¨ world ç©ºé—´ï¼Œä½ç½®å§‹ç»ˆåŒæ­¥ï¼‰
         if (smoke->getParent())
         {
             smoke->setPosition(this->getPosition());
@@ -448,7 +448,7 @@ void TangHuang::spawnSmoke()
             }
         }
 
-        // ¶ÔĞÂ½øÈëµÄµĞÈËÌí¼ÓÔ´£¨Ê¹ÓÃ smoke Ö¸Õë ×÷Îª source id£©
+        // å¯¹æ–°è¿›å…¥çš„æ•Œäººæ·»åŠ æºï¼ˆä½¿ç”¨ smoke æŒ‡é’ˆ ä½œä¸º source idï¼‰
         for (auto e : currentInside)
         {
             if (std::find(insideVec->begin(), insideVec->end(), e) == insideVec->end())
@@ -457,7 +457,7 @@ void TangHuang::spawnSmoke()
             }
         }
 
-        // ¶ÔÒÑÀë¿ªµÄµĞÈËÒÆ³ıÔ´
+        // å¯¹å·²ç¦»å¼€çš„æ•Œäººç§»é™¤æº
         for (auto prev : *insideVec)
         {
             if (std::find(currentInside.begin(), currentInside.end(), prev) == currentInside.end())
@@ -466,7 +466,7 @@ void TangHuang::spawnSmoke()
             }
         }
 
-        // ¸üĞÂ insideVec
+        // æ›´æ–° insideVec
         insideVec->assign(currentInside.begin(), currentInside.end());
 
     }, "TangHuangSmokeUpdate");
@@ -474,19 +474,19 @@ void TangHuang::spawnSmoke()
     // After duration, unschedule update, remove stealth from remaining inside, and remove node
     smoke->runAction(Sequence::create(DelayTime::create(TANGHUANG_SMOKE_DURATION),
         CallFunc::create([smoke, insideVec]() {
-            // Í£Ö¹µ÷¶È
+            // åœæ­¢è°ƒåº¦
             smoke->unschedule("TangHuangSmokeUpdate");
 
-            // ÒÆ³ı²ĞÁôµÄ stealth Ô´
+            // ç§»é™¤æ®‹ç•™çš„ stealth æº
             for (auto e : *insideVec)
             {
                 if (e) e->removeStealthSource((void*)smoke);
             }
 
-            // ÇåÀíÈİÆ÷
+            // æ¸…ç†å®¹å™¨
             delete insideVec;
 
-            // µ­³ö²¢ÒÆ³ıÑÌÎí½Úµã
+            // æ·¡å‡ºå¹¶ç§»é™¤çƒŸé›¾èŠ‚ç‚¹
             auto fade = FadeOut::create(0.35f);
             auto remove = CallFunc::create([smoke]() {
                 if (smoke->getParent()) smoke->removeFromParent();
@@ -497,7 +497,7 @@ void TangHuang::spawnSmoke()
 
 void TangHuang::playAttackAnimation()
 {
-    // ¶îÍâµÄÊÓ¾õĞ§¹û»òÍ¬²½Âß¼­¿ÉÒÔ·ÅÕâÀï£¨Èô¹¥»÷Óë¶¯»­·Ö¿ªÇı¶¯£©
+    // é¢å¤–çš„è§†è§‰æ•ˆæœæˆ–åŒæ­¥é€»è¾‘å¯ä»¥æ”¾è¿™é‡Œï¼ˆè‹¥æ”»å‡»ä¸åŠ¨ç”»åˆ†å¼€é©±åŠ¨ï¼‰
     if (_attackAnimation && _sprite)
     {
         _sprite->stopActionByTag(TANGHUANG_MOVE_ACTION_TAG);
@@ -509,22 +509,22 @@ void TangHuang::playAttackAnimation()
 
 void TangHuang::die()
 {
-    // ÏÈµ÷ÓÃ»ùÀàÒÔ´¥·¢ºìÉ«±ê¼Ç / KongKaZi µÈÍ¨ÓÃÂß¼­
+    // å…ˆè°ƒç”¨åŸºç±»ä»¥è§¦å‘çº¢è‰²æ ‡è®° / KongKaZi ç­‰é€šç”¨é€»è¾‘
     Enemy::die();
 
-    // ·ÀÖØÈë£ºÉèÖÃËÀÍö×´Ì¬
+    // é˜²é‡å…¥ï¼šè®¾ç½®æ­»äº¡çŠ¶æ€
     if (_currentState == EntityState::DIE && !_isAlive) return;
     setState(EntityState::DIE);
     _isAlive = false;
 
-    // Í£Ö¹ÆäËû¶¯×÷²¢²¥·ÅËÀÍö¶¯»­£¬²¥·ÅÍê³ÉºóÉú³É 1 ¸ö IronLightCup£¨Óë XinXing µÄÊµÏÖÒ»ÖÂ£©
+    // åœæ­¢å…¶ä»–åŠ¨ä½œå¹¶æ’­æ”¾æ­»äº¡åŠ¨ç”»ï¼Œæ’­æ”¾å®Œæˆåç”Ÿæˆ 1 ä¸ª IronLightCupï¼ˆä¸ XinXing çš„å®ç°ä¸€è‡´ï¼‰
     this->stopAllActions();
     if (_sprite) { _sprite->stopAllActions(); _sprite->setVisible(true); _sprite->setOpacity(255); }
 
     auto finalizeSpawn = [this]() {
         Vec2 basePos = this->getPosition();
 
-        // ´´½¨²¢·ÅÖÃ 1 ¸ö IronLightCup£¬Î»ÖÃÔÚÌÃ»ÊÔ­µØÉÔÎ¢Æ«ÒÆËæ»úÒ»µã
+        // åˆ›å»ºå¹¶æ”¾ç½® 1 ä¸ª IronLightCupï¼Œä½ç½®åœ¨å ‚çš‡åŸåœ°ç¨å¾®åç§»éšæœºä¸€ç‚¹
         auto il = IronLightCup::create();
         if (!il) {
             this->removeFromParent();
@@ -538,7 +538,7 @@ void TangHuang::die()
 
         if (_hasRoomBounds) il->setRoomBounds(_roomBounds);
 
-        // ³¢ÊÔÍ¨¹ıµ±Ç°ÔËĞĞ³¡¾°×¢²áµ½ GameScene£¬ÒÔ±ã±» update/enemies ¹ÜÀí£¨Óë XinXing ÖĞµÄÂß¼­ÍêÈ«Ò»ÖÂ£©
+        // å°è¯•é€šè¿‡å½“å‰è¿è¡Œåœºæ™¯æ³¨å†Œåˆ° GameSceneï¼Œä»¥ä¾¿è¢« update/enemies ç®¡ç†ï¼ˆä¸ XinXing ä¸­çš„é€»è¾‘å®Œå…¨ä¸€è‡´ï¼‰
         Scene* running = Director::getInstance()->getRunningScene();
         GameScene* gs = nullptr;
         if (running)
@@ -556,7 +556,7 @@ void TangHuang::die()
         if (gs) gs->addEnemy(il);
         else if (running) running->addChild(il);
 
-        // ÒÆ³ı×ÔÉí£¨Óë XinXing ±£³ÖÏàÍ¬µÄÒÆ³ıµ÷ÓÃ·ç¸ñ£©
+        // ç§»é™¤è‡ªèº«ï¼ˆä¸ XinXing ä¿æŒç›¸åŒçš„ç§»é™¤è°ƒç”¨é£æ ¼ï¼‰
         this->removeFromParent();
     };
 
@@ -569,6 +569,6 @@ void TangHuang::die()
         return;
     }
 
-    // Ã»ÓĞËÀÍö¶¯»­ÔòÖ±½ÓÉú³É²¢ÒÆ³ı
+    // æ²¡æœ‰æ­»äº¡åŠ¨ç”»åˆ™ç›´æ¥ç”Ÿæˆå¹¶ç§»é™¤
     finalizeSpawn();
 }

@@ -7,32 +7,22 @@
 
 class Player;
 
-/**
- * 障碍物基类
- */
+// 障碍物基类
 class Barrier : public cocos2d::Sprite {
 public:
     virtual ~Barrier() = default;
     
-    /**
-     * 是否阻挡移动
-     */
+    // 是否阻挡移动
     virtual bool blocksMovement() const { return false; }
     
-    /**
-     * 是否阻挡子弹
-     */
+    // 是否阻挡子弹
     virtual bool blocksProjectiles() const { return false; }
     
-    /**
-     * 更新障碍物状态
-     */
+    // 更新障碍物状态
     virtual void updateState(float dt, Player* player) {}
 };
 
-/**
- * 地刺陷阱：踩上去每秒造成固定伤害，并在触发时变白
- */
+// 地刺陷阱：踩上去每秒造成固定伤害，并在触发时变白
 class Spike : public Barrier {
 public:
     static Spike* create(const std::string& texturePath = "Map/Barrier/Spikes_down.png");
@@ -52,9 +42,7 @@ private:
     const int _damagePerTick = 10;         // 每次10点伤害
 };
 
-/**
- * 木箱障碍物：阻挡移动和子弹
- */
+// 木箱障碍物：阻挡移动和子弹
 class Box : public Barrier {
 public:
     enum class BoxType {
@@ -74,9 +62,7 @@ private:
     BoxType _boxType;
 };
 
-/**
- * 石柱障碍物：阻挡移动和子弹
- */
+// 石柱障碍物：阻挡移动和子弹
 class Pillar : public Barrier {
 public:
     enum class PillarType {

@@ -15,6 +15,7 @@
 #include "Entities/Enemy/KuiLongBoss.h"
 #include "Entities/Objects/Chest.h"
 #include "Entities/Objects/ItemDrop.h"
+#include "Entities/Objects/Portal.h"
 #include "ui/CocosGUI.h"
 #include "audio/include/AudioEngine.h"
 #include "Managers/SoundManager.h"
@@ -194,8 +195,6 @@ void GameScene::initCamera()
 {
     // 不创建自定义相机，使用默认相机
     // 通过移动游戏层来实现相机跟随效果
-    _camera = nullptr;
-    
     GAME_LOG("Camera system initialized (using default camera with layer movement)");
 }
 
@@ -300,7 +299,7 @@ void GameScene::createPlayer()
         return;
     }
     
-    // 注意：HP/MP恢复移到道具效果恢复之后，在init()中进行
+    // PS: HP/MP恢复移到道具效果恢复之后，在init()中进行
     
     // 设置玩家初始位置在起始房间的中心
     if (_currentRoom) {
@@ -393,12 +392,7 @@ void GameScene::spawnEnemiesInRoom(Room* room)
             boss->setRoomBounds(walk);
             
             // 获取三阶段房间并设置给 Boss
-            // 假设 MapGenerator 已经生成了 BossFloor，我们需要找到它
-            // 这里通过遍历子节点找到 BossFloor，或者通过 MapGenerator 获取
-            // 由于 GameScene 持有 _mapGenerator，我们可以尝试从那里获取信息
-            // 但 MapGenerator 没有直接暴露 BossFloor，我们需要一种方式获取 Phase3Room
-            
-            // 方案：遍历所有房间，找到位于 Boss 房间右侧的那个房间
+            // 遍历所有房间，找到位于 Boss 房间右侧的那个房间
             if (_mapGenerator) {
                 int bossGridX = room->getGridX();
                 int bossGridY = room->getGridY();
@@ -434,7 +428,7 @@ void GameScene::spawnEnemiesInRoom(Room* room)
         return; 
     }
 
-    // 随机生成3-8个怪（普通小怪：Ayao / DeYi，精英怪：XinXing / TangHuang / Du）
+    // 随机生成3-8个怪
     int enemyCount = RANDOM_INT(3, 8);
 
     for (int i = 0; i < enemyCount; i++)
@@ -469,7 +463,8 @@ void GameScene::spawnEnemiesInRoom(Room* room)
 
         if (!enemy) continue;
 
-        // 在 walk 可行走区域内随机位置（注意：walk 是绝对坐标，直接采样）
+        // PS: walk 是绝对坐标，直接采样
+        // 在 walk 可行走区域内随机位置
         float spawnX = RANDOM_FLOAT(walk.getMinX() + 1.0f, walk.getMaxX() - 1.0f);
         float spawnY = RANDOM_FLOAT(walk.getMinY() + 1.0f, walk.getMaxY() - 1.0f);
         Vec2 spawnPos = Vec2(spawnX, spawnY);
@@ -478,13 +473,12 @@ void GameScene::spawnEnemiesInRoom(Room* room)
         // 通过统一入口设置房间边界并将敌人注册到场景/列表中
         enemy->setRoomBounds(walk);
 
-        // ---------- 新增：对每个新生成的敌人按基础速度的 90%~110% 随机化移动速度 ----------
+        // 对每个新生成的敌人按基础速度的 90%~110% 随机化移动速度
         // 保持子类/基础初始化的默认值不变（只是对该实例做微调）
         float baseSpeed = enemy->getMoveSpeed(); // 子类在 init() 里已设置基础速度
         float randFactor = RANDOM_FLOAT(0.9f, 1.1f);
         enemy->setMoveSpeed(baseSpeed * randFactor);
         GAME_LOG("Enemy speed randomized: base=%.1f factor=%.3f final=%.1f", baseSpeed, randFactor, enemy->getMoveSpeed());
-        // ------------------------------------------------------------------------------
 
         // 使用 GameScene::addEnemy 统一注册（会加入场景、_enemies，并尝试将其加入对应房间）
         addEnemy(enemy);
@@ -820,11 +814,12 @@ void GameScene::updateInteraction(float dt)
     bool canInteractPortal = _currentRoom->canInteractWithPortal(_player);
     if (canInteractPortal)
     {
-        Sprite* portal = _currentRoom->getPortal();
-        if (portal)
+        Portal* portal = _currentRoom->getPortal();
+        if (portal && portal->getSprite())
         {
+            auto sprite = portal->getSprite();
             Vec2 portalWorldPos = portal->getParent()->convertToWorldSpace(portal->getPosition());
-            float portalHeight = portal->getContentSize().height * portal->getScale();
+            float portalHeight = sprite->getContentSize().height * sprite->getScale();
             _gameHUD->showInteractionHint(u8"[E] 进入传送门", portalWorldPos, portalHeight * 0.6f);
             return;
         }
@@ -934,8 +929,6 @@ void GameScene::checkCollisions()
             }
         }
     }
-    
-    // 玩家技能判定（火球等） - 在Mage::castFireball中处理
 }
 
 void GameScene::checkBarrierCollisions()
@@ -957,7 +950,6 @@ void GameScene::checkBarrierCollisions()
         Vec2 playerPos = _player->getPosition();
         
         // 使用固定的碰撞体积，与角色视觉大小无关
-        // 这样所有角色都能通过相同大小的间隙
         float collisionSize = Constants::FLOOR_TILE_SIZE * 1.5f;  // 约1.5格的碰撞体积
         Size playerSize = Size(collisionSize, collisionSize);
         
@@ -973,7 +965,6 @@ void GameScene::checkBarrierCollisions()
                 continue;
             }
             
-            // 障碍物在Room节点下，Room节点在(0,0)，所以障碍物的getBoundingBox就是世界坐标（相对于GameLayer）
             Rect barrierBox = barrier->getBoundingBox();
             
             // 缩小障碍物碰撞箱一点点，避免卡住
@@ -1350,7 +1341,7 @@ void GameScene::addEnemy(Enemy* enemy)
         _enemies.pushBack(enemy);
     }
 
-    // --- 新增：尝试将该敌人归入所在房间的房间敌人列表，并设置房间边界 ---
+    // 尝试将该敌人归入所在房间的房间敌人列表，并设置房间边界
     if (_mapGenerator)
     {
         auto rooms = _mapGenerator->getAllRooms();
@@ -1385,10 +1376,8 @@ void GameScene::addEnemy(Enemy* enemy)
             }
         }
     }
-    // --- end 新增 ---
 
     // 确保动态生成的敌人也有机会成为“红色标记”怪以生成 KongKaZi
-    // spawnEnemiesInRoom 已对初生群体调用 tryApplyRedMark，但通过 addEnemy 动态加入的（如 XinXing 死后生成的 IronLance）也需要调用
     enemy->tryApplyRedMark(0.3f);
 
     GAME_LOG("GameScene::addEnemy - enemy added and registered (total=%zu)", _enemies.size());

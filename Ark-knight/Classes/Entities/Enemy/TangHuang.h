@@ -1,16 +1,16 @@
-#ifndef __TANGHUANG_H__
+ï»¿#ifndef __TANGHUANG_H__
 #define __TANGHUANG_H__
 
 #include "Enemy.h"
 #include "cocos2d.h"
 
-// Ç°ÏòÉùÃ÷±ÜÃâÍ·Ñ­»·
+// å‰å‘å£°æ˜é¿å…å¤´å¾ªç¯
 class Player;
 
 /**
- * ÌÃ»Ê TangHuang
- * - ½üÕ½ MELEE
- * - ¼òµ¥×·»÷/Ñ²Âß AI£¬½üÕ½¹¥»÷
+ * å ‚çš‡ TangHuang
+ * - è¿‘æˆ˜ MELEE
+ * - ç®€å•è¿½å‡»/å·¡é€» AIï¼Œè¿‘æˆ˜æ”»å‡»
  */
 class TangHuang : public Enemy {
 public:
@@ -22,55 +22,54 @@ public:
 
     CREATE_FUNC(TangHuang);
 
-    // AI Ñ­»·
+    // AI å¾ªç¯
     virtual void executeAI(Player* player, float dt) override;
 
-    // ³õÊ¼»¯ÊôĞÔÓë¶¯»­¼ÓÔØ
+    // åˆå§‹åŒ–å±æ€§ä¸åŠ¨ç”»åŠ è½½
     void setupAttributes();
     void loadAnimations();
 
-    // ¹¥»÷/²¥·Å¹¥»÷¶¯»­/ËÀÍö
+    // æ”»å‡»/æ’­æ”¾æ”»å‡»åŠ¨ç”»/æ­»äº¡
     virtual void attack() override;
     virtual void playAttackAnimation() override;
     virtual void die() override;
 
-    // ÉèÖÃ·¿¼ä±ß½ç
+    // è®¾ç½®æˆ¿é—´è¾¹ç•Œ
     virtual void setRoomBounds(const cocos2d::Rect& bounds) override { _roomBounds = bounds; _hasRoomBounds = true; }
 
-    // ÒÆ¶¯£¨Ê¹ÓÃ»ùÀà move£¬µ«Í¬²½¶¯»­£©
+    // ç§»åŠ¨ï¼ˆä½¿ç”¨åŸºç±» moveï¼Œä½†åŒæ­¥åŠ¨ç”»ï¼‰
     virtual void move(const cocos2d::Vec2& direction, float dt) override;
 
-    // ¶ÔÍæ¼ÒÔì³ÉÉËº¦£¨¸²Ğ´ÒÔÊµÏÖ¾ßÌåÉËº¦Âß¼­£©
+    // å¯¹ç©å®¶é€ æˆä¼¤å®³ï¼ˆè¦†å†™ä»¥å®ç°å…·ä½“ä¼¤å®³é€»è¾‘ï¼‰
     virtual void attackPlayer(Player* player) override;
 
-    // ========== ¼¼ÄÜÏà¹Ø½Ó¿Ú ==========
+    // æŠ€èƒ½ç›¸å…³æ¥å£
     void setSkillCooldown(float seconds) { _skillCooldown = seconds; }
     float getSkillCooldown() const { return _skillCooldown; }
     bool canUseSkill() const { return _skillCooldownTimer <= 0.0f; }
-    void useSmokeSkill(); // ´¥·¢ÑÌÎí¼¼ÄÜ£¨ÄÚ²¿»á´¦ÀíÀäÈ´ÓëÑÓ³Ù£©
-    void spawnSmoke();    // Êµ¼ÊÉú³ÉÑÌÎí£¨»á´´½¨ÊÓ¾õ²¢¹ÜÀí stealth Ô´£©
+    void useSmokeSkill(); // è§¦å‘çƒŸé›¾æŠ€èƒ½ï¼ˆå†…éƒ¨ä¼šå¤„ç†å†·å´ä¸å»¶è¿Ÿï¼‰
+    void spawnSmoke();    // å®é™…ç”ŸæˆçƒŸé›¾ï¼ˆä¼šåˆ›å»ºè§†è§‰å¹¶ç®¡ç† stealth æºï¼‰
 
 protected:
     cocos2d::Animation* _moveAnimation;
     cocos2d::Animation* _attackAnimation;
     cocos2d::Animation* _dieAnimation;
-    // ĞÂÔö£º¼¼ÄÜ¶¯»­
+    // æŠ€èƒ½åŠ¨ç”»
     cocos2d::Animation* _skillAnimation;
 
     cocos2d::Rect _roomBounds;
     bool _hasRoomBounds;
 
-    // ¹¥»÷Ê±µÄÄ¿±êÒıÓÃ£¨·Ç owning£©
+    // æ”»å‡»æ—¶çš„ç›®æ ‡å¼•ç”¨ï¼ˆé owningï¼‰
     Player* _attackTarget;
 
-    // ========== ÌÃ»Ê¼¼ÄÜ×´Ì¬ ==========
-    // ¼¼ÄÜÀäÈ´£¨Ãë£©£¬Ä¬ÈÏÎª 15s£¨ÔÚ¹¹Ôì»ò setupAttributes ÖĞÉèÖÃ£©
+    // å ‚çš‡æŠ€èƒ½çŠ¶æ€
+    // æŠ€èƒ½å†·å´ï¼ˆç§’ï¼‰ï¼Œé»˜è®¤ä¸º 15sï¼ˆåœ¨æ„é€ æˆ– setupAttributes ä¸­è®¾ç½®ï¼‰
     float _skillCooldown;
-    // µ±Ç°¼¼ÄÜ CD ¼ÆÊ±Æ÷£¨>0 ±íÊ¾ÕıÔÚÀäÈ´£©
+    // å½“å‰æŠ€èƒ½ CD è®¡æ—¶å™¨ï¼ˆ>0 è¡¨ç¤ºæ­£åœ¨å†·å´ï¼‰
     float _skillCooldownTimer;
 
-    // ½«´´½¨ÑÌÎíµÄÊµ¼ÊÂß¼­·â×°ÎªÀà·½·¨
-    // spawnSmoke() ÒÑÔÚ public ÉùÃ÷£¬protected ¿É±£ÁôÒÔ±ã×ÓÀàÀ©Õ¹
+    // å°†åˆ›å»ºçƒŸé›¾çš„å®é™…é€»è¾‘å°è£…ä¸ºç±»æ–¹æ³• spawnsmoke()
 };
 
 #endif // __TANGHUANG_H__

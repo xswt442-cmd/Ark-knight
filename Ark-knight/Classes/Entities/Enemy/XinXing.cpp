@@ -1,4 +1,4 @@
-#include "XinXing.h"
+ï»¿#include "XinXing.h"
 #include "Entities/Enemy/IronLance.h"
 #include "Scenes/GameScene.h"
 #include "Entities/Player/Player.h"
@@ -11,7 +11,7 @@ USING_NS_CC;
 static const int XINX_MOVE_ACTION_TAG    = 0xE101;
 static const int XINX_HIT_ACTION_TAG     = 0xE102;
 static const int XINX_WINDUP_ACTION_TAG  = 0xE103;
-// ½Úµã²ãÃæµÄ·çÏä»ØÍË£¨Óë sprite ÉÏµÄ windup Çø·Ö£©
+// èŠ‚ç‚¹å±‚é¢çš„é£ç®±å›é€€ï¼ˆä¸ sprite ä¸Šçš„ windup åŒºåˆ†ï¼‰
 static const int XINX_WINDUP_NODE_TAG   = 0xE104;
 
 XinXing::XinXing()
@@ -40,7 +40,7 @@ bool XinXing::init()
     setupAttributes();
     loadAnimations();
 
-    // Ê¹ÓÃÒÆ¶¯¶¯»­µÚÒ»Ö¡×÷Îª³õÊ¼¾«Áé£¬²¢·Å´ó 1.5 ±¶
+    // ä½¿ç”¨ç§»åŠ¨åŠ¨ç”»ç¬¬ä¸€å¸§ä½œä¸ºåˆå§‹ç²¾çµï¼Œå¹¶æ”¾å¤§ 1.5 å€
     if (_moveAnimation)
     {
         auto frames = _moveAnimation->getFrames();
@@ -53,12 +53,12 @@ bool XinXing::init()
     }
     else
     {
-        // »ØÍË£ºÈ·±£Ò»¶¨ÓĞÒ»¸ö¿É¼ûµÄÕ¼Î» Sprite£¨±ÜÃâ¿´²»µ½ÊµÌå£©
-        // Ö±½Ó´´½¨´¿É«¾ØĞÎ Sprite ×÷ÎªÕ¼Î»£¨±ÜÃâÊ¹ÓÃ RenderTexture::visit µ¼ÖÂµÄÔËĞĞÊ±±ÀÀ££©
+        // å›é€€ï¼šç¡®ä¿ä¸€å®šæœ‰ä¸€ä¸ªå¯è§çš„å ä½ Spriteï¼ˆé¿å…çœ‹ä¸åˆ°å®ä½“ï¼‰
+        // ç›´æ¥åˆ›å»ºçº¯è‰²çŸ©å½¢ Sprite ä½œä¸ºå ä½ï¼ˆé¿å…ä½¿ç”¨ RenderTexture::visit å¯¼è‡´çš„è¿è¡Œæ—¶å´©æºƒï¼‰
         auto placeholder = Sprite::create();
-        // ´´½¨Ò»¸ö¼òµ¥µÄÎÆÀí¾ØĞÎ±íÏÖ£¨²»ÒÀÀµÍâ²¿Í¼Æ¬£©
+        // åˆ›å»ºä¸€ä¸ªç®€å•çš„çº¹ç†çŸ©å½¢è¡¨ç°ï¼ˆä¸ä¾èµ–å¤–éƒ¨å›¾ç‰‡ï¼‰
         placeholder->setTextureRect(Rect(0,0,32,32));
-        placeholder->setColor(Color3B(200, 50, 50)); // ºìÉ«Õ¼Î»
+        placeholder->setColor(Color3B(200, 50, 50)); // çº¢è‰²å ä½
         placeholder->setAnchorPoint(Vec2(0.5f, 0.5f));
         placeholder->setScale(1.5f);
         this->bindSprite(placeholder);
@@ -71,17 +71,17 @@ bool XinXing::init()
 
 void XinXing::setupAttributes()
 {
-    // »ù´¡ÊôĞÔ£¨¿É°´ĞèÎ¢µ÷£©
+    // åŸºç¡€å±æ€§ï¼ˆå¯æŒ‰éœ€å¾®è°ƒï¼‰
     setMaxHP(6000);
     setHP(6000);
-    setAttack(2000);            // ¸ßÉËº¦
+    setAttack(2000);            // é«˜ä¼¤å®³
     setMoveSpeed(120.0f);
 
     setSightRange(320.0f);
     setAttackRange(50.0f);
 
-    setAttackCooldown(0.8f);  // ¹¥ËÙ¿ì
-    setAttackWindup(0.25f);   // Ç°Ò¡¶Ì
+    setAttackCooldown(0.8f);  // æ”»é€Ÿå¿«
+    setAttackWindup(0.25f);   // å‰æ‘‡çŸ­
 }
 
 static Vector<SpriteFrame*> tryLoadFramesFromPatterns(const std::vector<std::string>& patterns, int count)
@@ -109,7 +109,7 @@ static Vector<SpriteFrame*> tryLoadFramesFromPatterns(const std::vector<std::str
         if (!frames.empty())
         {
             GAME_LOG("XinXing::loadAnimations - loaded %zu frames using pattern '%s'", frames.size(), pat.c_str());
-            break; // ÒÑÕÒµ½Ò»ÖÖ¿ÉÓÃµÄ pattern£¬Í£Ö¹³¢ÊÔÆäËû pattern
+            break; // å·²æ‰¾åˆ°ä¸€ç§å¯ç”¨çš„ patternï¼Œåœæ­¢å°è¯•å…¶ä»– pattern
         }
     }
 
@@ -118,7 +118,7 @@ static Vector<SpriteFrame*> tryLoadFramesFromPatterns(const std::vector<std::str
 
 void XinXing::loadAnimations()
 {
-    // ³¢ÊÔÈô¸É¿ÉÄÜµÄÂ·¾¶Ä£Ê½£¨¼æÈİ²»Í¬×ÊÔ´×éÖ¯£©
+    // å°è¯•è‹¥å¹²å¯èƒ½çš„è·¯å¾„æ¨¡å¼ï¼ˆå…¼å®¹ä¸åŒèµ„æºç»„ç»‡ï¼‰
     std::vector<std::string> movePatterns = {
         "Enemy/XinXing&&Iron Lance/XinXing/XinXing_Move/XinXing_Move_%04d.png",
         "Enemy/XinXing&&IronXing_Move/XinXing_Move_%04d.png",
@@ -137,7 +137,7 @@ void XinXing::loadAnimations()
         GAME_LOG("XinXing::loadAnimations - no move frames found for XinXing");
     }
 
-    // ¹¥»÷¶¯»­£¨ÈôÎŞ×ÊÔ´£¬²»»á×èÈû£©
+    // æ”»å‡»åŠ¨ç”»ï¼ˆè‹¥æ— èµ„æºï¼Œä¸ä¼šé˜»å¡ï¼‰
     std::vector<std::string> atkPatterns = {
         "Enemy/XinXing&&Iron Lance/XinXing/XinXing_Attack/XinXing_Attack_%04d.png",
         "Enemy/XinXing&&IronXing_Attack/XinXing_Attack_%04d.png",
@@ -155,7 +155,7 @@ void XinXing::loadAnimations()
         GAME_LOG("XinXing::loadAnimations - no attack frames found for XinXing");
     }
 
-    // ËÀÍö¶¯»­£¨¿ÉÑ¡£©
+    // æ­»äº¡åŠ¨ç”»ï¼ˆå¯é€‰ï¼‰
     std::vector<std::string> diePatterns = {
         "Enemy/XinXing&&Iron Lance/XinXing/XinXing_Die/XinXing_Die_%04d.png",
         "Enemy/XinXing&&IronXing_Die/XinXing_Die_%04d.png",
@@ -180,7 +180,7 @@ void XinXing::update(float dt)
 
     Enemy::update(dt);
 
-    // ·¿¼ä±ß½çÏŞÖÆ
+    // æˆ¿é—´è¾¹ç•Œé™åˆ¶
     if (_hasRoomBounds)
     {
         Vec2 pos = this->getPosition();
@@ -192,7 +192,7 @@ void XinXing::update(float dt)
 
 void XinXing::executeAI(Player* player, float dt)
 {
-    // Ê¹ÓÃ»ùÀàµÄ AI/¹¥»÷·çÏäÂß¼­ÒÔ±£Ö¤¹¥»÷Ç°Ò¡ÓëÃüÖĞ¶¯»­ÕıÈ·Í¬²½
+    // ä½¿ç”¨åŸºç±»çš„ AI/æ”»å‡»é£ç®±é€»è¾‘ä»¥ä¿è¯æ”»å‡»å‰æ‘‡ä¸å‘½ä¸­åŠ¨ç”»æ­£ç¡®åŒæ­¥
     if (_currentState == EntityState::DIE || !_isAlive) return;
     Enemy::executeAI(player, dt);
 }
@@ -204,9 +204,9 @@ void XinXing::attack()
     setState(EntityState::ATTACK);
     resetAttackCooldown();
 
-    // ÏÈÔÚ½Úµã²ãÃæ×¢²áÒ»¸ö·çÏäÑÓ³Ù»ØÍË£¨È·±£¼´±ã playAttackAnimation Î´±»µ÷ÓÃÒ²²»»áÒ»Ö±¿¨ÔÚ ATTACK£©
+    // å…ˆåœ¨èŠ‚ç‚¹å±‚é¢æ³¨å†Œä¸€ä¸ªé£ç®±å»¶è¿Ÿå›é€€ï¼ˆç¡®ä¿å³ä¾¿ playAttackAnimation æœªè¢«è°ƒç”¨ä¹Ÿä¸ä¼šä¸€ç›´å¡åœ¨ ATTACKï¼‰
     float windup = getAttackWindup();
-    // ÏÈÒÆ³ıÒÑÓĞÍ¬ tag µÄ£¨±ÜÃâÖØ¸´£©
+    // å…ˆç§»é™¤å·²æœ‰åŒ tag çš„ï¼ˆé¿å…é‡å¤ï¼‰
     this->stopActionByTag(XINX_WINDUP_NODE_TAG);
     auto nodeDelay = Sequence::create(DelayTime::create(windup),
                                       CallFunc::create([this]() {
@@ -217,25 +217,25 @@ void XinXing::attack()
 
     if (_attackAnimation && _sprite)
     {
-        // Í£Ö¹ÒÆ¶¯Ñ­»·
+        // åœæ­¢ç§»åŠ¨å¾ªç¯
         auto moveAct = _sprite->getActionByTag(XINX_MOVE_ACTION_TAG);
         if (moveAct) _sprite->stopAction(moveAct);
 
-        // Í£Ö¹Ö®Ç°µÄÇ°Ò¡¶¯×÷£¨Èç¹ûÓĞ£©
+        // åœæ­¢ä¹‹å‰çš„å‰æ‘‡åŠ¨ä½œï¼ˆå¦‚æœæœ‰ï¼‰
         auto prevWind = _sprite->getActionByTag(XINX_WINDUP_ACTION_TAG);
         if (prevWind) _sprite->stopAction(prevWind);
 
-        // ²¥·ÅÇ°Ò¡¶¯»­£¨Ê¹ÓÃ¹¥»÷¶¯»­×÷ÎªÇ°Ò¡ÊÓ¾õ£©
+        // æ’­æ”¾å‰æ‘‡åŠ¨ç”»ï¼ˆä½¿ç”¨æ”»å‡»åŠ¨ç”»ä½œä¸ºå‰æ‘‡è§†è§‰ï¼‰
         _attackAnimation->setRestoreOriginalFrame(true);
         auto animate = Animate::create(_attackAnimation);
         animate->setTag(XINX_WINDUP_ACTION_TAG);
         _sprite->runAction(animate);
 
-        // ×¢Òâ£º²»ÒªÔÚÕâÀïÔÙÇ¿ÖÆ°Ñ×´Ì¬ÖÃ»Ø IDLE£¨½Úµã²ãÃæµÄÑÓÊ±»ØÍË»á´¦ÀíÌÓÅÜ³¡¾°£»µ± playAttackAnimation ±»µ÷ÓÃÊ±»áÍ£Ö¹¸Ã»ØÍË£©
+        // æ³¨æ„ï¼šä¸è¦åœ¨è¿™é‡Œå†å¼ºåˆ¶æŠŠçŠ¶æ€ç½®å› IDLEï¼ˆèŠ‚ç‚¹å±‚é¢çš„å»¶æ—¶å›é€€ä¼šå¤„ç†é€ƒè·‘åœºæ™¯ï¼›å½“ playAttackAnimation è¢«è°ƒç”¨æ—¶ä¼šåœæ­¢è¯¥å›é€€ï¼‰
     }
     else
     {
-        // Ã»ÓĞ¶¯»­Ê±°´·çÏäÊ±³¤»ØÍËµ½ IDLE£¨¼æÈİÎŞÊÓ¾õ×ÊÔ´£©
+        // æ²¡æœ‰åŠ¨ç”»æ—¶æŒ‰é£ç®±æ—¶é•¿å›é€€åˆ° IDLEï¼ˆå…¼å®¹æ— è§†è§‰èµ„æºï¼‰
         this->stopActionByTag(XINX_WINDUP_NODE_TAG);
         auto fallback = Sequence::create(DelayTime::create(windup),
                                          CallFunc::create([this]() {
@@ -251,7 +251,7 @@ void XinXing::playAttackAnimation()
     if (!_sprite) return;
     if (_currentState == EntityState::DIE) return;
 
-    // Èç¹ûÎÒÃÇ¼´½«²¥·ÅÃüÖĞ¶¯»­£¬ÏÈÈ¡Ïû½Úµã²ãÃæµÄ·çÏä»ØÍË£¬±ÜÃâÔÚÃüÖĞ¶¯»­½øĞĞÖĞ±»ÖÃ»Ø IDLE
+    // å¦‚æœæˆ‘ä»¬å³å°†æ’­æ”¾å‘½ä¸­åŠ¨ç”»ï¼Œå…ˆå–æ¶ˆèŠ‚ç‚¹å±‚é¢çš„é£ç®±å›é€€ï¼Œé¿å…åœ¨å‘½ä¸­åŠ¨ç”»è¿›è¡Œä¸­è¢«ç½®å› IDLE
     this->stopActionByTag(XINX_WINDUP_NODE_TAG);
 
     if (_currentState != EntityState::ATTACK) setState(EntityState::ATTACK);
@@ -269,7 +269,7 @@ void XinXing::playAttackAnimation()
 
         _attackAnimation->setRestoreOriginalFrame(true);
         auto animate = Animate::create(_attackAnimation);
-        // ½« tag Ó¦ÓÃµ½Íâ²ã sequence£¬±ãÓÚºóĞø²éÑ¯/Í£Ö¹
+        // å°† tag åº”ç”¨åˆ°å¤–å±‚ sequenceï¼Œä¾¿äºåç»­æŸ¥è¯¢/åœæ­¢
         auto seq = Sequence::create(animate, CallFunc::create([this]() {
                 if (_moveAnimation && _sprite) {
                     auto frames = _moveAnimation->getFrames();
@@ -327,10 +327,10 @@ void XinXing::move(const Vec2& direction, float dt)
 
 void XinXing::die()
 {
-    // µ÷ÓÃ»ùÀàÒÔ´¦ÀíºìÉ«±ê¼Ç£¨KongKaZi£©µÈÍ¨ÓÃÊÓ¾õÓëÉú³É¹¦ÄÜ
+    // è°ƒç”¨åŸºç±»ä»¥å¤„ç†çº¢è‰²æ ‡è®°ï¼ˆKongKaZiï¼‰ç­‰é€šç”¨è§†è§‰ä¸ç”ŸæˆåŠŸèƒ½
     Enemy::die();
 
-    // ·ÀÖ¹ÖØ¸´´¦Àí
+    // é˜²æ­¢é‡å¤å¤„ç†
     if (_currentState == EntityState::DIE && !_isAlive) return;
 
     setState(EntityState::DIE);
@@ -339,7 +339,7 @@ void XinXing::die()
     this->stopAllActions();
     if (_sprite) { _sprite->stopAllActions(); _sprite->setVisible(true); _sprite->setOpacity(255); }
 
-    // ²¥·ÅËÀÍö¶¯»­²¢ÔÚ½áÊøºóÉú³É IronLance£¨Èô×ÊÔ´´æÔÚÔòÓÃ¶¯»­£©
+    // æ’­æ”¾æ­»äº¡åŠ¨ç”»å¹¶åœ¨ç»“æŸåç”Ÿæˆ IronLanceï¼ˆè‹¥èµ„æºå­˜åœ¨åˆ™ç”¨åŠ¨ç”»ï¼‰
     auto finalizeSpawn = [this]() {
         Vec2 basePos = this->getPosition();
         const float PI_F = 3.14159265358979323846f;
@@ -355,7 +355,7 @@ void XinXing::die()
 
             if (_hasRoomBounds) il->setRoomBounds(_roomBounds);
 
-            // ×¢²áµ½ GameScene£¬±£Ö¤·¿¼ä¹ÜÀíÓë±ß½çÉèÖÃÒ»ÖÂ
+            // æ³¨å†Œåˆ° GameSceneï¼Œä¿è¯æˆ¿é—´ç®¡ç†ä¸è¾¹ç•Œè®¾ç½®ä¸€è‡´
             Scene* running = Director::getInstance()->getRunningScene();
             GameScene* gs = nullptr;
             if (running)

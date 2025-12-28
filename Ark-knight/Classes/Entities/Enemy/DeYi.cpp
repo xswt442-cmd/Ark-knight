@@ -1,4 +1,4 @@
-#include "DeYi.h"
+ï»¿#include "DeYi.h"
 #include "Entities/Player/Player.h"
 #include "Scenes/GameScene.h"
 #include "UI/FloatingText.h"
@@ -9,8 +9,8 @@ USING_NS_CC;
 static const int DEYI_MOVE_ACTION_TAG = 0xD001;
 static const int DEYI_DIE_ACTION_TAG  = 0xD002;
 
-static const int DEYI_EXPLOSION_DAMAGE = 1200; // ±¬Õ¨Ôì³ÉµÄ¡°´óÁ¿ÉËº¦¡±£¬¿É¸ù¾İĞèÒªµ÷Õû
-static const float DEYI_EXPLOSION_RADIUS = 80.0f; // ±¬Õ¨°ë¾¶£¨ºÍÅĞ¶¨¾àÀë£©
+static const int DEYI_EXPLOSION_DAMAGE = 1200; // çˆ†ç‚¸é€ æˆçš„â€œå¤§é‡ä¼¤å®³â€ï¼Œå¯æ ¹æ®éœ€è¦è°ƒæ•´
+static const float DEYI_EXPLOSION_RADIUS = 80.0f; // çˆ†ç‚¸åŠå¾„ï¼ˆå’Œåˆ¤å®šè·ç¦»ï¼‰
 
 DeYi::DeYi()
     : _moveAnimation(nullptr)
@@ -34,13 +34,13 @@ bool DeYi::init()
         return false;
     }
 
-    // µØÃæ½üÕ½µ¥Î»
+    // åœ°é¢è¿‘æˆ˜å•ä½
     setEnemyType(EnemyType::MELEE);
 
     setupDeYiAttributes();
     loadAnimations();
 
-    // Ê¹ÓÃÒÆ¶¯¶¯»­µÚÒ»Ö¡×÷Îª³õÊ¼¾«Áé
+    // ä½¿ç”¨ç§»åŠ¨åŠ¨ç”»ç¬¬ä¸€å¸§ä½œä¸ºåˆå§‹ç²¾çµ
     if (_moveAnimation)
     {
         auto frames = _moveAnimation->getFrames();
@@ -63,24 +63,24 @@ void DeYi::setRoomBounds(const cocos2d::Rect& bounds)
 
 void DeYi::setupDeYiAttributes()
 {
-    // »ù´¡ÊôĞÔ£¨¸ù¾İĞèÒªµ÷Õû£©
+    // åŸºç¡€å±æ€§ï¼ˆæ ¹æ®éœ€è¦è°ƒæ•´ï¼‰
     setMaxHP(1000);
     setHP(1000);
-    setAttack(0); // ²»Ê¹ÓÃ³£¹æ½üÕ½¹¥»÷
+    setAttack(0); // ä¸ä½¿ç”¨å¸¸è§„è¿‘æˆ˜æ”»å‡»
     setMoveSpeed(140.0f);
 
-    // AI ²ÎÊı
+    // AI å‚æ•°
     setSightRange(350.0f);
-    setAttackRange(40.0f); // ½Ó½üµ½¸Ã·¶Î§¼´´¥·¢×Ô±¬
+    setAttackRange(40.0f); // æ¥è¿‘åˆ°è¯¥èŒƒå›´å³è§¦å‘è‡ªçˆ†
 
-    // ¹¥»÷/Ç°Ò¡ÀäÈ´²»ÊÊÓÃÓÚ DeYi£¬µ«ÈÔÉèÖÃ°²È«Öµ
+    // æ”»å‡»/å‰æ‘‡å†·å´ä¸é€‚ç”¨äº DeYiï¼Œä½†ä»è®¾ç½®å®‰å…¨å€¼
     setAttackCooldown(1.0f);
     setAttackWindup(0.1f);
 }
 
 void DeYi::loadAnimations()
 {
-    // ¼ÓÔØÒÆ¶¯¶¯»­£¨DeYi_Move£©
+    // åŠ è½½ç§»åŠ¨åŠ¨ç”»ï¼ˆDeYi_Moveï¼‰
     Vector<SpriteFrame*> moveFrames;
     for (int i = 1; i <= 5; i++)
     {
@@ -98,7 +98,7 @@ void DeYi::loadAnimations()
         _moveAnimation->retain();
     }
 
-    // ¼ÓÔØËÀÍö¶¯»­£¨DeYi_Die£©
+    // åŠ è½½æ­»äº¡åŠ¨ç”»ï¼ˆDeYi_Dieï¼‰
     Vector<SpriteFrame*> dieFrames;
     for (int i = 1; i <= 5; i++)
     {
@@ -126,7 +126,7 @@ void DeYi::update(float dt)
 
     Enemy::update(dt);
 
-    // ÏŞÖÆÔÚ·¿¼ä±ß½çÄÚ£¨ÈôÉèÖÃÁË£©
+    // é™åˆ¶åœ¨æˆ¿é—´è¾¹ç•Œå†…ï¼ˆè‹¥è®¾ç½®äº†ï¼‰
     if (_hasRoomBounds)
     {
         Vec2 pos = this->getPosition();
@@ -138,7 +138,7 @@ void DeYi::update(float dt)
 
 void DeYi::executeAI(Player* player, float dt)
 {
-    // »ù±¾Í¬ Enemy::executeAI µÄ¼ì²éÂß¼­£¬µ«½øÈë¹¥»÷·¶Î§Ê±Ö±½Ó×Ô±¬
+    // åŸºæœ¬åŒ Enemy::executeAI çš„æ£€æŸ¥é€»è¾‘ï¼Œä½†è¿›å…¥æ”»å‡»èŒƒå›´æ—¶ç›´æ¥è‡ªçˆ†
     if (player == nullptr || player->isDead() || _currentState == EntityState::DIE)
     {
         return;
@@ -150,24 +150,24 @@ void DeYi::executeAI(Player* player, float dt)
 
         if (isPlayerInAttackRange(player))
         {
-            // Ò»µ©´ïµ½¹¥»÷·¶Î§Á¢¿Ì×Ô±¬£¨²»×÷Îª¹¥»÷Ì¬£©£¬²¢ËÀÍö£¨ÇÒÖ»·¢ÉúÒ»´Î£©
+            // ä¸€æ—¦è¾¾åˆ°æ”»å‡»èŒƒå›´ç«‹åˆ»è‡ªçˆ†ï¼ˆä¸ä½œä¸ºæ”»å‡»æ€ï¼‰ï¼Œå¹¶æ­»äº¡ï¼ˆä¸”åªå‘ç”Ÿä¸€æ¬¡ï¼‰
             if (!_hasExploded)
             {
-                // ÔÚ±¬Õ¨Ç°ÃæÏòÍæ¼Ò²¢Í£Ö¹ÒÆ¶¯
+                // åœ¨çˆ†ç‚¸å‰é¢å‘ç©å®¶å¹¶åœæ­¢ç§»åŠ¨
                 move(Vec2::ZERO, dt);
                 faceToPosition(player->getPosition());
 
-                // ±ê¼ÇÒÑ±¬Õ¨²¢Ö±½ÓÖ´ĞĞ±¬Õ¨ÉËº¦£¨¶ÔÍæ¼Ò£©
+                // æ ‡è®°å·²çˆ†ç‚¸å¹¶ç›´æ¥æ‰§è¡Œçˆ†ç‚¸ä¼¤å®³ï¼ˆå¯¹ç©å®¶ï¼‰
                 _hasExploded = true;
                 doExplosion();
 
-                // Ö±½Óµ÷ÓÃµ×²ãÉËº¦´¦ÀíÒÔÇ¿ÖÆ×ÔËÀ£¬ÈÆ¹ı Enemy::takeDamage µÄ Cup ·Öµ£Âß¼­
+                // ç›´æ¥è°ƒç”¨åº•å±‚ä¼¤å®³å¤„ç†ä»¥å¼ºåˆ¶è‡ªæ­»ï¼Œç»•è¿‡ Enemy::takeDamage çš„ Cup åˆ†æ‹…é€»è¾‘
                 GameEntity::takeDamage(this->getHP());
             }
         }
         else
         {
-            // ×·»÷Íæ¼Ò
+            // è¿½å‡»ç©å®¶
             chasePlayer(player, dt);
         }
     }
@@ -180,13 +180,13 @@ void DeYi::executeAI(Player* player, float dt)
 
 void DeYi::doExplosion()
 {
-    // ±¬Õ¨ÊÓ¾õÓë¶ÔÍæ¼ÒÔì³ÉÉËº¦£¨Ö»Ó°ÏìÍæ¼Ò£©
-    // ½«ÊÓ¾õÈ¦Ìí¼Óµ½µĞÈËµÄ¸¸½Úµã£¨Í¨³£Îª gameLayer£©£¬Ê¹Ö®ÏÔÊ¾ÔÚµØ°åÖ®ÉÏ¡¢ÊµÌåÖ®ÏÂ£¨Óë Cup µÄ·¶Î§È¦Ò»ÖÂ£©
+    // çˆ†ç‚¸è§†è§‰ä¸å¯¹ç©å®¶é€ æˆä¼¤å®³ï¼ˆåªå½±å“ç©å®¶ï¼‰
+    // å°†è§†è§‰åœˆæ·»åŠ åˆ°æ•Œäººçš„çˆ¶èŠ‚ç‚¹ï¼ˆé€šå¸¸ä¸º gameLayerï¼‰ï¼Œä½¿ä¹‹æ˜¾ç¤ºåœ¨åœ°æ¿ä¹‹ä¸Šã€å®ä½“ä¹‹ä¸‹ï¼ˆä¸ Cup çš„èŒƒå›´åœˆä¸€è‡´ï¼‰
     Vec2 localPos = this->getPosition();
     Node* parent = this->getParent();
 
     auto circle = DrawNode::create();
-    circle->drawSolidCircle(Vec2::ZERO, DEYI_EXPLOSION_RADIUS, 0, 32, Color4F(1.0f, 0.4f, 0.2f, 0.6f)); // ³ÈÉ«°ëÍ¸Ã÷
+    circle->drawSolidCircle(Vec2::ZERO, DEYI_EXPLOSION_RADIUS, 0, 32, Color4F(1.0f, 0.4f, 0.2f, 0.6f)); // æ©™è‰²åŠé€æ˜
 
     if (parent)
     {
@@ -197,7 +197,7 @@ void DeYi::doExplosion()
     }
     else
     {
-        // ÍË»Ø£ºÌí¼Óµ½ running scene£¨Ô­ĞĞÎª£©
+        // é€€å›ï¼šæ·»åŠ åˆ° running sceneï¼ˆåŸè¡Œä¸ºï¼‰
         Scene* running = Director::getInstance()->getRunningScene();
         if (running)
         {
@@ -207,14 +207,14 @@ void DeYi::doExplosion()
         }
     }
 
-    // ÔÚÔ²×ÔÉíÉÏÔËĞĞµ­³ö²¢ÒÆ³ı
+    // åœ¨åœ†è‡ªèº«ä¸Šè¿è¡Œæ·¡å‡ºå¹¶ç§»é™¤
     auto fade = FadeOut::create(0.5f);
     auto removeCircle = CallFunc::create([circle]() {
         if (circle->getParent()) circle->removeFromParent();
     });
     circle->runAction(Sequence::create(DelayTime::create(0.1f), fade, removeCircle, nullptr));
 
-    // ¶ÔÍæ¼ÒÔì³ÉÉËº¦£¨ÈôÔÚ°ë¾¶ÄÚ£©
+    // å¯¹ç©å®¶é€ æˆä¼¤å®³ï¼ˆè‹¥åœ¨åŠå¾„å†…ï¼‰
     Scene* running = Director::getInstance()->getRunningScene();
     GameScene* gs = nullptr;
     if (running)
@@ -240,7 +240,7 @@ void DeYi::doExplosion()
             {
                 player->takeDamage(DEYI_EXPLOSION_DAMAGE);
 
-                // ÏÔÊ¾ÉËº¦¸¡×Ö£¨Í¬¶¾ÉË±íÏÖ£©
+                // æ˜¾ç¤ºä¼¤å®³æµ®å­—ï¼ˆåŒæ¯’ä¼¤è¡¨ç°ï¼‰
                 Scene* runningScene = Director::getInstance()->getRunningScene();
                 if (runningScene)
                 {
@@ -256,17 +256,17 @@ void DeYi::doExplosion()
 
 void DeYi::die()
 {
-    // ÏÈµ÷ÓÃ»ùÀàÒÔ´¦ÀíºìÉ«±ê¼Ç -> KongKaZi Éú³É¹¦ÄÜ£¨Èç¹ûÓĞ£©
+    // å…ˆè°ƒç”¨åŸºç±»ä»¥å¤„ç†çº¢è‰²æ ‡è®° -> KongKaZi ç”ŸæˆåŠŸèƒ½ï¼ˆå¦‚æœæœ‰ï¼‰
     Enemy::die();
 
-    // Èç¹ûÉĞÎ´±¬Õ¨£¨¼´±»Íæ¼Ò»÷É±£©£¬ÔÚ´Ë´¥·¢Ò»´Î±¬Õ¨
+    // å¦‚æœå°šæœªçˆ†ç‚¸ï¼ˆå³è¢«ç©å®¶å‡»æ€ï¼‰ï¼Œåœ¨æ­¤è§¦å‘ä¸€æ¬¡çˆ†ç‚¸
     if (!_hasExploded)
     {
         _hasExploded = true;
         doExplosion();
     }
 
-    // ·ÀÖ¹ÖØ¸´ËÀÍö´¦Àí
+    // é˜²æ­¢é‡å¤æ­»äº¡å¤„ç†
     if (_currentState == EntityState::DIE && !_isAlive)
     {
         return;
@@ -283,7 +283,7 @@ void DeYi::die()
         _sprite->setOpacity(255);
     }
 
-    // ²¥·ÅËÀÍö¶¯»­²¢ÒÆ³ı
+    // æ’­æ”¾æ­»äº¡åŠ¨ç”»å¹¶ç§»é™¤
     if (_dieAnimation && _sprite)
     {
         auto animate = Animate::create(_dieAnimation);
@@ -314,7 +314,7 @@ void DeYi::die()
 
 void DeYi::move(const cocos2d::Vec2& direction, float dt)
 {
-    // ĞĞÎªÀàËÆ Ayao£º¹¥»÷/ËÀÍö×´Ì¬²»ÒÆ¶¯£¬¿ØÖÆÒÆ¶¯¶¯»­Óë³¯Ïò
+    // è¡Œä¸ºç±»ä¼¼ Ayaoï¼šæ”»å‡»/æ­»äº¡çŠ¶æ€ä¸ç§»åŠ¨ï¼Œæ§åˆ¶ç§»åŠ¨åŠ¨ç”»ä¸æœå‘
     if (_currentState == EntityState::ATTACK || _currentState == EntityState::DIE)
     {
         Character::move(Vec2::ZERO, dt);

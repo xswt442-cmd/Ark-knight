@@ -1,6 +1,5 @@
 ﻿#include "SoundManager.h"
 
-// cocos2d-x 4.0 中 AudioEngine 直接在 cocos2d 命名空间下
 using cocos2d::AudioEngine;
 
 SoundManager* SoundManager::_instance = nullptr;
@@ -36,7 +35,7 @@ void SoundManager::destroyInstance()
         }
         _instance->_sfxMap.clear();
 
-        // 注意：不要在这里调用 AudioEngine::end() —— AppDelegate 负责在程序退出时调用它。
+        // PS: 不要在这里调用 AudioEngine::end() —— AppDelegate 负责在程序退出时调用它
         delete _instance;
         _instance = nullptr;
         GAME_LOG("SoundManager instance destroyed");

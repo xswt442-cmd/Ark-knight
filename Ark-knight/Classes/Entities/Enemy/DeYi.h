@@ -1,18 +1,16 @@
-#ifndef __DEYI_H__
+ï»¿#ifndef __DEYI_H__
 #define __DEYI_H__
 
 #include "Enemy.h"
 
-// Ç°ÏòÉùÃ÷£¬±ÜÃâÔÚÍ·ÎÄ¼şÖĞ°üº¬ Player.h£¬¼õĞ¡±àÒëÒÀÀµ
+// å‰å‘å£°æ˜ï¼Œé¿å…åœ¨å¤´æ–‡ä»¶ä¸­åŒ…å« Player.hï¼Œå‡å°ç¼–è¯‘ä¾èµ–
 class Player;
 
 /**
- * µÃÒâ - »á¿¿½üÍæ¼Ò²¢×Ô±¬µÄĞ¡¹Ö
- * ÌØµã£º
- *  - µØÃæµ¥Î»£¨MELEE£©
- *  - ·¢ÏÖÍæ¼Òºó¿¿½ü£¬½øÈë¹¥»÷·¶Î§Á¢¼´×Ô±¬²¢ËÀÍö£¨±¬Õ¨Ôì³É´óÁ¿ÉËº¦£©
- *  - ±»Íæ¼Ò»÷É±Ê±ÔÚÕóÍöµØµã´¥·¢±¬Õ¨£¨Ôì³É´óÁ¿ÉËº¦£©
- *  - ¿É±»¿Ö¿¨×È¼ÄÉú£¨ÑØÓÃ Enemy µÄÂß¼­£©
+ * å¾—æ„ - ä¼šé è¿‘ç©å®¶å¹¶è‡ªçˆ†çš„å°æ€ª
+ * ç‰¹ç‚¹ï¼š
+ *  - åœ°é¢å•ä½
+ *  - å‘ç°ç©å®¶åé è¿‘ï¼Œè¿›å…¥æ”»å‡»èŒƒå›´ç«‹å³è‡ªçˆ†å¹¶æ­»äº¡ï¼ˆçˆ†ç‚¸é€ æˆå¤§é‡ä¼¤å®³ï¼‰
  */
 class DeYi : public Enemy {
 public:
@@ -22,37 +20,37 @@ public:
     virtual bool init() override;
     CREATE_FUNC(DeYi);
 
-    // ¸üĞÂ£¨ÏŞÖÆ·¿¼ä·¶Î§£©
+    // æ›´æ–°ï¼ˆé™åˆ¶æˆ¿é—´èŒƒå›´ï¼‰
     virtual void update(float dt) override;
 
-    // ÉèÖÃ·¿¼ä±ß½ç£¨¸²Ğ´ÒÔ½ÓÊÕ²¢Ó¦ÓÃ·¿¼ä±ß½ç£©
+    // è®¾ç½®æˆ¿é—´è¾¹ç•Œï¼ˆè¦†å†™ä»¥æ¥æ”¶å¹¶åº”ç”¨æˆ¿é—´è¾¹ç•Œï¼‰
     virtual void setRoomBounds(const cocos2d::Rect& bounds) override;
 
-    // Óë Ayao ÀàËÆµÄÊÓ¾õ/ĞĞÎªº¯Êı
+    // ä¸ Ayao ç±»ä¼¼çš„è§†è§‰/è¡Œä¸ºå‡½æ•°
     void setupDeYiAttributes();
     void loadAnimations();
 
-    // DeYi ²»Ö´ĞĞ³£¹æ¹¥»÷£¬¶øÊÇ½Ó½üºó×Ô±¬£¬ËùÒÔ¸²Ğ´ AI Á÷³Ì
+    // DeYi ä¸æ‰§è¡Œå¸¸è§„æ”»å‡»ï¼Œè€Œæ˜¯æ¥è¿‘åè‡ªçˆ†ï¼Œæ‰€ä»¥è¦†å†™ AI æµç¨‹
     virtual void executeAI(Player* player, float dt) override;
 
-    // ¸²Ğ´ die£ºÔÚ±»»÷É±Ê±´¥·¢±¬Õ¨£¨ÈôÉĞÎ´±¬Õ¨£©
+    // è¦†å†™ dieï¼šåœ¨è¢«å‡»æ€æ—¶è§¦å‘çˆ†ç‚¸ï¼ˆè‹¥å°šæœªçˆ†ç‚¸ï¼‰
     virtual void die() override;
 
     virtual void move(const cocos2d::Vec2& direction, float dt) override;
 
 protected:
-    // ¶¯»­×ÊÔ´
+    // åŠ¨ç”»èµ„æº
     cocos2d::Animation* _moveAnimation;
     cocos2d::Animation* _dieAnimation;
 
-    // ·¿¼ä±ß½ç
+    // æˆ¿é—´è¾¹ç•Œ
     cocos2d::Rect _roomBounds;
     bool _hasRoomBounds;
 
-    // ÊÇ·ñÒÑ¾­´¥·¢±¬Õ¨£¨±ÜÃâÖØ¸´£©
+    // æ˜¯å¦å·²ç»è§¦å‘çˆ†ç‚¸ï¼ˆé¿å…é‡å¤ï¼‰
     bool _hasExploded;
 
-    // ÄÚ²¿£ºÖ´ĞĞ±¬Õ¨Ğ§¹û£¨ÊÓ¾õ + ¶ÔÍæ¼ÒÔì³ÉÉËº¦£©
+    // å†…éƒ¨ï¼šæ‰§è¡Œçˆ†ç‚¸æ•ˆæœï¼ˆè§†è§‰ + å¯¹ç©å®¶é€ æˆä¼¤å®³ï¼‰
     void doExplosion();
 };
 

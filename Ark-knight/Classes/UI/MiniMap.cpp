@@ -4,7 +4,7 @@
 
 USING_NS_CC;
 
-// ==================== MiniRoom Implementation ====================
+// MiniRoom小地图中的小房间
 
 MiniRoom* MiniRoom::create() {
     MiniRoom* room = new (std::nothrow) MiniRoom();
@@ -122,7 +122,7 @@ void MiniRoom::setDoorVisible(int direction, bool visible) {
     }
 }
 
-// ==================== MiniMap Implementation ====================
+// MiniMap小地图主类
 
 MiniMap* MiniMap::create() {
     MiniMap* miniMap = new (std::nothrow) MiniMap();

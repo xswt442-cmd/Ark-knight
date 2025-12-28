@@ -12,55 +12,28 @@ class Player;
 class Room;
 struct ItemDef;
 
-/**
- * 游戏HUD管理类
- * 负责管理游戏中的所有HUD元素：
- * - 血条、蓝条
- * - 技能图标和冷却显示
- * - 道具栏
- * - Debug信息
- */
+// 游戏HUD管理 - 血条、蓝条、技能图标、道具栏等
 class GameHUD : public Node {
 public:
     static GameHUD* create();
     virtual bool init() override;
     
-    /**
-     * 更新HUD显示
-     * @param player 玩家对象
-     * @param currentRoom 当前房间
-     * @param roomCount 房间总数
-     */
+    // 更新HUD显示
     void update(Player* player, Room* currentRoom, int roomCount);
     
-    /**
-     * 添加道具图标到UI
-     * @param itemDef 道具定义
-     */
+    // 道具栏管理
     void addItemIcon(const ItemDef* itemDef);
     
-    /**
-     * 显示交互提示
-     * @param text 提示文本
-     * @param worldPos 世界坐标位置
-     * @param offsetY Y轴偏移
-     */
+    // 交互提示显示
     void showInteractionHint(const std::string& text, const Vec2& worldPos, float offsetY);
     
-    /**
-     * 隐藏交互提示
-     */
+    // 隐藏交互提示
     void hideInteractionHint();
     
-    /**
-     * 获取交互提示标签
-     */
+    // 获取交互提示标签
     Label* getInteractionLabel() const { return _interactionLabel; }
     
-    /**
-     * 设置技能图标（根据角色类型）
-     * @param characterType 0=Mage, 1=Gunner, 2=Warrior
-     */
+    // 设置技能图标（根据角色类型）
     void setSkillIcon(int characterType);
     
 private:

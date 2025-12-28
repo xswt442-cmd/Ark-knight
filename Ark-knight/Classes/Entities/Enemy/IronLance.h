@@ -1,4 +1,4 @@
-#ifndef __IRONLANCE_H__
+ï»¿#ifndef __IRONLANCE_H__
 #define __IRONLANCE_H__
 
 #include "Enemy.h"
@@ -15,26 +15,24 @@ public:
 
     CREATE_FUNC(IronLance);
 
-    // ÏÖÔÚËã×÷·¿¼äÇå³ı¼ÆÊı£¨¸ÄÎª true£©
+    // ç°åœ¨ç®—ä½œæˆ¿é—´æ¸…é™¤è®¡æ•°ï¼ˆæ”¹ä¸º trueï¼‰
     virtual bool countsForRoomClear() const override { return true; }
 
-    // ½öÒÆ¶¯£¨¸²Ğ´ AI£©
+    // ä»…ç§»åŠ¨ï¼ˆè¦†å†™ AIï¼‰
     virtual void executeAI(Player* player, float dt) override;
 
-    // ÈÎÒâÒ»´ÎÊÜÉË½ö¿Û 1 µã
+    // ä»»æ„ä¸€æ¬¡å—ä¼¤ä»…æ‰£ 1 ç‚¹
     virtual void takeDamage(int damage) override;
 
-    // ---------- ĞÂÔö£ºÈ·±£Ö±½Óµ÷ÓÃ takeDamageReported Ò²Ö»Ôì³É 1 µãÉËº¦ ----------
     virtual int takeDamageReported(int damage) override;
-    // ---------------------------------------------------------------------------
 
-    // ¸²Ğ´ die()£¬È·±£ËÀÍöÊ±Ö´ĞĞÊÓ¾õ²¥·Å + ÇåÀí
+    // è¦†å†™ die()ï¼Œç¡®ä¿æ­»äº¡æ—¶æ‰§è¡Œè§†è§‰æ’­æ”¾ + æ¸…ç†
     virtual void die() override;
 
-    // ·¿¼ä±ß½ç
+    // æˆ¿é—´è¾¹ç•Œ
     virtual void setRoomBounds(const cocos2d::Rect& bounds) override { _roomBounds = bounds; _hasRoomBounds = true; }
 
-    // ¸²Ğ´ÒÆ¶¯ÒÔ°´ Ayao µÄ¶¯»­Âß¼­¿ØÖÆÒÆ¶¯Ñ­»·ÓëÍ£Ö¹»Ö¸´Ê×Ö¡
+    // è¦†å†™ç§»åŠ¨ä»¥æŒ‰ Ayao çš„åŠ¨ç”»é€»è¾‘æ§åˆ¶ç§»åŠ¨å¾ªç¯ä¸åœæ­¢æ¢å¤é¦–å¸§
     virtual void move(const cocos2d::Vec2& direction, float dt) override;
 
 protected:

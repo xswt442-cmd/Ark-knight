@@ -1,4 +1,4 @@
-#include "Cup.h"
+ï»¿#include "Cup.h"
 #include "UI/FloatingText.h"
 #include "Entities/Player/Player.h"
 #include "cocos2d.h"
@@ -60,7 +60,7 @@ bool Cup::init()
     }
     initial->setScale(1.2f);
 
-    // Ê¹ÓÃÄ¬ÈÏ ZOrder (Constants::ZOrder::ENTITY)
+    // ä½¿ç”¨é»˜è®¤ ZOrder 
     bindSprite(initial);
 
     _sprite = getSprite();
@@ -140,7 +140,7 @@ void Cup::update(float dt)
 
     Enemy::update(dt);
 
-    // ±£ÁôÔ­ÓĞÑ²ÂßÂß¼­£¨Èô²»ÏëÑ²Âß¿É×¢ÊÍ£©
+    // ä¿ç•™åŸæœ‰å·¡é€»é€»è¾‘ï¼ˆè‹¥ä¸æƒ³å·¡é€»å¯æ³¨é‡Šï¼‰
     _patrolTimer += dt;
     if (_patrolTimer >= _patrolInterval) {
         _patrolTimer = 0.0f;
@@ -207,11 +207,11 @@ void Cup::absorbDamage(int damage)
     }
 }
 
-// ¸²Ğ´ executeAI£º²»Ë÷µĞ£¬²»¿¿½üÍæ¼Ò
+// è¦†å†™ executeAIï¼šä¸ç´¢æ•Œï¼Œä¸é è¿‘ç©å®¶
 void Cup::executeAI(Player* player, float dt)
 {
-    // ¹ÊÒâ¿ÕÊµÏÖ£ºCup ²»»á»ùÓÚÍæ¼Ò½øĞĞ×·»÷»ò¹¥»÷
-    // ±£³ÖÓÉ update() ¿ØÖÆµÄÑ²Âß/¾²Ö¹ĞĞÎª
+    // Cup ä¸ä¼šåŸºäºç©å®¶è¿›è¡Œè¿½å‡»æˆ–æ”»å‡»
+    // ä¿æŒç”± update() æ§åˆ¶çš„å·¡é€»/é™æ­¢è¡Œä¸º
     (void)player;
     (void)dt;
 }

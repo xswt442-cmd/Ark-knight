@@ -3,7 +3,7 @@
 
 USING_NS_CC;
 
-// ==================== Spike ====================
+// Spike 尖刺陷阱实现
 
 Spike* Spike::create(const std::string& texturePath)
 {
@@ -98,7 +98,7 @@ void Spike::updateState(float dt, Player* player)
     }
 }
 
-// ==================== Box ====================
+// Box 箱子障碍物实现
 
 Box* Box::create(BoxType type)
 {

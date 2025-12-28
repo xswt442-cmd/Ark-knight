@@ -7,9 +7,7 @@
 class MapGenerator;
 class Room;
 
-/**
- * MiniRoom - 小地图上的单个房间显示
- */
+// MiniRoom - 小地图上的单个房间显示
 class MiniRoom : public cocos2d::Node {
 public:
     static MiniRoom* create();
@@ -33,10 +31,7 @@ private:
     bool _isCurrent;
 };
 
-/**
- * MiniMap - 小地图UI组件
- * 显示在屏幕右上角，展示房间布局
- */
+// MiniMap - 小地图UI组件 - 显示在屏幕右上角，展示房间布局
 class MiniMap : public cocos2d::Node {
 public:
     static MiniMap* create();

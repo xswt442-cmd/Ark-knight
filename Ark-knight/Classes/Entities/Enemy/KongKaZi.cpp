@@ -1,9 +1,9 @@
-#include "KongKaZi.h"
+ï»¿#include "KongKaZi.h"
 #include "Entities/Player/Player.h"
 
-static const int KONG_MOVE_ACTION_TAG = 0xB001; // ÒÆ¶¯Ñ­»·¶¯×÷ tag
-static const int KONG_HIT_ACTION_TAG  = 0xB002; // ÃüÖĞ/ÉËº¦²¥·Å¶¯×÷ tag
-static const int KONG_WINDUP_ACTION_TAG = 0xB003; // ¹¥»÷Ç°Ò¡¶¯×÷ tag
+static const int KONG_MOVE_ACTION_TAG = 0xB001; // ç§»åŠ¨å¾ªç¯åŠ¨ä½œ tag
+static const int KONG_HIT_ACTION_TAG  = 0xB002; // å‘½ä¸­/ä¼¤å®³æ’­æ”¾åŠ¨ä½œ tag
+static const int KONG_WINDUP_ACTION_TAG = 0xB003; // æ”»å‡»å‰æ‘‡åŠ¨ä½œ tag
 
 KongKaZi::KongKaZi()
     : _moveAnimation(nullptr)
@@ -28,13 +28,13 @@ bool KongKaZi::init()
         return false;
     }
 
-    // ÉèÖÃµĞÈËÀàĞÍ£¨½üÕ½£©
+    // è®¾ç½®æ•Œäººç±»å‹ï¼ˆè¿‘æˆ˜ï¼‰
     setEnemyType(EnemyType::MELEE);
 
     setupKongKaZiAttributes();
     loadAnimations();
 
-    // ÉèÖÃ³õÊ¼¾«Áé£¨Ê¹ÓÃÒÆ¶¯¶¯»­µÚÒ»Ö¡£©
+    // è®¾ç½®åˆå§‹ç²¾çµï¼ˆä½¿ç”¨ç§»åŠ¨åŠ¨ç”»ç¬¬ä¸€å¸§ï¼‰
     if (_moveAnimation)
     {
         auto frames = _moveAnimation->getFrames();
@@ -51,7 +51,7 @@ bool KongKaZi::init()
 
 void KongKaZi::update(float dt)
 {
-    // Èç¹ûËÀÍöÔò²»ÔÙ¸üĞÂÂß¼­
+    // å¦‚æœæ­»äº¡åˆ™ä¸å†æ›´æ–°é€»è¾‘
     if (_currentState == EntityState::DIE)
     {
         return;
@@ -59,7 +59,7 @@ void KongKaZi::update(float dt)
 
     Enemy::update(dt);
 
-    // ÏŞÖÆÎ»ÖÃÔÚ·¿¼ä±ß½çÄÚ£¨¸´ÓÃ Ayao µÄĞĞÎª£©
+    // é™åˆ¶ä½ç½®åœ¨æˆ¿é—´è¾¹ç•Œå†…ï¼ˆå¤ç”¨ Ayao çš„è¡Œä¸ºï¼‰
     if (_hasRoomBounds)
     {
         cocos2d::Vec2 pos = this->getPosition();
@@ -71,13 +71,13 @@ void KongKaZi::update(float dt)
 
 void KongKaZi::setupKongKaZiAttributes()
 {
-    // ÉèÖÃ»ù´¡ÊôĞÔ£¨¿É¸ù¾İĞèÒªµ÷ÕûÊıÖµ£©
+    // è®¾ç½®åŸºç¡€å±æ€§ï¼ˆå¯æ ¹æ®éœ€è¦è°ƒæ•´æ•°å€¼ï¼‰
     setMaxHP(5000);
     setHP(5000);
     setAttack(750);
     setMoveSpeed(150.0f);
 
-    // AI ²ÎÊı
+    // AI å‚æ•°
     setSightRange(1000.0f);
     setAttackRange(40.0f);
     setAttackCooldown(1.5f);
@@ -88,7 +88,7 @@ void KongKaZi::loadAnimations()
 {
     using namespace cocos2d;
 
-    // ÒÆ¶¯¶¯»­
+    // ç§»åŠ¨åŠ¨ç”»
     Vector<SpriteFrame*> moveFrames;
     for (int i = 1; i <= 5; i++)
     {
@@ -106,7 +106,7 @@ void KongKaZi::loadAnimations()
         _moveAnimation->retain();
     }
 
-    // ¹¥»÷¶¯»­
+    // æ”»å‡»åŠ¨ç”»
     Vector<SpriteFrame*> attackFrames;
     for (int i = 1; i <= 9; i++)
     {
@@ -124,7 +124,7 @@ void KongKaZi::loadAnimations()
         _attackAnimation->retain();
     }
 
-    // ËÀÍö¶¯»­
+    // æ­»äº¡åŠ¨ç”»
     Vector<SpriteFrame*> dieFrames;
     for (int i = 1; i <= 8; i++)
     {
@@ -155,7 +155,7 @@ void KongKaZi::attack()
 
     GAME_LOG("KongKaZi attacks!");
 
-    // ²¥·Å¹¥»÷Ç°Ò¡¶¯»­£¨Óë Ayao Ò»ÖÂµÄ´¦Àí£©
+    // æ’­æ”¾æ”»å‡»å‰æ‘‡åŠ¨ç”»ï¼ˆä¸ Ayao ä¸€è‡´çš„å¤„ç†ï¼‰
     if (_attackAnimation && _sprite)
     {
         auto moveAct = _sprite->getActionByTag(KONG_MOVE_ACTION_TAG);
@@ -203,19 +203,19 @@ void KongKaZi::attack()
 
 void KongKaZi::die()
 {
-    // ÏÈÖ´ĞĞ»ùÀà´¦Àí£¨»á´¦Àí¿ÉÄÜµÄºìÉ«±ê¼Ç±¬Õ¨Óë KongKaZi Éú³É¹¦ÄÜ£©
+    // å…ˆæ‰§è¡ŒåŸºç±»å¤„ç†ï¼ˆä¼šå¤„ç†å¯èƒ½çš„çº¢è‰²æ ‡è®°çˆ†ç‚¸ä¸ KongKaZi ç”ŸæˆåŠŸèƒ½ï¼‰
     Enemy::die();
 
-    // ·ÀÖ¹ÖØ¸´´¦ÀíËÀÍöÂß¼­
+    // é˜²æ­¢é‡å¤å¤„ç†æ­»äº¡é€»è¾‘
     if (_currentState == EntityState::DIE)
     {
-        // ÈÔÈ»¼ÌĞø²¥·Å±¾ÀàËÀÍö¶¯»­£¨²»Ö±½Ó return£©
+        // ä»ç„¶ç»§ç»­æ’­æ”¾æœ¬ç±»æ­»äº¡åŠ¨ç”»ï¼ˆä¸ç›´æ¥ returnï¼‰
     }
 
-    // ²¥·ÅËÀÍö¶¯»­£¨Óë Ayao ±£³ÖÒ»ÖÂ£©
+    // æ’­æ”¾æ­»äº¡åŠ¨ç”»ï¼ˆä¸ Ayao ä¿æŒä¸€è‡´ï¼‰
     setState(EntityState::DIE);
-    // ±ê¼ÇÎª²»´æ»î
-    // Í£Ö¹ËùÓĞ¶¯×÷
+    // æ ‡è®°ä¸ºä¸å­˜æ´»
+    // åœæ­¢æ‰€æœ‰åŠ¨ä½œ
     this->stopAllActions();
     if (_sprite)
     {
@@ -254,7 +254,7 @@ void KongKaZi::die()
 
 void KongKaZi::move(const cocos2d::Vec2& direction, float dt)
 {
-    // ÔÚ¹¥»÷»òËÀÍö½×¶Î½ûÖ¹ÒÆ¶¯£¨Óë Ayao ±£³ÖÒ»ÖÂ£©
+    // åœ¨æ”»å‡»æˆ–æ­»äº¡é˜¶æ®µç¦æ­¢ç§»åŠ¨ï¼ˆä¸ Ayao ä¿æŒä¸€è‡´ï¼‰
     if (_currentState == EntityState::ATTACK || _currentState == EntityState::DIE)
     {
         Character::move(cocos2d::Vec2::ZERO, dt);
@@ -286,11 +286,11 @@ void KongKaZi::move(const cocos2d::Vec2& direction, float dt)
         return;
     }
 
-    // ÓĞÒÆ¶¯ÏòÁ¿£ºÏÈµ÷ÓÃ»ùÀà½øĞĞÊµ¼ÊÒÆ¶¯
+    // æœ‰ç§»åŠ¨å‘é‡ï¼šå…ˆè°ƒç”¨åŸºç±»è¿›è¡Œå®é™…ç§»åŠ¨
     cocos2d::Vec2 dirNorm = direction.getNormalized();
     Character::move(dirNorm, dt);
 
-    // ÉèÖÃ×óÓÒ³¯Ïò²¢²¥·ÅÒÆ¶¯¶¯»­
+    // è®¾ç½®å·¦å³æœå‘å¹¶æ’­æ”¾ç§»åŠ¨åŠ¨ç”»
     if (_sprite && _moveAnimation)
     {
         _sprite->setFlippedX(dirNorm.x < 0.0f);
@@ -315,14 +315,14 @@ void KongKaZi::playAttackAnimation()
         setState(EntityState::ATTACK);
     }
 
-    // Í£Ö¹ÒÆ¶¯Ñ­»·
+    // åœæ­¢ç§»åŠ¨å¾ªç¯
     auto moveAct = _sprite->getActionByTag(KONG_MOVE_ACTION_TAG);
     if (moveAct)
     {
         _sprite->stopAction(moveAct);
     }
 
-    // Í£Ö¹Ç°Ò¡£¨Èç¹ûÓĞ£©
+    // åœæ­¢å‰æ‘‡ï¼ˆå¦‚æœæœ‰ï¼‰
     auto wind = _sprite->getActionByTag(KONG_WINDUP_ACTION_TAG);
     if (wind)
     {
